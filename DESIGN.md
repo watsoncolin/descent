@@ -15,14 +15,166 @@ A Motherload-inspired mining game where you pilot a drilling pod through planets
 
 ## Core Gameplay Loop
 
-1. **Select a planet** from globe view
-2. **Drill downward** through terrain layers to collect minerals
-3. **Manage fuel** carefully - running out = game over
-4. **Return to surface** to sell minerals and refuel
-5. **Buy upgrades** with Credits (cash) to improve your pod
-6. **Extract the planet's core** to trigger prestige
-7. **Gain Soul Crystals** for permanent earning bonuses
-8. **Move to harder planets** for higher multipliers
+### What is a "Run"?
+
+A **run** is a single mining expedition from surface to core (or back to surface). Each run follows this cycle:
+
+**1. Launch Phase**
+
+- Select a planet from the planet selection screen
+- Your pod launches from the surface station
+- All stats start at current upgrade levels (fuel full, hull full, cargo empty)
+
+**2. Descent Phase**
+
+- Drill downward through terrain layers
+- Collect minerals to fill cargo
+- Manage fuel consumption
+- Avoid/survive hazards
+- Make risk/reward decisions: "Go deeper for better minerals, or return now?"
+
+**3. Return Decision**
+
+- **Option A - Return Early**: Fly back to surface before reaching core
+  - Keep all collected minerals
+  - Sell minerals for Credits (temporary currency)
+  - No prestige - can immediately start another run
+  - Safe but lower rewards
+- **Option B - Reach Core**: Extract the planet's core
+  - Keep all collected minerals
+  - Earn Dark Matter (guaranteed valuable drop)
+  - Triggers prestige option
+  - Higher risk, maximum rewards
+
+**4. Surface Phase**
+
+- Sell all minerals for Credits
+- Spend Credits on Common Upgrades (fuel, cargo, drill, hull, speed, dampeners)
+- Use Golden Gems (if any) on Epic Upgrades (permanent unlocks)
+- View run statistics (depth reached, minerals collected, earnings)
+- **Planet regenerates** - all drilled terrain respawns with fresh resources
+
+**5. Next Run Decision**
+
+- **Start another run**: Same planet, with your new upgrades, but terrain is fresh
+- **Prestige** (if core was extracted): Reset planet, gain Soul Crystals
+- **Switch planets**: Choose different planet (if unlocked)
+- **Quit to main menu**: Save progress
+
+### Planet Reset Behavior
+
+**Between Runs:**
+
+- All terrain regenerates when you return to surface
+- Resource positions redistribute (same spawn rates and formulas, different locations)
+- Hazards respawn in new positions
+- Core chamber remains in same location (always at maximum depth)
+- Your upgrades and stats persist, but the planet itself resets
+
+**Why Planets Reset:**
+
+- Keeps each run fresh and unpredictable
+- Prevents "strip mining" strategies
+- Can't memorize exact mineral locations
+- Maintains challenge across multiple runs
+- Balances economy and progression
+- Each run tests your skills, not your memory
+
+**Procedural Generation:**
+
+- Planets use seeded random generation
+- Same planet type always feels similar (Mars feels like Mars)
+- But specific mineral positions vary each run
+- Ensures replayability while maintaining planet identity
+
+**Visual/Lore Explanation:**
+
+> "The planet's crust regenerates between expeditions due to the corporation's quantum mining technology. Each run phases matter temporarily - when you return to base, geological forces rapidly restore the drilled sections. This sustainable approach prevents permanent planetary damage."
+
+### Run Duration
+
+**Typical Run Length:**
+
+- **Quick surface run**: 2-3 minutes (grab surface minerals, return)
+- **Mid-depth run**: 5-7 minutes (reach 300m, good minerals)
+- **Core run**: 8-15 minutes depending on upgrades and skill
+- **Failed run**: Variable (ran out of fuel, died to hazards)
+
+**Mobile-Friendly Sessions:**
+
+- Perfect for short play sessions (one quick run)
+- Or longer sessions (multiple runs, progression visible)
+- Can pause mid-run, resume later
+
+### Run Failure States
+
+A run can end prematurely if:
+
+**Out of Fuel:**
+
+- Pod automatically returns to surface (emergency thrust)
+- Lose 50% of collected minerals (cargo insurance can reduce this)
+- No Credits earned from lost minerals
+- Hull remains at current HP
+
+**Hull Destroyed (0 HP):**
+
+- Pod explodes, emergency ejection
+- Lose all collected minerals (unless Ejection Pod upgrade is active)
+- No Credits earned
+- Respawn at surface for new run
+
+**Manual Abandon:**
+
+- Can choose "Abandon Run" from pause menu
+- Lose all collected minerals
+- Counts as failed run
+- Use this to escape impossible situations
+
+### Example Run Scenarios
+
+**Scenario 1: Conservative Early Game**
+
+1. Launch on Mars with basic upgrades
+2. Drill to 150m collecting Iron, Copper, Silver
+3. Cargo at 45/50, fuel at 40/100
+4. Return to surface (safe play)
+5. Sell minerals for $2,000 Credits
+6. Buy Cargo Level 2 upgrade
+7. Start next run immediately
+
+**Scenario 2: Risky Deep Push**
+
+1. Launch with Drill Level 3, Fuel Level 4
+2. Drill deep to 450m, collecting Platinum and Diamonds
+3. Cargo full (50/50), fuel at 25/300
+4. Spot Ruby vein, drop some Platinum to collect Rubies
+5. Risk the return trip with low fuel
+6. Barely make it back with $8,000 worth of cargo
+7. Major upgrade purchased
+
+**Scenario 3: Core Extraction**
+
+1. Launch with max upgrades for Mars
+2. Efficient drilling to 500m core
+3. Extract Dark Matter
+4. Return to surface with full cargo + Dark Matter
+5. Sell everything for $22,000 Credits
+6. Prestige screen appears
+7. Choose to prestige: Gain 50 Soul Crystals
+8. All Credits and upgrades reset
+9. All minerals now worth 50% more permanently
+10. Start fresh run on Mars (or unlock Luna)
+
+**Scenario 4: Failed Run**
+
+1. Launch and drill to 300m
+2. Hit gas pocket, lose 20 HP
+3. Cave-in, lose another 20 HP (40 HP remaining)
+4. Panic, drill too fast, another cave-in
+5. Hull destroyed at 0 HP
+6. Lose all collected minerals
+7. Respawn at surface, start new run more carefully
 
 ---
 
@@ -194,7 +346,7 @@ This creates natural progression: grind early planets to unlock later ones.
 
 ## Currency Systems
 
-### 1. Credits (Cash) - Temporary Currency
+### 1. Bocks (Cash) - Temporary Currency
 
 - Earned by selling minerals at surface
 - Used to buy Common Upgrades (planet-specific)
@@ -228,7 +380,7 @@ This creates natural progression: grind early planets to unlock later ones.
 
 **What You Lose:**
 
-- All Credits (cash)
+- All Bocks (cash)
 - All Common Upgrades (fuel, cargo, drill, hull, speed, dampeners)
 - Your current planet progress
 
@@ -260,7 +412,7 @@ This bonus applies to ALL mineral values on ALL planets permanently.
 
 ### Common Upgrades (Reset on Prestige)
 
-Bought with Credits, specific to current planet run.
+Bought with Bocks, specific to current planet run.
 
 #### Starting Pod Stats
 
@@ -764,7 +916,7 @@ _"Fragments of stellar matter, somehow stabilized into crystalline form. Its exi
 
 1. Unlock Level 3 resistances for Mercury/Enceladus
 2. Minerals worth 100x base value PLUS massive Soul Crystal bonus
-3. Single runs can earn millions of Credits
+3. Single runs can earn millions of Bocks
 4. Prestiging gives thousands of Soul Crystals per run
 5. Maxing out Epic Upgrades
 6. Perfect execution runs on hardest planets
@@ -813,7 +965,7 @@ Players can optimize different playstyles:
 
 ### Surface/Upgrade Screen
 
-- Current Credits balance
+- Current Bocks balance
 - Upgrade shop with clear level indicators
 - "Prestige Available" indicator when at core
 - Soul Crystal counter with EB percentage
@@ -877,7 +1029,7 @@ Simple, intuitive direct-touch controls:
 - Hull HP (horizontal bar with percentage)
 - Cargo capacity (volume used/max + current value)
 - Current depth meter
-- Cash/Credits counter
+- Cash/Bocks counter
 
 **Additional UI**
 
@@ -925,719 +1077,6 @@ Simple, intuitive direct-touch controls:
 - Button size scaling (small/medium/large)
 - Colorblind modes for mineral identification
 - Optional "safe mode" warning before entering dangerous areas
-
----
-
-## UI/UX Design & Screen Layouts
-
-### Screen Flow Diagram
-
-```
-App Launch
-    ↓
-Main Menu
-    ↓
-Planet Selection
-    ↓
-Mining View ←→ Pause Menu
-    ↓            ↓
-Surface/Shop    Abandon Run
-    ↓               ↓
-Mining View    Planet Selection
-    ↓
-Prestige Screen
-    ↓
-Surface/Shop
-```
-
----
-
-### Screen 1: Main Menu / Title Screen
-
-**Layout:**
-```
-┌─────────────────────────┐
-│                         │
-│      [DESCENT Logo]     │
-│   "How deep will you    │
-│        go?"             │
-│                         │
-│     [Start Game]        │
-│     [Continue]          │ (if save exists)
-│     [Settings]          │
-│     [Compendium]        │ (locked until first exotic found)
-│                         │
-│   [Golden Gems: 1,250]  │
-└─────────────────────────┘
-```
-
-**Elements:**
-- Logo: Large pixel art title with subtle glow animation
-- Tagline: Fades in below logo
-- Buttons: Centered, stacked vertically with icons
-- Golden Gems counter: Bottom right corner
-- Background: Animated starfield or Mars surface parallax
-
-**Transitions:**
-- Fade in from black on app launch
-- Button press: Scale animation + haptic feedback
-- Start Game → Fade to Planet Selection (or Mining if continuing)
-
----
-
-### Screen 2: Planet Selection (Globe View)
-
-**Layout:**
-```
-┌─────────────────────────┐
-│  [Back]    PLANETS [💎1,250]│
-│                         │
-│     🌍 ← Rotatable      │
-│    Globe                │
-│   (Swipe to rotate,     │
-│    Tap planet           │
-│    to select)           │
-│                         │
-│  ┌─────────────────┐    │
-│  │ 🔴 MARS (1x)    │    │
-│  │ Unlocked        │    │
-│  │ Core: 500m      │    │
-│  │                 │    │
-│  │ Your Best:      │    │
-│  │ • Deepest: 487m │    │
-│  │ • Best: $5,200  │    │
-│  │ • Prestiges: 12 │    │
-│  │                 │    │
-│  │   [SELECT]      │    │
-│  └─────────────────┘    │
-└─────────────────────────┘
-```
-
-**Locked Planet Card:**
-```
-┌─────────────────────┐
-│ 🔒 IO (LOCKED)      │
-│ Multiplier: 5x      │
-│                     │
-│ Requires:           │
-│ Heat Resist Lvl 1   │
-│ Cost: 2,500 💎      │
-│                     │
-│ 💎 Have: 1,850      │
-│ [████░░] 74%        │
-│                     │
-│ Hazards: Lava 🔥    │
-│ Rewards: 5x value!  │
-│                     │
-│  [UNLOCK] (grayed)  │
-└─────────────────────┘
-```
-
-**Features:**
-- Rotatable 3D globe (swipe left/right)
-- Planets pulse/glow when unlocked
-- Locked planets show lock icon + silhouette
-- Tapping planet slides card up from bottom
-- Shows Soul Crystal bonus: "EB: +250%" at top
-- Quick stats overlay on swipe up
-
-**Transitions:**
-- Slide up from Main Menu
-- Planet select → Zoom to planet, fade to Mining View
-
----
-
-### Screen 3: Mining View (Main Gameplay)
-
-**Layout:**
-```
-┌─────────────────────────┐
-│ ⛽[████░░] 67%  Credits  │ ← Top HUD
-│ ❤️ [██████] 90%  12,450 │
-│ 📦 34/50  💰$2,450      │
-│ 📏 Depth: 245m     [≡]  │
-├─────────────────────────┤
-│                         │
-│                         │
-│    [Your Pod] ← 🔦      │
-│                         │
-│   ▓▓▓▓ Terrain ▓▓▓▓     │ ← Scrolling
-│   ▓💎▓▓▓▓▓▓▓▓▓▓         │   game area
-│   ▓▓▓▓⚡▓▓▓▓▓▓          │   (camera
-│   ▓▓▓▓▓▓▓🔥▓▓▓          │    follows pod)
-│                         │
-│                         │
-├─────────────────────────┤
-│ [💣] [📡] [🔧] [⛽] [🛡]  │ ← Item buttons
-│  3    1    2    1    0  │   (with counts)
-└─────────────────────────┘
-```
-
-**HUD Elements (Always Visible):**
-
-**Top Bar:**
-- **Fuel Gauge**: Horizontal bar, color-coded (green→yellow→red)
-  - Shows percentage and visual bar
-  - Pulses red when <20%
-- **Hull HP**: Horizontal bar, color-coded
-  - Shows percentage and visual bar
-  - Screen edges flash red when taking damage
-- **Cargo Display**: "34/50 units" + current value "$2,450"
-  - Visual bar showing capacity
-  - Glows gold when near full
-- **Depth Meter**: "245m" with down arrow icon
-  - Updates in real-time
-- **Credits Counter**: Shows current cash
-- **Pause Button** (☰): Top right corner
-
-**Bottom Bar (Semi-transparent):**
-- 5 consumable item buttons with icons
-- Shows quantity owned below each
-- Grayed out when quantity = 0
-- Tap to use (confirmation for Teleporter)
-
-**Visual Feedback:**
-- Touch position: Optional crosshair/circle (accessibility)
-- Pod thrust: Particle trail pointing toward finger
-- Drilling: Cracks appear, debris particles fly
-- Collection: Material floats up with value popup
-- Damage: Screen shake + red flash at edges
-- Low fuel warning: Fuel bar pulses + warning beep
-
-**Dynamic HUD Modes:**
-- **Standard**: All elements visible (90% opacity)
-- **Minimal**: Auto-hide when pod deep (depth >300m), only show critical warnings
-- **Critical**: Low fuel (<30%) or hull (<30%) - warnings prominent
-
-**Transitions:**
-- Fade in from Planet Selection at surface altitude
-- Camera follows pod smoothly
-- Return to surface → Slide right to Shop
-
----
-
-### Screen 4: Surface / Upgrade Shop
-
-**Layout:**
-```
-┌─────────────────────────┐
-│    SURFACE - MARS       │
-│  [Change Planet] [⚙️]   │
-├─────────────────────────┤
-│  CARGO HOLD             │
-│  ┌─────────────────┐    │
-│  │ Gold x5    $750 │    │
-│  │ Diamond x2 $1600│    │
-│  │ Iron x8    $200 │    │
-│  │ ─────────────── │    │
-│  │ TOTAL: $2,550   │    │
-│  │   [SELL ALL]    │    │
-│  └─────────────────┘    │
-├─────────────────────────┤
-│  💰 Credits: 12,450     │
-│  💎 Soul Crystals: 45   │
-│  ⭐ Earnings Bonus: 450%│
-├─────────────────────────┤
-│  [COMMON] [✨EPIC✨]    │ ← Tabs
-├─────────────────────────┤
-│  ┌─────────────────┐    │
-│  │ ⛽ FUEL TANK    │    │
-│  │ Level 2 → 3     │    │
-│  │                 │    │
-│  │ Current: 150    │    │
-│  │ Next: 200 (+33%)│    │
-│  │                 │    │
-│  │ 💡 "Reach 300m" │    │
-│  │                 │    │
-│  │ Cost: 1,200 Cr  │    │
-│  │ [████░░] 100%   │    │
-│  │                 │    │
-│  │   [UPGRADE]     │    │
-│  └─────────────────┘    │
-│  (Scroll for more...)   │
-├─────────────────────────┤
-│    [🚀 LAUNCH]          │
-└─────────────────────────┘
-```
-
-**Epic Upgrades Tab:**
-```
-┌─────────────────────────┐
-│  [COMMON] [✨EPIC✨]    │
-├─────────────────────────┤
-│ 💎 Golden Gems: 1,850   │
-├─────────────────────────┤
-│ ┌─────────────────┐     │
-│ │ 🔥 HEAT RESIST 1│     │
-│ │ PERMANENT       │     │
-│ │                 │     │
-│ │ Unlocks Io      │     │
-│ │ (5x multiplier!)│     │
-│ │                 │     │
-│ │ Cost: 2,500 💎  │     │
-│ │ [████░░] 74%    │     │
-│ │                 │     │
-│ │  [NOT YET]      │     │
-│ └─────────────────┘     │
-│                         │
-│ ┌─────────────────┐     │
-│ │ 📡 SCANNER      │     │
-│ │ ✅ OWNED        │     │
-│ │                 │     │
-│ │ Shows minerals  │     │
-│ │ through terrain │     │
-│ └─────────────────┘     │
-└─────────────────────────┘
-```
-
-**Features:**
-- **Cargo auto-sells** on arrival (or manual SELL button)
-- **Upgrade cards** scroll vertically
-- Each card shows:
-  - Icon + name
-  - Current level → Next level
-  - Stat comparison (150 → 200)
-  - Benefit hint ("Reach depth 300m")
-  - Cost with affordability bar
-  - Buy button (green when affordable)
-- **Smart recommendations**:
-  - "Recommended!" badge if died from that issue
-  - Highlight fuel if died from fuel depletion
-- **Prestige indicator**:
-  - "PRESTIGE AVAILABLE" glowing button if core extracted
-- **Epic tab**:
-  - Premium gold/purple theme
-  - Shows owned upgrades with checkmark
-  - Progress bars for "almost there" motivation
-
-**Transitions:**
-- Slide from right when returning from mining
-- Launch → Slide left, fade to mining at surface
-- Prestige button → Popup overlay
-
----
-
-### Screen 5: Run Summary Screen
-
-**Appears immediately after returning to surface:**
-
-```
-┌─────────────────────────┐
-│     RUN COMPLETE! ✨    │
-│                         │
-│  Depth: 340m            │
-│  🏆 NEW RECORD! (+15m)  │
-│                         │
-│  Cargo Value: $2,850    │
-│  Time: 4m 32s           │
-│  Fuel Efficiency: 87%   │
-│                         │
-│  Best Find:             │
-│  💎 Diamond x2          │
-│                         │
-│  [Continue to Shop]     │
-└─────────────────────────┘
-```
-
-**Features:**
-- Shows key stats from run
-- Highlights new records with celebration
-- Shows most valuable material found
-- Quick swipe down to dismiss
-- Auto-dismisses after 5 seconds
-
-**Transitions:**
-- Popup overlay with blur background
-- Celebration confetti if new record
-- Tap anywhere or wait → Continues to Shop
-
----
-
-### Screen 6: Prestige Confirmation Screen
-
-**Layout:**
-```
-┌─────────────────────────┐
-│   CORE EXTRACTED! ✨    │
-│                         │
-│   ┌───────────────┐     │
-│   │  [Dark Matter]│     │ ← Animated
-│   │   Collected!  │     │   glow + spin
-│   └───────────────┘     │
-│                         │
-│  PRESTIGE AVAILABLE     │
-│                         │
-│  Calculating...         │
-│  💰 Total: $89,450      │ ← Counts up
-│                         │
-│  You will gain:         │
-│  ✨ +23 Soul Crystals   │
-│                         │
-│  You will lose:         │
-│  • All Credits          │
-│    ($12,450)            │
-│  • All Common Upgrades  │
-│                         │
-│  You will keep:         │
-│  • 45 + 23 = 68 Crystals│
-│  • Epic Upgrades        │
-│  • Planet Unlocks       │
-│  • Golden Gems (1,850)  │
-│                         │
-│  Earnings Bonus:        │
-│  450% → 680%            │
-│                         │
-│   [✨ PRESTIGE ✨]      │
-│   [Cancel]              │
-└─────────────────────────┘
-```
-
-**Prestige Animation Sequence:**
-1. Core extraction in gameplay
-2. Screen shakes violently
-3. White flash
-4. "CORE EXTRACTED!" with particle explosion
-5. Fade to prestige screen
-6. Numbers count up dramatically
-7. Show before/after comparison
-8. Confirm or cancel
-9. If confirmed: Sparkle transition, reset to surface
-
-**Transitions:**
-- Popup overlay with blur background
-- Particle effects (stars, sparkles)
-- Haptic burst on prestige
-- Fade to Surface/Shop after confirmation
-
----
-
-### Screen 7: Pause Menu
-
-**Layout:**
-```
-┌─────────────────────────┐
-│       ⏸ PAUSED          │
-│                         │
-│     [▶ Resume]          │
-│     [⚙️ Settings]       │
-│     [🏠 Return to       │
-│         Surface]        │
-│     [❌ Abandon Run]    │
-│                         │
-│  (Return to Surface     │
-│   keeps cargo)          │
-│                         │
-│  (Abandon Run           │
-│   loses everything)     │
-└─────────────────────────┘
-```
-
-**Features:**
-- Blur + darken background
-- Game fully paused
-- Clear explanations for each option
-- Confirmation dialog for destructive actions
-
-**Transitions:**
-- Slide down from top
-- Blur animation on background
-- Resume → Fade out, unpause
-- Return to Surface → Slide transition
-
----
-
-### Screen 8: Material Compendium
-
-**Layout:**
-```
-┌─────────────────────────┐
-│  [← Back]  COMPENDIUM   │
-├─────────────────────────┤
-│  [All] [Tier 1] [Tier 2]│ ← Filter tabs
-│  [Tier 3] [Exotic] [???]│
-├─────────────────────────┤
-│  ┌──┐  PYRONIUM ⭐      │
-│  │🔥│  First Discovery!  │
-│  └──┘                   │
-│  Collected: 47          │
-│  Value: $1,500 each     │
-│  Found: Venus (400m+)   │
-│                         │
-│  "First discovered in   │
-│  the volcanic depths of │
-│  Io, Pyronium maintains │
-│  a stable temperature..." │
-├─────────────────────────┤
-│  ┌──┐  CHRONITE         │
-│  │⏰│  Rare!             │
-│  └──┘                   │
-│  Collected: 3           │
-│  Value: $5,000 each     │
-│  "Transparent crystal..." │
-├─────────────────────────┤
-│  ┌──┐  ??? LOCKED       │
-│  │❓│  Not discovered   │
-│  └──┘  "???"            │
-└─────────────────────────┘
-```
-
-**Features:**
-- List or grid view toggle
-- Filter by tier/type
-- Shows lore for discovered materials
-- Locked entries show silhouette + "???"
-- First discovery shows +500 Golden Gems reward
-- Stats: Total collected, where to find
-
-**Transitions:**
-- Slide from bottom
-- Entry tap → Expands for full lore
-
----
-
-### Screen 9: Settings
-
-**Layout:**
-```
-┌─────────────────────────┐
-│  [← Back]   SETTINGS    │
-├─────────────────────────┤
-│  AUDIO                  │
-│  Music:     [█████░] 80%│
-│  SFX:       [██████] 100%│
-│                         │
-│  CONTROLS               │
-│  Sensitivity:[███░░] 60%│
-│  Haptics:    [ON] / OFF │
-│  Show Touch: ON / [OFF] │
-│                         │
-│  VISUAL                 │
-│  Colorblind: [Standard▼]│
-│   • Protanopia          │
-│   • Deuteranopia        │
-│   • Tritanopia          │
-│  Material Labels: [ON]  │
-│  Button Size:  [Medium▼]│
-│  Particle FX:  [ON]     │
-│  Reduced Motion: [OFF]  │
-│                         │
-│  GAMEPLAY               │
-│  Auto-Pause on Call: ON │
-│  Confirm Teleport: [ON] │
-│                         │
-│  DATA                   │
-│  [Cloud Save: ✅ ON]    │
-│  [Reset Progress]       │
-│  [Restore Purchases]    │
-└─────────────────────────┘
-```
-
-**Features:**
-- Sliders for audio levels
-- Dropdown menus for options
-- Toggle switches for binary settings
-- Warning dialog for Reset Progress
-- Cloud save status indicator
-
----
-
-### Transition Styles & Timing
-
-**Screen Transitions:**
-- **Fast** (0.2s): Tab switches, button presses
-- **Medium** (0.4s): Screen changes (menu to planet)
-- **Slow** (0.8s): Prestige celebration, major events
-
-**Animation Types:**
-- Fade: Black transitions between major scenes
-- Slide: UI panels (shop from right, pause from top)
-- Scale: Button presses (scale down on press, up on release)
-- Blur: Pause menu, popups
-- Particles: Prestige, rare material collection
-
-**In-Game Feedback:**
-- Material collection: Float up + fade (0.5s)
-- Damage: Screen flash red (0.1s) + shake
-- Low fuel: Pulse animation (continuous)
-- Item use: Button scale + particle burst
-
----
-
-### Mobile-Specific Considerations
-
-**Safe Areas:**
-- Top: Notch/Dynamic Island safe area (44pt)
-- Bottom: Home indicator safe area (34pt)
-- HUD elements respect safe areas
-
-**Thumb Zones:**
-- Critical actions in bottom 1/3 (easy reach)
-- Info display in top 1/3 (read-only)
-- Item buttons in thumb zone
-
-**Screen Sizes:**
-- Design for iPhone SE (smallest) first
-- Scale up for iPhone 15 Pro Max
-- Adjust layouts dynamically using Auto Layout principles in SpriteKit
-
-**Interruptions:**
-- Auto-pause on:
-  - Phone call
-  - Notification
-  - App backgrounding
-- Auto-save every 30 seconds
-- Resume exactly where left off
-
----
-
-## Visual Art Style
-
-### Modern Pixel Art with HD Effects
-
-**Core Foundation:**
-- **Tile Size**: 32x32 pixels for terrain blocks
-- **Pod**: 48x48 pixels with smooth 8-direction rotation
-- **Aesthetic**: Crisp, clean pixel art with modern color palettes (not overly retro)
-
-**Visual Hierarchy by Material Tier:**
-
-**Tier 1-2 Materials (Common/Precious):**
-- Pure pixel art with simple animations
-- Realistic textures (metallic sheens, crystal facets)
-- Earth-tone colors
-
-**Tier 3 Materials (Rare Gems):**
-- Pixel art + subtle glow effects
-- Crystalline facets with light refraction
-
-**Tier 4 Materials (Exotic):**
-- Pixel art + animated shaders + particles
-- Pyronium: Fire particle trails + heat shimmer
-- Cryonite: Ice crystal particles + frost effect
-- Voltium: Electrical arcs animation
-- Gravitite: Floating animation + purple aura shader
-- Neutronium: Gravitational distortion effect
-
-**Tier 5 Materials (Alien):**
-- Pixel art + advanced effects
-- Stellarium: Lens flares, bloom, star particles
-- Dark Matter: Distortion shader, void effect, light bending
-- Quantum Foam: Glitch shader, phase in/out
-- Chronite: Slow-motion particle effects
-
-**Environmental Effects:**
-- Dynamic lighting: Pod headlight, material glows
-- Per-planet color grading filters
-- Background parallax layers (pixel art)
-- Weather effects: Dust storms (Mars), acid rain (Venus), ice geysers (Enceladus)
-- Screen effects: Heat distortion, frost overlay, electrical interference
-
-**UI Style:**
-- Clean vector graphics for menus and buttons
-- Pixel-art icons for materials in inventory
-- Modern typography (SF Pro for iOS native feel)
-- Smooth transitions and animations
-
-**Technical Implementation:**
-- SpriteKit particle system for drilling/collection effects
-- Shader support for exotic material effects
-- Built-in lighting system
-- Texture atlases for performance
-- Estimated ~50-75 terrain sprites, ~25 material sprites
-
-**Color Palette Strategy:**
-- Mars: Reds, oranges, rust browns
-- Luna: Grays, whites, deep blacks
-- Io: Yellows, sulfur, volcanic oranges
-- Europa: Blues, whites, cyan
-- Titan: Oranges, browns, hazy amber
-- Venus: Yellow-greens, acid greens, bright oranges
-- Mercury: Charcoal blacks, silvers, stark whites
-- Enceladus: Pure whites, ice blues, deep ocean blues
-- Materials maintain color consistency across all planets
-
----
-
-## MVP Development Plan
-
-### Phased Approach (8-10 weeks to Soft Launch)
-
-**Phase 1: Core Mechanics Prototype (Week 1-2)**
-- Goal: Prove the core gameplay loop is fun
-- Mars only, basic terrain (3 block types)
-- Touch controls + drilling
-- Fuel system (depletes, game over when empty)
-- 5 materials (Coal, Iron, Copper, Silver, Gold)
-- Simple HUD (fuel, cargo, depth)
-- Return to surface + sell mechanic
-- **Success Metric**: Can you mine, return, sell, and repeat?
-
-**Phase 2: Progression Loop (Week 3-4)**
-- Goal: Make the grind satisfying
-- Upgrade shop (6 types, 3-5 levels each)
-- Hull HP system + damage
-- Cargo volume system (visual inventory)
-- 5 more materials (Platinum, Ruby, Emerald, Diamond, Titanium)
-- 3 basic hazards (gas pockets, falling damage, cave-ins)
-- Save/load system
-- Better UI (upgrade screen, cargo value display)
-- **Result**: Complete single-planet game loop
-
-**Phase 3: Prestige System (Week 5)**
-- Goal: Add the long-term hook
-- Planet core + extraction mechanic
-- Soul Crystal calculation + storage
-- Earnings Bonus (EB) display
-- Prestige confirmation screen with animation
-- Reset logic (keep Soul Crystals, lose upgrades)
-- **Result**: Repeatable progression system works
-
-**Phase 4: Visual Polish (Week 6)**
-- Goal: Make it feel good
-- Particle effects (drilling, collecting, explosions)
-- Screen shake on impacts
-- Haptic feedback implementation
-- Material glow effects
-- Sound effects and simple background music
-- Animated UI transitions
-- Polish pass on pixel art
-- **Result**: Game feels juicy and satisfying
-
-**Phase 5: Second Planet (Week 7-8)**
-- Goal: Prove planet variety works
-- Planet selection screen (globe view, basic)
-- Luna (2x multiplier, low gravity mechanic)
-- Luna-specific hazards
-- 3 exotic materials (Pyronium, Cryonite, Xenite for endgame taste)
-- Golden Gems currency (basic implementation)
-- 2-3 Epic Upgrades (Auto-Refuel, Scanner, Heat Resistance 1)
-- **Result**: Multi-planet system validated
-
-**Soft Launch MVP Scope:**
-- 3 planets (Mars, Luna, Io)
-- 15 materials (all Tier 1-2 + Pyronium as exotic teaser)
-- All 6 Common Upgrade types (5 levels each)
-- 5 Epic Upgrades (Auto-Refuel, Scanner, Heat Resistance 1, Mineral Value Boost, Soul Crystal Amplifier)
-- Full prestige system with Soul Crystals
-- Golden Gems (from Golden Nuggets while mining)
-- Tutorial system (first 3 runs on Mars)
-- Polish: particles, haptics, sound, smooth UI
-- Planet-specific hazards for each
-- **Progression**: ~10 runs to max Mars, ~15 for Luna, ~20 for Io = 15-20 hours gameplay
-
-**Post-Launch Content Pipeline:**
-- Add 1 planet per month (Europa → Titan → Venus → Mercury → Enceladus)
-- Add exotic/alien materials with each planet
-- Expand Epic Upgrade tree
-- Add achievements and challenges
-- Material compendium/encyclopedia
-- Additional consumables
-
-**Key Metrics to Track:**
-- Session length: Target 5-10 minutes per run
-- Retention: Day 1 (40%+), Day 7 (20%+)
-- Progression: Players reaching prestige within first hour
-- Red flags: Quitting before first upgrade, no prestiges, sessions <2min or >20min
 
 ---
 

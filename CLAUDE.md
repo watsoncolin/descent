@@ -24,7 +24,7 @@ This is a **very early-stage project**. As of the last update:
 
 ### Visual Art Style
 **Modern Pixel Art with HD Effects:**
-- 32x32 pixel art for terrain blocks
+- 24x24 pixel art for terrain blocks
 - 48x48 pixel pod with 8-direction rotation
 - Pixel art base for all materials
 - Modern particle effects and shaders for exotic materials (Tier 4-5)
@@ -44,6 +44,14 @@ This is a **very early-stage project**. As of the last update:
 - Haptic feedback: Light (soft terrain) → Strong (valuable materials)
 - Visual feedback: Thrust particles, terrain cracks, screen shake, damage flash
 - One-handed play optimized
+
+**Return to Surface Mechanic:**
+- NO automatic "return to surface" button
+- Players must use Emergency Teleporter (consumable item) to return
+- Teleporters are purchased at surface shop with credits
+- Core risk/reward: balance fuel usage vs cargo collection
+- Running out of fuel = game over = lose all cargo
+- Strategic decision: when to teleport back vs continue mining deeper
 
 ### MVP Scope
 **Phased Development (8-10 weeks to soft launch):**

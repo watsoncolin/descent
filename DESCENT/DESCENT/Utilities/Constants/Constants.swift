@@ -12,7 +12,7 @@ struct K {
 
     // MARK: - Sizes
     struct Size {
-        static let terrainTile: CGFloat = 32
+        static let terrainTile: CGFloat = 24
         static let podSize: CGFloat = 48
     }
 
