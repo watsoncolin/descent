@@ -60,3 +60,28 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+
+# Xcode
+xcuserdata/
+*.xcworkspace
+!*.xcworkspace/contents.xcworkspacedata
+/*.gcno
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+Packages/
+*.xcodeproj
+
+# CocoaPods (if you use it later)
+Pods/
+
+# macOS
+.DS_Store
+
