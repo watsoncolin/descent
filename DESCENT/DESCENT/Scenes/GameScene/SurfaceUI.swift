@@ -31,6 +31,7 @@ class SurfaceUI: SKNode {
     var onLaunch: (() -> Void)?
     var onPurchaseUpgrade: ((UpgradeType) -> Void)?
     var onPurchaseConsumable: ((ConsumableType) -> Void)?
+    var onResetProgress: (() -> Void)?
 
     enum UpgradeType {
         case fuelTank
@@ -156,6 +157,23 @@ class SurfaceUI: SKNode {
         launchLabel.fontColor = .white
         launchLabel.verticalAlignmentMode = .center
         launchButton.addChild(launchLabel)
+
+        // Reset button (for testing) - positioned to the left of launch button
+        let resetButton = SKShapeNode(rectOf: CGSize(width: 140, height: 40), cornerRadius: 8)
+        resetButton.fillColor = UIColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 1.0)
+        resetButton.strokeColor = .white
+        resetButton.lineWidth = 2
+        resetButton.position = CGPoint(x: -screenWidth / 2 + 90, y: -screenHeight / 2 + bottomMargin)
+        resetButton.zPosition = 1
+        resetButton.name = "resetButton"
+        addChild(resetButton)
+
+        let resetLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        resetLabel.text = "RESET ALL"
+        resetLabel.fontSize = 16
+        resetLabel.fontColor = .white
+        resetLabel.verticalAlignmentMode = .center
+        resetButton.addChild(resetLabel)
 
         updateTabColors()
     }
@@ -346,6 +364,11 @@ class SurfaceUI: SKNode {
 
         if nodes.contains(where: { $0.name == "launchButton" }) {
             onLaunch?()
+            return true
+        }
+
+        if nodes.contains(where: { $0.name == "resetButton" }) {
+            onResetProgress?()
             return true
         }
 

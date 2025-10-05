@@ -120,8 +120,9 @@ class HUD: SKNode {
         // Update depth
         depthLabel.text = "\(Int(gameState.currentDepth))m"
 
-        // Update cargo
-        cargoLabel.text = "\(gameState.cargoUsed)/\(gameState.cargoCapacity)"
+        // Update cargo (show volume and value)
+        let cargoValue = Int(gameState.cargoValue)
+        cargoLabel.text = "\(gameState.cargoUsed)/\(gameState.cargoCapacity) ($\(cargoValue))"
 
         // Update credits
         creditsLabel.text = "$\(Int(gameState.credits))"

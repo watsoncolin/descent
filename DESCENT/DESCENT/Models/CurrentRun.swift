@@ -83,6 +83,34 @@ class CurrentRun: Codable {
         statistics.deepestReached = max(statistics.deepestReached, currentDepth)
     }
 
+    /// Remove one unit of a mineral from cargo (for auto-drop)
+    func removeMineral(type: String) -> Bool {
+        guard let index = collectedMinerals.firstIndex(where: { $0.type == type }) else {
+            return false
+        }
+
+        var mineral = collectedMinerals[index]
+
+        if mineral.quantity > 1 {
+            // Calculate single unit values
+            let singleValue = mineral.totalValue / Double(mineral.quantity)
+            let singleVolume = mineral.volumeUsed / mineral.quantity
+
+            // Remove one unit
+            mineral.quantity -= 1
+            mineral.totalValue -= singleValue
+            mineral.volumeUsed -= singleVolume
+
+            collectedMinerals[index] = mineral
+        } else {
+            // Remove entire entry if only one left
+            collectedMinerals.remove(at: index)
+        }
+
+        pod.cargo = totalCargoVolume
+        return true
+    }
+
     func consumeFuel(_ amount: Double) -> Bool {
         if pod.fuel >= amount {
             pod.fuel -= amount

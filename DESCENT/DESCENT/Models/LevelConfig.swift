@@ -50,11 +50,11 @@ struct StrataLayer: Codable {
 
 struct ResourceConfig: Codable {
     let type: String              // e.g., "carbon", "iron", "gold"
-    let spawnRate: Double          // 0.0 to 1.0 (percentage per chunk)
+    let seedRate: Double           // 0.0 to 1.0 (vein seed placement rate)
     let value: Double              // Base dollar value
     let size: Double               // Cargo space units
-    let clusterMin: Int            // Minimum tiles in vein
-    let clusterMax: Int            // Maximum tiles in vein
+    let veinSizeMin: Int           // Minimum tiles in vein
+    let veinSizeMax: Int           // Maximum tiles in vein
     let colorHex: String?          // Optional color override
 
     var color: UIColor {

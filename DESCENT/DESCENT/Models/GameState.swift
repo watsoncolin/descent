@@ -342,13 +342,63 @@ class GameState {
     func addToCargo(_ material: Material) -> Bool {
         guard let run = currentRun else { return false }
 
-        // Check if cargo has space
-        if run.totalCargoVolume + material.volume > run.pod.maxCargo {
-            return false
+        // Check if there's space without dropping anything
+        if run.totalCargoVolume + material.volume <= run.pod.maxCargo {
+            run.addMineral(material)
+            print("➕ Added \(material.type.rawValue) to cargo")
+            return true
         }
 
+        // Cargo is full - implement auto-drop system (CARGO_SYSTEM.md)
+        let spaceNeeded = (run.totalCargoVolume + material.volume) - run.pod.maxCargo
+
+        // Calculate value per unit for new material
+        let newMaterialValuePerUnit = material.value / Double(material.volume)
+
+        // Calculate value per unit for all current cargo
+        // Sort by value per unit (lowest first) for auto-drop
+        let sortedCargo = run.collectedMinerals.sorted { mineral1, mineral2 in
+            let value1PerUnit = mineral1.totalValue / Double(mineral1.volumeUsed)
+            let value2PerUnit = mineral2.totalValue / Double(mineral2.volumeUsed)
+            return value1PerUnit < value2PerUnit
+        }
+
+        // Check if new material is worse than everything in cargo
+        if let lowestInCargo = sortedCargo.first {
+            let lowestValuePerUnit = lowestInCargo.totalValue / Double(lowestInCargo.volumeUsed)
+            if newMaterialValuePerUnit <= lowestValuePerUnit {
+                print("🚫 \(material.type.rawValue) ignored (too low value: $\(String(format: "%.1f", newMaterialValuePerUnit))/unit)")
+                return false
+            }
+        }
+
+        // Drop lowest value minerals until we have space
+        var freedSpace = 0
+        var droppedItems: [String] = []
+
+        for mineral in sortedCargo {
+            if freedSpace >= spaceNeeded {
+                break
+            }
+
+            // Calculate how much one unit of this mineral frees
+            let singleUnitVolume = mineral.volumeUsed / mineral.quantity
+
+            // Drop one unit
+            if run.removeMineral(type: mineral.type) {
+                freedSpace += singleUnitVolume
+                droppedItems.append(mineral.type)
+            }
+        }
+
+        // Now collect the new material
         run.addMineral(material)
-        print("➕ Added \(material.type.rawValue) to cargo")
+
+        // Log the auto-drop
+        let droppedSummary = droppedItems.joined(separator: ", ")
+        print("📦 Auto-dropped: \(droppedSummary)")
+        print("➕ Collected: \(material.type.rawValue)")
+
         return true
     }
 

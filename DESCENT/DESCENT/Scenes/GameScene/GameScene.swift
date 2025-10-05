@@ -11,6 +11,14 @@ class GameScene: SKScene {
     private var currentTouchLocation: CGPoint?
     private var isTouching: Bool = false
 
+    // Debug showcase (triple tap to activate)
+    private var lastTapTime: TimeInterval = 0
+    private var tapCount: Int = 0
+
+    // Impact damage cooldown (prevent multiple damage from same collision)
+    private var lastImpactTime: TimeInterval = 0
+    private let impactCooldown: TimeInterval = 0.5  // 0.5 seconds between impacts
+
     // Camera
     private var cameraNode: SKCameraNode!
 
@@ -31,7 +39,7 @@ class GameScene: SKScene {
 
     // Drilling
     private var drillCooldown: TimeInterval = 0
-    private let drillSpeed: TimeInterval = 0.1  // Seconds between drill hits (faster drilling)
+    private var currentDrillSpeed: TimeInterval = 0.3  // Dynamic drill speed based on strata hardness
 
     // Movement lock (for dialog interactions)
     private var isMovementLocked: Bool = false
@@ -87,6 +95,9 @@ class GameScene: SKScene {
         }
         surfaceUI.onPurchaseConsumable = { [weak self] consumableType in
             self?.purchaseConsumable(consumableType)
+        }
+        surfaceUI.onResetProgress = { [weak self] in
+            self?.resetProgressForTesting()
         }
         cameraNode.addChild(surfaceUI)
 
@@ -233,6 +244,22 @@ class GameScene: SKScene {
         let location = touch.location(in: self)
         let locationInCamera = touch.location(in: cameraNode)
 
+        // Debug: Triple tap to open showcase (only at surface)
+        if !surfaceUI.isHidden && gameState.phase == .surface {
+            let currentTime = Date().timeIntervalSince1970
+            if currentTime - lastTapTime < 0.5 {
+                tapCount += 1
+                if tapCount >= 2 {  // Third tap (0, 1, 2)
+                    openPodShowcase()
+                    tapCount = 0
+                    return
+                }
+            } else {
+                tapCount = 0
+            }
+            lastTapTime = currentTime
+        }
+
         // If game over dialog is visible, handle touches there first
         if !gameOverDialog.isHidden {
             if gameOverDialog.handleTouch(at: locationInCamera) {
@@ -259,6 +286,13 @@ class GameScene: SKScene {
         // Normal movement controls
         currentTouchLocation = location
         isTouching = true
+    }
+
+    private func openPodShowcase() {
+        print("🎨 Opening Pod Showcase...")
+        let showcaseScene = PodShowcaseScene(size: size)
+        showcaseScene.scaleMode = scaleMode
+        view?.presentScene(showcaseScene, transition: SKTransition.fade(withDuration: 0.3))
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -297,41 +331,54 @@ class GameScene: SKScene {
         // Limit delta time to prevent large jumps
         let clampedDeltaTime = min(deltaTime, 1.0 / 30.0)
 
-        // Update player movement (only if not locked by dialog)
-        if !isMovementLocked && isTouching, let touchLocation = currentTouchLocation {
+        // Update player movement (only if not locked by dialog AND actively mining)
+        if !isMovementLocked && isTouching && gameState.phase == .mining, let touchLocation = currentTouchLocation {
             let gravity = gameState.currentPlanet.gravity * 9.8
             player.moveTowards(target: touchLocation, deltaTime: clampedDeltaTime, currentGravity: CGFloat(gravity))
 
-            // Consume fuel when moving (FUEL_SYSTEM.md:13-38)
+            // Apply active physics (higher friction for control)
+            player.applyActivePhysics()
+
+            // Fuel consumption when thrusting (FUEL_SYSTEM.md:13-38)
             // Formula: fuelPerSecond = baseFuelConsumption × thrustIntensity × zoneModifier
             let distanceToFinger = hypot(touchLocation.x - player.position.x, touchLocation.y - player.position.y)
             let maxThrustDistance: CGFloat = 150  // Full thrust beyond this
             let thrustIntensity = min(1.0, distanceToFinger / maxThrustDistance)
-            let baseFuelConsumption = 0.5  // fuel/second
+            let baseFuelConsumption = 1.5  // fuel/second (FUEL_SYSTEM.md:19)
             let zoneModifier = 1.0  // No environmental zones yet
 
             let fuelPerSecond = baseFuelConsumption * thrustIntensity * zoneModifier
             let fuelConsumption = fuelPerSecond * deltaTime
 
+            // Update exhaust particles based on thrust intensity
+            player.updateExhaust(thrustIntensity: thrustIntensity)
+
             if !gameState.consumeFuel(fuelConsumption) {
                 // Out of fuel - triggers 50% cargo penalty
                 handleGameOver(reason: "Out of Fuel")
             }
+        } else if !isMovementLocked && gameState.phase == .mining {
+            // Apply edge physics when not thrusting (lower friction allows sliding)
+            player.applyEdgePhysics()
+            // Stop exhaust when not thrusting
+            player.updateExhaust(thrustIntensity: 0)
         }
 
         // Update player
         player.update(deltaTime: clampedDeltaTime)
 
-        // Update drill cooldown
-        if drillCooldown > 0 {
-            drillCooldown -= clampedDeltaTime
-        }
+        // Update drill cooldown (only during mining phase)
+        if gameState.phase == .mining {
+            if drillCooldown > 0 {
+                drillCooldown -= clampedDeltaTime
+            }
 
-        // Try drilling (with cooldown)
-        if drillCooldown <= 0 {
-            tryDrilling()
-            if player.getDrillDirection() != nil {
-                drillCooldown = drillSpeed
+            // Try drilling (with cooldown)
+            if drillCooldown <= 0 {
+                tryDrilling()
+                if player.getDrillDirection() != nil {
+                    drillCooldown = currentDrillSpeed
+                }
             }
         }
 
@@ -481,6 +528,13 @@ class GameScene: SKScene {
 
         print("🚀 Launching mining run...")
 
+        // Update pod visuals based on current upgrade levels
+        player.updateUpgrades(
+            drillLevel: gameState.drillStrengthLevel,
+            hullLevel: gameState.hullArmorLevel,
+            engineLevel: gameState.engineSpeedLevel
+        )
+
         // Regenerate terrain with new seed for this run
         terrainManager.removeAllTerrain()
         terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet)
@@ -491,6 +545,28 @@ class GameScene: SKScene {
             self?.hud.isHidden = false
         })
         isGameOverInProgress = false  // Reset game over flag
+    }
+
+    private func resetProgressForTesting() {
+        print("🔄 RESETTING ALL PROGRESS FOR TESTING...")
+
+        // Reset planet state completely
+        gameState.planetState?.credits = 0
+        gameState.planetState?.upgrades = CommonUpgrades()
+        gameState.planetState?.consumables = Consumables()
+        gameState.planetState?.statistics = PlanetStatistics()
+
+        // Save the reset
+        _ = SaveManager.shared.saveProfile(gameState.profile)
+
+        // Refresh the UI manually
+        surfaceUI.isHidden = true
+        surfaceUI.isHidden = false
+
+        print("✅ Progress reset complete!")
+        print("   - Credits: $0")
+        print("   - All upgrades: Level 1")
+        print("   - All consumables: 0")
     }
 
     private func purchaseUpgrade(_ type: SurfaceUI.UpgradeType) {
@@ -524,6 +600,12 @@ class GameScene: SKScene {
                 gameState.credits -= cost
                 gameState.drillStrengthLevel += 1
                 print("⛏️ Upgraded Drill Strength to Level \(gameState.drillStrengthLevel)")
+                // Update pod visuals
+                player.updateUpgrades(
+                    drillLevel: gameState.drillStrengthLevel,
+                    hullLevel: gameState.hullArmorLevel,
+                    engineLevel: gameState.engineSpeedLevel
+                )
             } else {
                 print("💸 Not enough credits! Need $\(Int(cost))")
             }
@@ -554,6 +636,12 @@ class GameScene: SKScene {
                 gameState.credits -= cost
                 gameState.hullArmorLevel += 1
                 print("🛡️ Upgraded Hull Armor to Level \(gameState.hullArmorLevel) (Max Hull: \(gameState.maxHull))")
+                // Update pod visuals
+                player.updateUpgrades(
+                    drillLevel: gameState.drillStrengthLevel,
+                    hullLevel: gameState.hullArmorLevel,
+                    engineLevel: gameState.engineSpeedLevel
+                )
             } else {
                 print("💸 Not enough credits! Need $\(Int(cost))")
             }
@@ -569,6 +657,12 @@ class GameScene: SKScene {
                 gameState.credits -= cost
                 gameState.engineSpeedLevel += 1
                 print("🚀 Upgraded Engine Speed to Level \(gameState.engineSpeedLevel)")
+                // Update pod visuals
+                player.updateUpgrades(
+                    drillLevel: gameState.drillStrengthLevel,
+                    hullLevel: gameState.hullArmorLevel,
+                    engineLevel: gameState.engineSpeedLevel
+                )
             } else {
                 print("💸 Not enough credits! Need $\(Int(cost))")
             }
@@ -658,7 +752,7 @@ extension GameScene {
         }
 
         // Calculate the drill tip position (at the edge of the pod)
-        // Pod dimensions: 24px wide × 36px tall
+        // Pod dimensions: 24px wide × 36px tall (same width as a single tile)
         let podHalfWidth: CGFloat = 12   // Half of 24px width
         let podHalfHeight: CGFloat = 18  // Half of 36px height
         let drillTipOffset: CGFloat = podHalfHeight + (TerrainBlock.size / 2)
@@ -673,71 +767,45 @@ extension GameScene {
             drillTipPosition.x += (podHalfWidth + TerrainBlock.size / 2)  // Drill tip to the right
         }
 
-        // Drill ALL blocks that the pod is touching in the drill direction
-        // Pod is 24 pixels wide × 36 pixels tall
-        // Sample points across the entire width/height of the pod
-        let blockSize = TerrainBlock.size
-        var blocksToHit: Set<String> = []  // Use string keys "x,y" to avoid duplicates
-
-        switch drillDirection {
-        case .down:
-            // Drill all horizontal blocks the pod is touching below
-            let leftEdge = player.position.x - podHalfWidth
-            let rightEdge = player.position.x + podHalfWidth
-
-            // Sample at half-block intervals to ensure we catch all blocks (especially with small blocks)
-            let sampleInterval = blockSize / 2
-            var currentX = leftEdge
-            while currentX <= rightEdge {
-                if let grid = terrainManager.worldToGrid(CGPoint(x: currentX, y: drillTipPosition.y)) {
-                    blocksToHit.insert("\(grid.x),\(grid.y)")
-                }
-                currentX += sampleInterval
-            }
-            // Always check the right edge too
-            if let grid = terrainManager.worldToGrid(CGPoint(x: rightEdge, y: drillTipPosition.y)) {
-                blocksToHit.insert("\(grid.x),\(grid.y)")
-            }
-
-        case .left, .right:
-            // Drill all vertical blocks the pod is touching horizontally
-            let topEdge = player.position.y + podHalfHeight
-            let bottomEdge = player.position.y - podHalfHeight
-
-            // Sample at half-block intervals to ensure we catch all blocks
-            let sampleInterval = blockSize / 2
-            var currentY = bottomEdge
-            while currentY <= topEdge {
-                if let grid = terrainManager.worldToGrid(CGPoint(x: drillTipPosition.x, y: currentY)) {
-                    blocksToHit.insert("\(grid.x),\(grid.y)")
-                }
-                currentY += sampleInterval
-            }
-            // Always check the top edge too
-            if let grid = terrainManager.worldToGrid(CGPoint(x: drillTipPosition.x, y: topEdge)) {
-                blocksToHit.insert("\(grid.x),\(grid.y)")
-            }
+        // Since pod is exactly 1 tile wide, just drill the single tile at drill tip position
+        guard let gridPos = terrainManager.worldToGrid(drillTipPosition) else {
+            return
         }
 
-        // Convert string keys back to coordinate tuples
-        let blockPositions = blocksToHit.compactMap { key -> (x: Int, y: Int)? in
-            let parts = key.split(separator: ",")
-            guard parts.count == 2,
-                  let x = Int(parts[0]),
-                  let y = Int(parts[1]) else { return nil }
-            return (x, y)
+        let blockPositions = [(x: gridPos.x, y: gridPos.y)]
+
+        // Calculate drill speed based on first block's strata hardness (mars_level_design.md:386-405)
+        // Formula: actualDrillTime = baseDrillTime × strataHardness / drillLevel
+        if let firstBlockPos = blockPositions.first,
+           let firstBlock = terrainManager.getBlock(x: firstBlockPos.x, y: firstBlockPos.y) {
+            let baseDrillTime = 0.3  // seconds per tile (mars_level_design.md:392)
+            let strataHardness = firstBlock.strataHardness
+            let drillLevel = Double(gameState.drillStrengthLevel)
+            currentDrillSpeed = baseDrillTime * strataHardness / drillLevel
         }
 
         // Try to drill all target blocks
         let drillPower = gameState.drillStrengthLevel
         for blockPos in blockPositions {
             if let targetBlock = terrainManager.getBlock(x: blockPos.x, y: blockPos.y) {
-                if targetBlock.takeDamage(drillPower) {
-                    // Block destroyed! Collect material if present
+                if targetBlock.takeDamage(drillPower, drillLevel: drillPower) {
+                    // Block destroyed! Consume fuel for drilling (FUEL_SYSTEM.md:45-68)
+                    // Formula: fuelPerTile = baseDrillCost × strataHardness / drillLevel
+                    let baseDrillCost = 1.0
+                    let strataHardness = targetBlock.strataHardness
+                    let drillLevel = Double(gameState.drillStrengthLevel)
+                    let fuelCost = baseDrillCost * strataHardness / drillLevel
+
+                    if !gameState.consumeFuel(fuelCost) {
+                        // Out of fuel while drilling - triggers 50% cargo penalty
+                        handleGameOver(reason: "Out of Fuel")
+                        return
+                    }
+
+                    // Collect material if present
                     if let material = terrainManager.removeBlock(x: blockPos.x, y: blockPos.y) {
                         if gameState.addToCargo(material) {
-                            print("⛏️ Mined \(material.type.rawValue) worth $\(Int(material.value))")
-                            // TODO: Add particle effects and sound
+                            print("⛏️ Mined \(material.type.rawValue) worth $\(Int(material.value)) (fuel: -\(String(format: "%.1f", fuelCost)))")
                         } else {
                             print("📦 Cargo full! Can't collect \(material.type.rawValue)")
                         }
@@ -771,36 +839,47 @@ extension GameScene: SKPhysicsContactDelegate {
         }
 
         // Check for terrain contact
-        guard let playerBody = bodies.first(where: { $0.categoryBitMask == 1 }),
+        guard bodies.first(where: { $0.categoryBitMask == 1 }) != nil,
               bodies.first(where: { $0.categoryBitMask == 2 }) != nil else {
             return
         }
 
         // Take impact damage ONLY when hitting terrain from above (falling down)
         // No damage from side impacts (hitting walls while moving horizontally)
+        // No damage when actively thrusting (isTouching = true means player is controlling the pod)
         // Don't take damage near the surface (within 150 pixels of surface level)
         let surfaceY = frame.maxY - 100
         let distanceFromSurface = surfaceY - player.position.y
         let nearSurface = distanceFromSurface < 150  // Safe zone near shop
 
-        // Only downward velocity (negative Y) causes damage
-        let impactSpeed = abs(playerBody.velocity.dy)  // Speed magnitude
+        // Use collision impulse instead of velocity for more accurate impact detection
+        // collisionImpulse is the actual force of the collision, not accumulated velocity
+        let impactForce = contact.collisionImpulse * 0.85
 
-        // Damage threshold based on Impact Dampeners level (HULL_SYSTEM.md:43-49)
+        // Damage threshold based on Impact Dampeners level
+        // These values are tuned for collision impulse (not velocity)
         let damageThreshold: CGFloat
         switch gameState.impactDampenersLevel {
-        case 0: damageThreshold = 50    // Very fragile
-        case 1: damageThreshold = 100   // Can handle moderate falls
-        case 2: damageThreshold = 200   // Can handle fast falls
+        case 0: damageThreshold = 10    // Very fragile
+        case 1: damageThreshold = 25    // Can handle moderate falls
+        case 2: damageThreshold = 50    // Can handle fast falls
         case 3: damageThreshold = .infinity  // No fall damage ever
-        default: damageThreshold = 50
+        default: damageThreshold = 10
         }
 
-        if impactSpeed > damageThreshold && !nearSurface {
-            // Formula: impactDamage = max(0, (impactSpeed - damageThreshold) × 0.5)
-            let damage = (impactSpeed - damageThreshold) * 0.5
+        // Check cooldown to prevent multiple damage from same collision
+        let currentTime = Date().timeIntervalSince1970
+        let timeSinceLastImpact = currentTime - lastImpactTime
+
+        // Only take damage if impact force is high enough and not actively thrusting
+        if impactForce > damageThreshold && !nearSurface && timeSinceLastImpact >= impactCooldown {
+            // Formula: damage scales with impact force
+            // Higher multiplier since impulse values are lower than velocity
+            let damage = (impactForce - damageThreshold) * 2.0
             let hullDestroyed = gameState.takeDamage(damage)
-            print("💥 Impact damage: \(Int(damage)) HP (speed: \(Int(impactSpeed)) px/s, threshold: \(Int(damageThreshold)) px/s, dampeners: Lv.\(gameState.impactDampenersLevel))")
+            lastImpactTime = currentTime  // Update last impact time
+
+            print("💥 Impact damage: \(Int(damage)) HP (impulse: \(String(format: "%.1f", impactForce)), threshold: \(Int(damageThreshold)), dampeners: Lv.\(gameState.impactDampenersLevel))")
             print("   Hull: \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
 
             if hullDestroyed {

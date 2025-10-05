@@ -3,8 +3,214 @@
 ## Core Depth & Vertical Structure
 
 **Total Depth to Core**: 500 meters  
-**Tile Size**: 32 pixels (≈1 meter per tile)  
-**Total Tiles Deep**: 500 tiles
+**Tile Size**: 24 pixels (≈1 meter per tile)  
+**Total Tiles Deep**: 500 tiles  
+**World Width**: 16 tiles (384 pixels)
+
+### Terrain Block Types
+
+**Drillable Terrain:**
+
+- Normal rock/soil (varies by layer)
+- Mineral veins (drillable and collectible)
+- Breakable with any drill level (speed varies by hardness)
+
+**Unbreakable Obstacles:**
+
+1. **Bedrock** (Completely Indestructible)
+
+   - Dark gray/black appearance (#1a1a1a)
+   - Cannot be drilled (any level)
+   - Cannot be exploded (bombs don't work)
+   - Forces navigation around obstacles
+   - Creates maze-like sections
+
+2. **Hard Crystal Formations** (Bomb-only)
+
+   - Iridescent purple/blue (#8B00FF)
+   - Cannot be drilled (any level)
+   - CAN be destroyed with bombs ($400 each)
+   - Often guards valuable minerals
+   - Strategic choice: bomb through or navigate around
+
+3. **Reinforced Rock** (High drill requirement)
+   - Metallic gray with silver streaks (#4a4a4a)
+   - Requires Drill Level 4+ to break
+   - CAN be destroyed with bombs
+   - Acts as soft progression gate
+   - Only appears in deep layers (300m+)
+
+### Obstacle Coverage by Layer
+
+Deeper layers have progressively more obstacles, forcing strategic navigation:
+
+| Layer | Depth | Bedrock | Hard Crystal | Reinforced Rock |
+|---
+
+## Obstacle Generation System
+
+### Bedrock Formation Algorithm
+
+**Step 1: Seed Placement**
+
+```
+For each layer:
+  bedrockSeeds = floor(layerArea × bedrockCoverage)
+
+  For each seed:
+    - Place at random valid position
+    - Skip if overlaps existing bedrock
+```
+
+**Step 2: Formation Growth**
+
+```
+For each seed:
+  formationSize = random based on layer depth
+  - Layer 2: 3x3 to 5x5
+  - Layer 4: 8x10 to 10x12
+  - Layer 8: 15x20 to 20x25
+
+  Grow formation:
+    - Start from seed position
+    - Expand in organic blob shape
+    - Stop at formation size limit
+    - Don't cross layer boundaries
+```
+
+**Step 3: Path Validation**
+
+```
+After all bedrock placed:
+  Run pathfinding from top to bottom
+
+  If no valid path exists:
+    - Remove small bedrock chunks
+    - Ensure minimum 3-tile-wide passages exist
+    - Guarantee at least 2 distinct paths through layer
+```
+
+### Hard Crystal Placement
+
+```
+For each layer with crystals:
+  crystalCount = floor(layerArea × crystalCoverage)
+
+  For each crystal:
+    - Place near valuable mineral veins (50% chance)
+    - Place near bedrock edges (30% chance)
+    - Place randomly (20% chance)
+    - Formation size: 3x3 to 5x5
+    - Creates risk/reward: valuable minerals behind crystals
+```
+
+### Reinforced Rock Placement
+
+```
+Only in layers 6-8 (300m+):
+  reinforcedCount = floor(layerArea × reinforcedCoverage)
+
+  For each reinforced section:
+    - Block passages to valuable areas
+    - Create "gates" requiring Drill Level 4+
+    - Formation size: 4x4 to 6x6
+    - Acts as soft progression check
+```
+
+### Obstacle Interaction Rules
+
+1. **Bedrock + Hard Crystal**: Can touch, creates complex barriers
+2. **Bedrock + Reinforced Rock**: Can touch, layered defenses
+3. **Hard Crystal + Minerals**: Often adjacent (intentional)
+4. **Path Guarantee**: Always at least one 3-tile-wide path exists
+5. **No Complete Blocks**: Never seal off entire sections permanently
+
+---
+
+## Bomb Mechanics
+
+### Bomb Item
+
+**Cost**: $400 (bought at surface)  
+**Effect**: Destroys 5x5 tile area  
+**Destroys**:
+
+- All normal terrain
+- Hard Crystal formations
+- Reinforced Rock
+- Mineral veins (careful!)
+
+**Does NOT destroy**:
+
+- Bedrock (indestructible)
+
+**Explosion Pattern:**
+
+```
+Before bomb:          After bomb:
+████████████████      ████████████████
+████CCCC████████      ████░░░░████████
+████CCCC████████  →   ████░░░░████████  C = Hard Crystal
+████CCCC████████      ████░░░░████████  ░ = Destroyed (empty)
+██████CCCC██████      ██████░░░░██████  █ = Remains
+████████████████      ████████████████
+
+5x5 area cleared (25 tiles)
+```
+
+### Bomb Economics
+
+**When bombs are worth it:**
+
+1. **Trapped valuable minerals**
+
+   - Diamond vein behind hard crystal
+   - Value: $8,000 (10 diamonds)
+   - Bomb cost: $400
+   - Net profit: $7,600 ✅
+
+2. **Time/fuel savings**
+
+   - Navigate around: 60 tiles drilling = 60 fuel + 30 seconds
+   - Bomb shortcut: $400 + instant
+   - If fuel scarce or time matters: Worth it ✅
+
+3. **Emergency escape**
+
+   - Low fuel, trapped by cave-in
+   - Bomb creates direct path to surface
+   - Saves cargo worth $5,000
+   - Bomb = $400 insurance ✅
+
+4. **Core access**
+   - Hard crystal wall blocks core entrance
+   - Must bomb through (no choice)
+   - Necessary expense ✅
+
+**When bombs aren't worth it:**
+
+- Plenty of fuel, easy navigation exists
+- Low-value area (iron/coal only)
+- Early game with limited credits
+
+### Strategic Bomb Usage
+
+**Recommended carry by game stage:**
+
+- **Early (Runs 1-5)**: 0 bombs (too expensive, not needed)
+- **Mid (Runs 6-15)**: 1-2 bombs (insurance + shortcuts)
+- **Late (Runs 16+)**: 2-3 bombs (strategic tool for efficiency)
+
+-------|-------|---------|--------------|-----------------|
+| 1 | 0-30m | 0% | 0% | 0% |
+| 2 | 30-80m | 3% | 0% | 0% |
+| 3 | 80-150m | 8% | 2% | 0% |
+| 4 | 150-220m | 10% | 3% | 0% |
+| 5 | 220-300m | 12% | 4% | 0% |
+| 6 | 300-380m | 15% | 5% | 3% |
+| 7 | 380-450m | 18% | 8% | 5% |
+| 8 | 450-490m | 20% | 6% | 8% |
+| 9 | 490-500m | 0% | Walls only | 0% |
 
 ---
 
@@ -38,6 +244,7 @@
 - No hazards
 - Clear visibility
 - Tutorial prompts appear here
+- **No obstacles** - straight vertical drilling possible (learning phase)
 
 ---
 
@@ -70,6 +277,10 @@
 
 - First **small gas pockets** appear (5% chance per chunk)
   - 1-2 tiles, 5 HP damage when drilled
+- **First obstacles introduced**: Bedrock patches (3% coverage)
+  - Small 3x3 formations
+  - Teaches navigation around obstacles
+  - Easy to avoid
 
 ---
 
@@ -101,6 +312,10 @@
 - **Unstable rock formations**: 10% of tiles
   - When drilled, adjacent tiles can collapse (10 HP damage)
 - Gas pockets increase to 8% chance
+- **Obstacles increase**:
+  - Bedrock: 8% coverage (5x5 to 8x8 formations)
+  - Hard Crystal: 2% coverage (introduces bomb-breakable obstacles)
+  - Forces branching paths and navigation choices
 
 ---
 
@@ -132,6 +347,11 @@
 - **Large gas pockets**: 12% chance
   - 3-5 tile pockets, 10 HP damage
 - **Cracks**: Visual cracks appear, hinting at instability
+- **Maze sections begin**:
+  - Bedrock: 10% coverage (8x10 formations)
+  - Hard Crystal: 3% coverage (often blocking valuable minerals)
+  - Multiple valid paths through layer
+  - Bombs become useful for shortcuts
 
 ---
 
@@ -166,6 +386,11 @@
   - But gravity pulls you down fast
 - **Lava remnants**: Decorative orange cracks (no damage on Mars)
 - Gas pockets: 10% chance, now 15 HP damage
+- **Complex navigation required**:
+  - Bedrock: 12% coverage (large 10x15 formations)
+  - Hard Crystal: 4% coverage (guarding platinum and gems)
+  - Winding corridors form naturally
+  - Strategic bomb usage encouraged
 
 ---
 
@@ -199,6 +424,12 @@
 - **High pressure**: Movement slightly slower (fuel efficiency -10%)
 - **Dense rock formations**: Some 3x3 unbreakable zones (navigate around)
 - Very rare cave-ins: 8% chance, but 20 HP damage
+- **Heavy obstacles**:
+  - Bedrock: 15% coverage (massive 15x20 formations)
+  - Hard Crystal: 5% coverage
+  - Reinforced Rock: 3% coverage (Drill Level 3+ required, or bomb)
+  - Must plan efficient routes
+  - Bombs highly valuable here
 
 ---
 
@@ -233,6 +464,12 @@
 - **Brittle formations**: 20% chance drilling causes chain reaction
   - Adjacent tiles crack (visual warning, then break after 1 second)
 - Minimal hazards (no gas, no cave-ins) - reward for reaching deep
+- **Highest obstacle density**:
+  - Bedrock: 18% coverage (very dense)
+  - Hard Crystal: 8% coverage (ironic - crystal zone has crystal obstacles)
+  - Reinforced Rock: 5% coverage (Drill Level 4+ needed)
+  - Valuable gems often behind obstacles
+  - Risk/reward: bomb through or navigate carefully?
 
 ---
 
@@ -265,6 +502,12 @@
 - **Heat signatures**: Visual red glow effect (no damage on Mars, but foreshadows other planets)
 - **Magnetic interference**: HUD flickers occasionally (cosmetic)
 - **Dense pockets**: Some tiles take 2x longer to drill even with max drill
+- **Final obstacle challenge**:
+  - Bedrock: 20% coverage (extremely dense)
+  - Hard Crystal: 6% coverage
+  - Reinforced Rock: 8% coverage (Drill Level 4+ or bomb required)
+  - Most complex navigation in the game
+  - Multiple bombs recommended for efficient progression
 
 ---
 
@@ -292,6 +535,10 @@
 - **The Core**: Glowing sphere, pulsing animation
 - Extracting it triggers prestige screen
 - Safe zone - no hazards, can rest here
+- **Core access challenge**:
+  - Hard Crystal walls form entry passage
+  - Must bomb through OR find narrow natural passage
+  - Final test before core extraction
 
 ---
 
@@ -386,33 +633,71 @@ This creates natural variation - some runs have more minerals, some have less.
 ### Hardness Impact on Drill Speed
 
 ```
-ActualDrillTime = BaseDrillTime × StrataHardness / DrillLevel
+actualDrillTime = baseDrillTime × strataHardness / drillLevel
 
 Where:
-- BaseDrillTime = 0.5 seconds
-- StrataHardness = 1.0 to 3.5
-- DrillLevel = 1 to 5
+- baseDrillTime = 0.3 seconds per tile
+- strataHardness = 1.0 to 3.5
+- drillLevel = 1 to 5
 
 Example:
 - Layer 6 (hardness 3.0) with Drill Level 2:
-  0.5 × 3.0 / 2.0 = 0.75 seconds per tile
+  0.3 × 3.0 / 2.0 = 0.45 seconds per tile
+
+- Layer 1 (hardness 1.0) with Drill Level 1:
+  0.3 × 1.0 / 1.0 = 0.3 seconds per tile (fast!)
+
+- Layer 8 (hardness 3.5) with Drill Level 5:
+  0.3 × 3.5 / 5.0 = 0.21 seconds per tile (efficient!)
 ```
+
+### Drill Speed Table by Layer
+
+**Layer 1 (Surface Regolith, Hardness 1.0):**
+
+| Drill Level | Seconds/Tile | 100 Tiles |
+| ----------- | ------------ | --------- |
+| 1 (start)   | 0.30 sec     | 30 sec    |
+| 2           | 0.15 sec     | 15 sec    |
+| 3           | 0.10 sec     | 10 sec    |
+| 5 (max)     | 0.06 sec     | 6 sec     |
+
+**Layer 6 (Dense Mantle, Hardness 3.0):**
+
+| Drill Level | Seconds/Tile | 100 Tiles |
+| ----------- | ------------ | --------- |
+| 1           | 0.90 sec     | 90 sec    |
+| 2           | 0.45 sec     | 45 sec    |
+| 3           | 0.30 sec     | 30 sec    |
+| 5 (max)     | 0.18 sec     | 18 sec    |
+
+**Layer 8 (Pre-Core Mantle, Hardness 3.5):**
+
+| Drill Level | Seconds/Tile | 100 Tiles |
+| ----------- | ------------ | --------- |
+| 1           | 1.05 sec     | 105 sec   |
+| 2           | 0.525 sec    | 52.5 sec  |
+| 3           | 0.35 sec     | 35 sec    |
+| 5 (max)     | 0.21 sec     | 21 sec    |
 
 ---
 
 ## Progression Gates
 
-**Depth 80m**: Basalt layer strongly encourages Drill Level 2  
-**Depth 220m**: Lava tubes show need for better fuel capacity  
-**Depth 300m**: Dense mantle REQUIRES Drill Level 3 or progress is painfully slow  
-**Depth 450m**: Pre-core zone benefits heavily from Drill Level 4+
+**Depth 80m**: Basalt layer strongly encourages Drill Level 2 + first obstacles appear  
+**Depth 150m**: Maze sections begin, bombs become useful  
+**Depth 220m**: Lava tubes show need for better fuel capacity + complex navigation  
+**Depth 300m**: Dense mantle REQUIRES Drill Level 3 or progress is painfully slow + Reinforced Rock appears  
+**Depth 380m**: Crystalline zone has highest obstacle density, strategic bomb usage essential  
+**Depth 450m**: Pre-core zone benefits heavily from Drill Level 4+ + multiple bombs recommended  
+**Depth 490m**: Core entrance may require bomb to access
 
 **Estimated Run Time by Drill Level:**
 
-- Level 1 only: ~15 minutes to core (tedious in deep layers)
-- Level 2: ~10 minutes
-- Level 3: ~7 minutes
-- Level 4+: ~5 minutes
+- Level 1 only: ~10-12 minutes to core (very tedious in deep layers, difficult navigation)
+- Level 2: ~6-7 minutes (obstacles still challenging)
+- Level 3: ~4-5 minutes (comfortable pace, can handle most obstacles)
+- Level 4+: ~3-4 minutes (efficient, optimized, obstacles manageable)
 
 ---
 
