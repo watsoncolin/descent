@@ -887,13 +887,15 @@ extension GameScene {
         // Pod dimensions: 48px wide × 72px tall (same width as a single tile)
         let podHalfWidth: CGFloat = 24   // Half of 48px width
         let podHalfHeight: CGFloat = 36  // Half of 72px height
-        let drillTipOffset: CGFloat = podHalfHeight + (TerrainBlock.size / 2)
         var drillTipPosition = player.position
 
         switch drillDirection {
         case .down:
-            drillTipPosition.y -= drillTipOffset  // Drill tip below center
+            // For downward drilling, position tip at pod's bottom edge + small offset
+            // This ensures we drill the block directly below, not the one further down
+            drillTipPosition.y -= (podHalfHeight + 8)  // Just 8px below pod bottom
         case .left:
+            // For horizontal drilling, reach into the center of adjacent block
             drillTipPosition.x -= (podHalfWidth + TerrainBlock.size / 2)  // Drill tip to the left
         case .right:
             drillTipPosition.x += (podHalfWidth + TerrainBlock.size / 2)  // Drill tip to the right
