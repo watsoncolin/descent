@@ -9,216 +9,237 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Core Concept
 - Drill through planets extracting minerals
 - Dual-currency system: Credits (temporary) and Soul Crystals (permanent prestige currency)
-- 8 planets with 100x value scaling from Mars to Enceladus
 - Prestige system resets planet-specific upgrades but grants permanent earning bonuses
+- Volume-based cargo with auto-drop optimization
 
-## Development Status
+---
 
-This is a **very early-stage project**. As of the last update:
-- Basic prototype with keyboard controls exists
-- Design decisions finalized (controls, art style, MVP scope)
-- Ready to begin iOS implementation
-- No Xcode project files present yet
+## Design Documentation
 
-## Design Decisions
+**All game design specifics live in dedicated design documents:**
 
-### Visual Art Style
-**Modern Pixel Art with HD Effects:**
-- 24x24 pixel art for terrain blocks
-- 48x48 pixel pod with 8-direction rotation
-- Pixel art base for all materials
-- Modern particle effects and shaders for exotic materials (Tier 4-5)
-- HD particle systems: fire trails for Pyronium, ice crystals for Cryonite, lens flares for Stellarium
-- Clean vector graphics for UI/menus
-- Each planet has distinct color grading filter
-- Dynamic lighting system (pod headlight, material glows)
+### Core Design
+- **DESIGN.md** - Complete game design, mechanics, progression
+- **MISSING_FEATURES.md** - Implementation status and task tracking
+- **DATA_MODEL.md** - Data structures and persistence layers
 
-### iOS Touch Controls
-**Direct Touch & Drag Control:**
-- Touch and hold anywhere on screen to move pod toward finger
-- Distance from pod = movement speed
-- Automatic drilling when pod contacts terrain while moving
-- Release to stop (gravity takes over)
-- 5 consumable item buttons at bottom (Bomb, Teleporter, Repair, Fuel, Shield)
-- Top HUD bar: Fuel, Hull, Cargo, Depth, Credits
-- Haptic feedback: Light (soft terrain) → Strong (valuable materials)
-- Visual feedback: Thrust particles, terrain cracks, screen shake, damage flash
-- One-handed play optimized
+### System-Specific Design
+- **FUEL_SYSTEM.md** - Fuel consumption, warnings, emergency return
+- **CARGO_SYSTEM.md** - Volume-based cargo, auto-drop algorithm
+- **HULL_SYSTEM.md** - Damage system, impact physics
+- **SUPPLY_DROP_SYSTEM.md** - Mid-run item ordering with capacity limits
+- **OBSTACLE_MATERIALS_GUIDE.md** - Terrain types and materials
 
-**Return to Surface Mechanic:**
-- NO automatic "return to surface" button
-- Players must use Emergency Teleporter (consumable item) to return
-- Teleporters are purchased at surface shop with credits
-- Core risk/reward: balance fuel usage vs cargo collection
-- Running out of fuel = game over = lose all cargo
-- Strategic decision: when to teleport back vs continue mining deeper
+### Level Design
+- **level_design/mars_level_design.md** - Mars planet configuration
+- **level_design/mars.json** - Mars strata and vein generation data
 
-### MVP Scope
-**Phased Development (8-10 weeks to soft launch):**
+**When implementing features, always consult the relevant design document first.**
 
-**Phase 1 (Week 1-2): Core Proof**
-- Mars only, 5 materials (Coal, Iron, Copper, Silver, Gold)
-- Touch controls + drilling mechanics
-- Fuel + cargo systems, basic sell loop
-- Milestone: "Is mining fun?"
+---
 
-**Phase 2 (Week 3-4): Upgrade Loop**
-- 6 upgrade types (3-5 levels each)
-- Hull/damage system, 3 hazards
-- 10 total materials (add Platinum, Ruby, Emerald, Diamond, Titanium)
-- Save system
-- Milestone: "Is progression satisfying?"
+## Technical Stack
 
-**Phase 3 (Week 5): Prestige Hook**
-- Soul Crystal system
-- Core extraction mechanic
-- Prestige reset logic
-- Milestone: "Does prestige feel rewarding?"
+### Engine & Platform
+- **Platform**: iOS (SpriteKit)
+- **Language**: Swift 5+
+- **Physics**: SpriteKit physics engine for gravity, collisions, movement
+- **Rendering**: 2D sprite-based with planned particle effects
 
-**Phase 4 (Week 6): Polish**
-- Particle effects, screen shake, haptics
-- UI animations, sound effects
-- Milestone: "Does it feel good?"
+### Architecture Patterns
+- **ECS-lite**: Entities (PlayerPod, TerrainBlock) with Systems (DamageSystem, ConsumableSystem, TerrainManager)
+- **Data Layer**: GameProfile (permanent) → PlanetState (per-planet) → CurrentRun (per-run)
+- **State Management**: GameState singleton manages current game phase and state
+- **Delegate Pattern**: Systems communicate via delegates (e.g., ConsumableSystemDelegate)
 
-**Phase 5 (Week 7-8): Second Planet**
-- Planet selection screen (globe view)
-- Luna implementation (2x multiplier)
-- Golden Gems basics, 2-3 Epic upgrades
-- Milestone: "Does variety work?"
+---
 
-**Soft Launch MVP:**
-- 3 planets (Mars, Luna, Io)
-- 15 materials (Tier 1-2 + Pyronium teaser)
-- Full Common Upgrades (6 types, 5 levels)
-- 5 Epic Upgrades (Auto-Refuel, Scanner, Heat Resistance 1, Mineral Boost, Soul Amplifier)
-- Tutorial system (first 3 runs)
-- 15-20 hours of gameplay
+## Current Development Status
 
-## Game Architecture
+**Phase**: Phase 1 → Phase 3 transition (~70% complete)
 
-### Planet System
-- 8 planets with progressive difficulty: Mars (1x) → Luna (2x) → Io (5x) → Europa (8x) → Titan (15x) → Venus (25x) → Mercury (50x) → Enceladus (100x)
-- Each planet has unique hazards, visual identity, and core depths (500m-1200m)
-- Planets require resistance upgrades to unlock (Heat/Cold Resistance Levels 1-3)
+### ✅ Implemented
+- Core movement, drilling, fuel, hull, cargo systems
+- All 6 Common Upgrades (Fuel Tank, Drill, Cargo, Hull, Engine Speed, Dampeners)
+- All 5 consumables (Repair Kit, Fuel Cell, Bomb, Teleporter, Shield)
+- Supply drop system with capacity (5-20 items per order)
+- Prestige system with Soul Crystal bonuses
+- Terrain generation with vein-based procedural spawning
+- Save/load system with persistence
 
-### Resource Economy
-Three tiers of materials:
-1. **Tier 1-3**: Real elements (Carbon, Iron, Gold, Platinum, Diamonds, etc.)
-2. **Tier 4**: Exotic fictional materials (Pyronium, Cryonite, Voltium, Gravitite, Neutronium)
-3. **Tier 5**: Alien/endgame materials (Xenite, Chronite, Quantum Foam, Dark Matter, Stellarium)
+### ❌ Missing (High Priority)
+- Fuel/hull warning systems (25%, 10%, 5% thresholds)
+- Emergency return system (auto-ascent at 0 fuel with cargo penalty)
+- Visual/audio polish (particles, screen shake, haptics, sound)
+- Hazards (gas pockets, cave-ins)
+- Tutorial system
 
-Resource values scale with planet multiplier (e.g., Iron on Mars = $25, Iron on Venus = $625).
+**See MISSING_FEATURES.md for complete status.**
 
-### Currency Systems
-1. **Credits** (cash): Earned by selling minerals, resets on prestige, used for Common Upgrades
-2. **Soul Crystals**: Earned on prestige based on career earnings, provide +10% mineral value bonus each, never reset
-3. **Golden Gems**: Premium currency for Epic Upgrades (permanent unlocks)
+---
 
-### Upgrade Systems
-**Common Upgrades** (reset on prestige):
-- Fuel Tank (6 levels, max 500 fuel)
-- Drill Strength (5 levels, gates terrain access)
-- Cargo Capacity (6 levels, max 250 units)
-- Hull Armor (5 levels, max 200 HP)
-- Engine Speed (5 levels, max 200%)
-- Impact Dampeners (3 levels)
-- Consumables (Repair Kit, Fuel Cell, Mining Bomb, Emergency Teleporter, Shield Generator)
+## Key Code Locations
 
-**Epic Upgrades** (permanent, bought with Golden Gems):
-- Soul Crystal Amplifier, Mineral Value Boost
-- Auto-Refuel, Auto-Repair, Advanced Scanner
-- Heat/Cold Resistance gates for planet unlocking
-- Discount upgrades for common purchases
+### Core Game Loop
+- `DESCENT/Scenes/GameScene/GameScene.swift` - Main game scene, orchestrates all systems
+- `DESCENT/Models/GameState.swift` - Central game state manager
+- `DESCENT/Entities/PlayerPod.swift` - Player pod entity with physics
 
-### Core Mechanics
-- **Movement**: Left/Right, Down (drilling), Up (thrusting), all consume fuel
-- **Fuel Management**: Running out = game over, must balance depth vs return trip
-- **Cargo System**: Volume-based (not weight), creates strategic "drop or keep" decisions
-- **Prestige**: Extract planet core → lose Credits/upgrades → gain Soul Crystals → unlock next planets
-- **Progression Formula**: `Soul Crystals = √(Total Career Earnings / 1000)`
+### Systems
+- `DESCENT/Systems/TerrainManager.swift` - Procedural terrain generation, chunk loading
+- `DESCENT/Systems/DamageSystem.swift` - Hull damage calculations
+- `DESCENT/Systems/ConsumableSystem.swift` - Consumable activation logic
+- `DESCENT/Systems/SupplyDropSystem.swift` - Mid-run supply ordering
+- `DESCENT/Systems/InputManager.swift` - Touch input handling
 
-## Technical Implementation (iOS/Swift)
+### UI Components
+- `DESCENT/Scenes/GameScene/HUD.swift` - In-game HUD (fuel, hull, cargo, depth)
+- `DESCENT/Scenes/GameScene/SurfaceUI.swift` - Surface shop with upgrade tabs
+- `DESCENT/Scenes/GameScene/PrestigeDialog.swift` - Prestige decision UI
+- `DESCENT/Scenes/GameScene/SupplyDropUI.swift` - Supply ordering menu
+- `DESCENT/Scenes/GameScene/ConsumableUI.swift` - Bottom consumable buttons
 
-### Engine Choice
-- **SpriteKit**: 2D engine built into iOS, suitable for physics-based mining gameplay
-- Use SpriteKit physics for gravity, collisions, and movement
-- Procedural terrain generation algorithms needed for mineral placement
+### Data Models
+- `DESCENT/Models/GameProfile.swift` - Permanent progression (never resets)
+- `DESCENT/Models/PlanetState.swift` - Per-planet progression (resets on prestige)
+- `DESCENT/Models/CurrentRun.swift` - Current run state (resets each run)
+- `DESCENT/Models/Material.swift` - Material definitions and values
+- `DESCENT/Models/Planet.swift` - Planet configuration and strata
 
-### Key Systems to Build
-1. **Touch Controls**: Convert keyboard prototype to iOS touch/swipe controls
-2. **Terrain Generation**: Chunk-based loading, depth-based mineral spawning
-3. **Save System**: UserDefaults for simple data, FileManager for complex progression
-4. **Planet-Specific Hazards**: Each planet needs unique environmental challenges
-5. **UI Screens**:
-   - Mining view (HUD with fuel, hull, cargo, depth)
-   - Surface/upgrade shop
-   - Planet selection (globe view)
-   - Material compendium
+### Entity Components
+- `DESCENT/Entities/TerrainBlock.swift` - Individual terrain blocks with materials
+- `DESCENT/Entities/PlayerPod.swift` - Player entity with physics body
 
-### Performance Considerations
-- Optimize for older iOS devices
-- Chunk-based terrain loading to manage memory
-- Efficient particle effects for exotic materials
+---
 
-## Resource Distribution by Depth
-- **0-50m**: Coal, Iron, Copper
-- **50-150m**: Silver, Gold appears
-- **150-300m**: Gold common, Platinum, occasional gems
-- **300-500m**: Gems common, Titanium
-- **500m+**: Heavy gem concentration, exotic materials
-- **Core zone**: Alien artifacts, Dark Matter
+## Implementation Patterns
 
-## Planet-Specific Features
+### When Adding New Features
 
-Key differentiators for each planet:
-- **Mars**: Tutorial, dust storms, unstable rock
-- **Luna**: Low gravity, vacuum pockets, titanium deposits
-- **Io**: Lava rivers, volcanic vents, sulfur gas, crumbling terrain
-- **Europa**: Ice spikes, subglacial ocean, pressure cracks, alien life
-- **Titan**: Methane lakes, nitrogen geysers, slippery physics, thick atmosphere
-- **Venus**: Sulfuric acid rain, extreme heat, volcanic eruptions, corrosive gas
-- **Mercury**: Solar radiation, magnetic storms, meteor impacts, day/night cycle
-- **Enceladus**: Cryogenic jets, deep ocean layer, ice quakes, alien guardians
+1. **Check design docs first** - DESIGN.md or system-specific .md files
+2. **Update MISSING_FEATURES.md** - Mark features as implemented
+3. **Follow existing patterns**:
+   - Systems for gameplay logic
+   - Delegates for communication
+   - Codable for persistence
+4. **Test with existing save system** - Ensure data persists correctly
 
-## Monetization Strategy
-- Optional ads for Golden Gems
-- IAP for gem packs
-- No pay-to-win mechanics
-- Golden Gems also earnable through gameplay (drones, golden nuggets, daily bonuses, challenges)
+### Touch Controls Implementation
 
-## UI/UX Design
+Touch controls follow this pattern:
+- `touchesBegan` in GameScene handles all touches
+- Delegate to appropriate UI element (HUD, SurfaceUI, dialogs)
+- Movement uses vector from touch to pod position
+- Distance from pod determines thrust intensity
 
-### Key Screens
-1. **Main Menu**: Title, Start/Continue, Settings, Compendium
-2. **Planet Selection**: Rotatable globe, planet cards with stats/requirements/best runs
-3. **Mining View**: Full-screen gameplay with top HUD (fuel, hull, cargo, depth) + bottom item buttons
-4. **Surface/Shop**: Cargo summary, Credits balance, upgrade shop (Common/Epic tabs), Launch button
-5. **Prestige Screen**: Core extraction celebration, Soul Crystal gain calculation, before/after comparison
-6. **Pause Menu**: Resume, Return to Surface, Abandon Run, Settings
+### Terrain Generation
 
-### UI Enhancements
-- **Run Summary Screen**: Shows depth, cargo value, best finds, new records after each run
-- **Material Collection Feedback**:
-  - Common materials: Small popup + particles
-  - Rare gems: Screen flash + dramatic sound
-  - Exotic materials: Full-screen flash + lore snippet + first discovery bonus
-- **Smart Upgrade Recommendations**: Game suggests upgrades based on how you died
-- **Dynamic HUD Modes**: Standard, Minimal (auto-hide), Critical (warnings)
-- **Contextual Tutorials**: Learn by doing, not reading walls of text
-- **Enhanced Planet Cards**: Show your stats (deepest, best haul, prestiges), recommendations
-- **Prestige Animation**: Epic sequence with particle effects, count-up animations, celebration
+TerrainManager uses chunk-based loading:
+- Generates terrain in 50-tile wide chunks
+- Loads/unloads chunks based on player Y position
+- Uses seeded RNG for deterministic generation
+- Veins spawn based on depth ranges from planet config
 
-### Accessibility
-- Colorblind modes (Protanopia, Deuteranopia, Tritanopia)
-- Material labels option (text on sprites)
-- Adjustable button sizes
-- Haptic intensity control
-- High contrast mode
-- Reduced motion option
+### State Persistence
 
-## Design Philosophy
-- **Always Progressing**: Even failed runs contribute to Soul Crystals
-- **Fresh Challenges**: 8 unique planets keep gameplay varied
-- **"One More Run" Factor**: Clear milestones drive engagement
-- **Strategic Depth**: When to prestige? Which planet? Which upgrades?
-- **Skill + Persistence**: Good players progress faster, but everyone can max out eventually
+Three-tier persistence model:
+```swift
+GameProfile (Level 1) - Never resets
+  └─ PlanetState (Level 2) - Resets on prestige
+      └─ CurrentRun (Level 3) - Resets each run
+```
+
+Save on:
+- Phase transitions (surface ↔ mining)
+- Significant events (prestige, purchases)
+- App backgrounding
+
+### Prestige Flow
+
+Prestige sequence:
+1. Collect Dark Matter at core (490m depth on Mars)
+2. Return to surface with `coreExtracted = true` flag
+3. Show PrestigeDialog with Soul Crystal calculation
+4. On prestige: sell cargo → calculate Soul Crystals → reset planet → regenerate terrain
+5. New terrain has increased material values (Soul Crystal multiplier)
+
+---
+
+## Common Tasks
+
+### Adding a New Upgrade
+
+1. Add to `CommonUpgrades` struct in PlanetState.swift
+2. Add cost/level data to upgrade methods
+3. Add UI in SurfaceUI.swift (upgrade tab)
+4. Update purchase handler in GameScene.swift
+5. Apply effect in relevant system (e.g., PlayerPod for speed)
+
+### Adding a New Consumable
+
+1. Add enum case to `ConsumableType` in ConsumableSystem.swift
+2. Add count property to GameState/PlanetState
+3. Add activation logic in ConsumableSystem
+4. Add button to ConsumableUI.swift
+5. Add purchase option in SurfaceUI.swift (consumables tab)
+6. Handle visual effects via delegate in GameScene
+
+### Adding a New Material
+
+1. Add enum case to `MaterialType` in Material.swift
+2. Add base value, volume, hardness
+3. Add to planet vein configuration (mars.json)
+4. Add color definition in TerrainBlock.swift
+5. Test spawning at appropriate depth range
+
+### Adding Visual/Audio Effects
+
+1. **Particles**: Create SKEmitterNode, add to scene at event location
+2. **Screen shake**: Use SKAction.move on camera with quick return
+3. **Haptics**: UIImpactFeedbackGenerator with .light/.medium/.heavy
+4. **Sound**: AVAudioPlayer or SKAction.playSoundFileNamed
+
+---
+
+## Performance Considerations
+
+### Memory Management
+- Chunk-based terrain loading keeps memory bounded
+- Remove off-screen terrain blocks to free memory
+- Use weak references for delegates to prevent retain cycles
+
+### Optimization
+- Batch terrain generation (generate multiple blocks per frame)
+- Cache frequently accessed data (planet config, material definitions)
+- Use SKTexture atlas for sprite rendering efficiency
+
+### iOS Best Practices
+- Support older devices (optimize for iPhone 8+)
+- Use size classes for different screen sizes
+- Handle app backgrounding (save state, pause game)
+- Test on actual devices, not just simulator
+
+---
+
+## Testing Checklist
+
+When implementing features, test:
+- [ ] Works with existing save data (backwards compatible)
+- [ ] Persists correctly through app restart
+- [ ] Handles edge cases (0 fuel, full cargo, etc.)
+- [ ] Touch targets are appropriately sized (44pt minimum)
+- [ ] No memory leaks (use Instruments)
+- [ ] Performs well on older devices
+
+---
+
+## Notes for Claude Code
+
+- **Always read design docs before implementing** - Don't guess at mechanics
+- **Update MISSING_FEATURES.md** when completing items
+- **Follow existing code patterns** - Consistency is key
+- **Test save/load** after data model changes
+- **Consider performance** - This runs on mobile devices
+- **Ask if design is unclear** - Better to clarify than implement wrong
+
+**Current Focus**: Implementing warning systems (fuel/hull) and emergency return system. See MISSING_FEATURES.md Priority 1 items.
