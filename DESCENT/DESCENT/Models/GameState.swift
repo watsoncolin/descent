@@ -483,6 +483,23 @@ class GameState {
         return planetState?.consumables.shields ?? 0
     }
 
+    // MARK: - Active Effects
+
+    /// Check if player has an active effect
+    func hasActiveEffect(_ type: String) -> Bool {
+        return currentRun?.activeEffects.contains(where: { $0.type == type }) ?? false
+    }
+
+    /// Get remaining duration of an active effect
+    func getActiveEffectDuration(_ type: String) -> TimeInterval? {
+        return currentRun?.activeEffects.first(where: { $0.type == type })?.remainingDuration
+    }
+
+    /// Update all active effects (call from game loop)
+    func updateActiveEffects(deltaTime: TimeInterval) {
+        currentRun?.updateActiveEffects(deltaTime: deltaTime)
+    }
+
     // MARK: - Save/Load
 
     func save() {

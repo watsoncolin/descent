@@ -33,6 +33,7 @@ struct StrataLayer: Codable {
     let minimumDrillLevel: Int?
     let resources: [ResourceConfig]
     let hazards: [HazardConfig]
+    let obstacles: [ObstacleConfig]
     let specialFeatures: [String]
 
     // Computed property for UIColor (not part of JSON)
@@ -70,6 +71,19 @@ struct HazardConfig: Codable {
     let damage: Double             // HP damage when triggered
     let size: Int?                 // Tiles affected (for gas pockets)
     let description: String?
+}
+
+// MARK: - Obstacle Configuration
+
+struct ObstacleConfig: Codable {
+    let type: String               // "bedrock", "hardCrystal", "reinforcedRock"
+    let coverage: Double           // 0.0 to 1.0 (percentage of layer coverage)
+    let formationSizes: [FormationSize]  // Possible formation dimensions
+}
+
+struct FormationSize: Codable {
+    let width: Int
+    let height: Int
 }
 
 // MARK: - Progression Gate

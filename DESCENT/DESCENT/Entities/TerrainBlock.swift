@@ -32,7 +32,7 @@ class TerrainBlock: SKSpriteNode {
     private var currentCrackLevel: Int = 0    // Track which level we've reached
 
     // Block size (in pixels)
-    static let size: CGFloat = 24
+    static let size: CGFloat = 48
 
     // MARK: - Initialization
 

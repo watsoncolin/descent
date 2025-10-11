@@ -155,8 +155,8 @@ class TextureGenerator {
         // Start with transparent background
         context.clear(CGRect(x: 0, y: 0, width: size, height: size))
 
-        // Draw cracks in dark gray/black
-        let crackColor = UIColor(white: 0.1, alpha: 0.8)
+        // Draw cracks in dark brown-gray to blend with terrain (more transparent)
+        let crackColor = UIColor(red: 0.15, green: 0.12, blue: 0.10, alpha: 0.5)
         crackColor.setStroke()
 
         context.setLineWidth(1.0)
@@ -188,86 +188,102 @@ class TextureGenerator {
         let endY = CGFloat(size - 2)
         let end = CGPoint(x: endX, y: endY)
 
-        context.beginPath()
-        context.move(to: drillImpact)
+        // Create smooth crack with Bezier curves
+        let segments = Int.random(in: 3...4)
+        var points: [CGPoint] = [drillImpact]
 
-        // Create jagged crack with 2-3 segments
-        let segments = Int.random(in: 2...3)
-        for i in 1...segments {
+        // Generate control points along the path
+        for i in 1..<segments {
             let progress = CGFloat(i) / CGFloat(segments)
             let baseX = drillImpact.x + (end.x - drillImpact.x) * progress
             let baseY = drillImpact.y + (end.y - drillImpact.y) * progress
 
-            // Add random jitter
-            let jitterAmount: CGFloat = 3
-            let jitterX = CGFloat.random(in: -jitterAmount...jitterAmount)
-            let jitterY = CGFloat.random(in: -jitterAmount...jitterAmount)
+            // Add organic noise (smaller jitter near impact, larger further away)
+            let jitterScale = progress * 0.5 + 0.5  // 0.5 to 1.0
+            let jitterX = CGFloat.random(in: -4...4) * jitterScale
+            let jitterY = CGFloat.random(in: -2...2) * jitterScale
 
-            context.addLine(to: CGPoint(x: baseX + jitterX, y: baseY + jitterY))
+            points.append(CGPoint(x: baseX + jitterX, y: baseY + jitterY))
         }
+        points.append(end)
 
-        context.addLine(to: end)
-        context.strokePath()
+        // Draw crack with variable width (thicker at top, thinner at bottom)
+        drawOrganicCrack(context: context, points: points, startWidth: 1.2, endWidth: 0.6)
+
+        // Add tiny micro-cracks near the main crack (10-20% of the time)
+        if Double.random(in: 0...1) < 0.15 {
+            let microStart = points[Int.random(in: 1..<points.count-1)]
+            let microEnd = CGPoint(
+                x: microStart.x + CGFloat.random(in: -4...4),
+                y: microStart.y + CGFloat.random(in: 3...6)
+            )
+            drawOrganicCrack(context: context, points: [microStart, microEnd], startWidth: 0.7, endWidth: 0.4)
+        }
     }
 
     private func drawMediumCracks(context: CGContext, size: Int) {
         // Main crack from top center, plus 1-2 additional branching cracks
         let drillImpact = CGPoint(x: CGFloat(size/2) + CGFloat.random(in: -2...2), y: 2)
 
-        // Draw main crack downward
+        // Draw main crack downward with more segments for organic look
         let mainEndX = CGFloat(size/2) + CGFloat.random(in: -8...8)
         let mainEnd = CGPoint(x: mainEndX, y: CGFloat(size - 2))
 
-        context.beginPath()
-        context.move(to: drillImpact)
-
-        let segments = Int.random(in: 3...4)
+        let segments = Int.random(in: 4...5)
         var mainCrackPoints: [CGPoint] = [drillImpact]
 
-        for i in 1...segments {
+        for i in 1..<segments {
             let progress = CGFloat(i) / CGFloat(segments)
             let baseX = drillImpact.x + (mainEnd.x - drillImpact.x) * progress
             let baseY = drillImpact.y + (mainEnd.y - drillImpact.y) * progress
 
-            let jitterAmount: CGFloat = 4
-            let jitterX = CGFloat.random(in: -jitterAmount...jitterAmount)
-            let jitterY = CGFloat.random(in: -jitterAmount...jitterAmount)
+            let jitterScale = progress * 0.6 + 0.4
+            let jitterX = CGFloat.random(in: -5...5) * jitterScale
+            let jitterY = CGFloat.random(in: -3...3) * jitterScale
 
-            let point = CGPoint(x: baseX + jitterX, y: baseY + jitterY)
-            mainCrackPoints.append(point)
-            context.addLine(to: point)
+            mainCrackPoints.append(CGPoint(x: baseX + jitterX, y: baseY + jitterY))
         }
+        mainCrackPoints.append(mainEnd)
 
-        context.addLine(to: mainEnd)
-        context.strokePath()
+        // Draw main crack with variable width
+        drawOrganicCrack(context: context, points: mainCrackPoints, startWidth: 1.3, endWidth: 0.7)
 
-        // Add 1-2 additional cracks from top center branching outward
+        // Add 1-2 branching cracks from points along the main crack
         let branchCount = Int.random(in: 1...2)
         for _ in 0..<branchCount {
-            context.beginPath()
-            context.move(to: drillImpact)
+            // Pick a random point along the main crack (not at the ends)
+            let branchStartIndex = Int.random(in: 1..<mainCrackPoints.count-1)
+            let branchStart = mainCrackPoints[branchStartIndex]
 
-            // Branch to side edges
-            let branchAngle = CGFloat.random(in: .pi/4 ... 3 * .pi/4) // 45-135 degrees (downward-ish)
-            if Bool.random() {
-                // Mirror to other side
-                context.move(to: drillImpact)
-            }
+            // Branch to the side
+            let branchDirection: CGFloat = Bool.random() ? -1 : 1
+            let branchAngle = CGFloat.random(in: .pi/3 ... 2 * .pi/3)
 
-            // Create branching crack
+            var branchPoints: [CGPoint] = [branchStart]
             let branchSegments = Int.random(in: 2...3)
+
             for i in 1...branchSegments {
                 let progress = CGFloat(i) / CGFloat(branchSegments)
-                let length = CGFloat(size) * 0.6 * progress
+                let length = CGFloat(size) * 0.4 * progress
 
-                let baseX = drillImpact.x + cos(branchAngle) * length
-                let baseY = drillImpact.y + sin(branchAngle) * length
+                let baseX = branchStart.x + cos(branchAngle) * length * branchDirection
+                let baseY = branchStart.y + sin(branchAngle) * length
 
                 let jitter = CGFloat.random(in: -3...3)
-                context.addLine(to: CGPoint(x: baseX + jitter, y: baseY + jitter))
+                branchPoints.append(CGPoint(x: baseX + jitter, y: baseY + jitter))
             }
 
-            context.strokePath()
+            drawOrganicCrack(context: context, points: branchPoints, startWidth: 1.0, endWidth: 0.5)
+        }
+
+        // Add micro-cracks (2-3 small ones)
+        for _ in 0...Int.random(in: 1...2) {
+            let microStart = mainCrackPoints[Int.random(in: 1..<mainCrackPoints.count-1)]
+            let microEnd = CGPoint(
+                x: microStart.x + CGFloat.random(in: -5...5),
+                y: microStart.y + CGFloat.random(in: 2...6)
+            )
+            drawOrganicCrack(context: context, points: [microStart, microEnd], startWidth: 0.6, endWidth: 0.3)
         }
     }
 
@@ -276,62 +292,144 @@ class TextureGenerator {
         let drillImpact = CGPoint(x: CGFloat(size/2) + CGFloat.random(in: -2...2), y: 2)
 
         // 3-5 major cracks radiating outward from impact point
-        let crackCount = Int.random(in: 3...5)
+        let crackCount = Int.random(in: 4...6)
         for i in 0..<crackCount {
             // Angle from top (0 radians) spreading outward
             // Concentrate cracks in downward hemisphere (0 to π radians)
-            let baseAngle = (CGFloat(i) / CGFloat(crackCount)) * .pi + CGFloat.random(in: -0.2...0.2)
+            let baseAngle = (CGFloat(i) / CGFloat(crackCount)) * .pi + CGFloat.random(in: -0.25...0.25)
             let angle = baseAngle + .pi/2 // Offset to spread from top
 
-            context.beginPath()
-            context.move(to: drillImpact)
+            var crackPoints: [CGPoint] = [drillImpact]
 
-            // Create jagged crack radiating outward
-            let segments = Int.random(in: 3...5)
+            // Create organic crack radiating outward
+            let segments = Int.random(in: 4...6)
             for segment in 1...segments {
                 let progress = CGFloat(segment) / CGFloat(segments)
-                let length = CGFloat(size) * 0.65 * progress
+                let length = CGFloat(size) * 0.7 * progress
 
                 let baseX = drillImpact.x + cos(angle) * length
                 let baseY = drillImpact.y + sin(angle) * length
 
-                // Add perpendicular jitter for jagged appearance
-                let jitterAmount: CGFloat = 3
+                // Add perpendicular jitter for organic appearance
+                let jitterScale = progress * 0.7 + 0.3
                 let perpAngle = angle + .pi / 2
-                let jitter = CGFloat.random(in: -jitterAmount...jitterAmount)
+                let jitter = CGFloat.random(in: -4...4) * jitterScale
 
                 let x = baseX + cos(perpAngle) * jitter
                 let y = baseY + sin(perpAngle) * jitter
 
-                context.addLine(to: CGPoint(x: x, y: y))
+                crackPoints.append(CGPoint(x: x, y: y))
             }
 
-            context.strokePath()
+            drawOrganicCrack(context: context, points: crackPoints, startWidth: 1.4, endWidth: 0.5)
+
+            // Add small branches from some major cracks (50% chance)
+            if Bool.random() && crackPoints.count > 2 {
+                let branchStart = crackPoints[Int.random(in: 2..<crackPoints.count-1)]
+                let branchAngle = angle + CGFloat.random(in: -.pi/3 ... .pi/3)
+                let branchLength = CGFloat.random(in: 4...8)
+
+                var branchPoints: [CGPoint] = [branchStart]
+                for j in 1...2 {
+                    let progress = CGFloat(j) / 2.0
+                    let x = branchStart.x + cos(branchAngle) * branchLength * progress + CGFloat.random(in: -2...2)
+                    let y = branchStart.y + sin(branchAngle) * branchLength * progress + CGFloat.random(in: -2...2)
+                    branchPoints.append(CGPoint(x: x, y: y))
+                }
+                drawOrganicCrack(context: context, points: branchPoints, startWidth: 0.8, endWidth: 0.4)
+            }
         }
 
-        // Add secondary cracks branching from the main cracks
-        for _ in 0...2 {
-            // Start from a point slightly below drill impact
-            let startY = CGFloat.random(in: 8...16)
-            let startX = CGFloat(size/2) + CGFloat.random(in: -8...8)
+        // Add many micro-cracks scattered across the damaged area (4-6 tiny cracks)
+        for _ in 0...Int.random(in: 3...5) {
+            let startX = CGFloat(size/2) + CGFloat.random(in: -10...10)
+            let startY = CGFloat.random(in: 6...18)
+            let start = CGPoint(x: startX, y: startY)
 
-            let angle = CGFloat.random(in: .pi/3 ... 2 * .pi/3) // Downward angles
-            let length = CGFloat.random(in: 6...12)
+            let angle = CGFloat.random(in: .pi/4 ... 3 * .pi/4) // Downward angles
+            let length = CGFloat.random(in: 3...6)
 
+            let endX = startX + cos(angle) * length + CGFloat.random(in: -2...2)
+            let endY = startY + sin(angle) * length + CGFloat.random(in: -2...2)
+            let end = CGPoint(x: endX, y: endY)
+
+            drawOrganicCrack(context: context, points: [start, end], startWidth: 0.5, endWidth: 0.3)
+        }
+    }
+
+    /// Draw an organic-looking crack using smooth Bezier curves with variable width
+    private func drawOrganicCrack(context: CGContext, points: [CGPoint], startWidth: CGFloat, endWidth: CGFloat) {
+        guard points.count >= 2 else { return }
+
+        // Save the current graphics state
+        context.saveGState()
+
+        if points.count == 2 {
+            // Simple line for 2-point cracks
+            context.setLineWidth(startWidth)
             context.beginPath()
-            context.move(to: CGPoint(x: startX, y: startY))
-
-            // Small jagged branch
-            let segments = 2
-            for segment in 1...segments {
-                let progress = CGFloat(segment) / CGFloat(segments)
-                let x = startX + cos(angle) * length * progress + CGFloat.random(in: -2...2)
-                let y = startY + sin(angle) * length * progress + CGFloat.random(in: -2...2)
-                context.addLine(to: CGPoint(x: x, y: y))
-            }
-
+            context.move(to: points[0])
+            context.addLine(to: points[1])
             context.strokePath()
+            context.restoreGState()
+            return
         }
+
+        // Draw crack as a smooth curve using quadratic Bezier curves
+        // Use blend mode for better integration with underlying texture
+        context.setBlendMode(.multiply)
+
+        // Draw center crack darker
+        context.setLineWidth(startWidth)
+        context.beginPath()
+        context.move(to: points[0])
+
+        // Draw smooth curve through all points using quadratic Bezier
+        for i in 1..<points.count {
+            if i < points.count - 1 {
+                // Use quadratic curve to current point with next point influencing curvature
+                let current = points[i]
+                let next = points[i + 1]
+
+                // Control point is slightly offset toward next point for smooth flow
+                let controlX = current.x + (next.x - current.x) * 0.3
+                let controlY = current.y + (next.y - current.y) * 0.3
+                let control = CGPoint(x: controlX, y: controlY)
+
+                context.addQuadCurve(to: current, control: control)
+            } else {
+                // Last point - just draw line
+                context.addLine(to: points[i])
+            }
+        }
+
+        context.strokePath()
+
+        // Draw softer outer edges for anti-aliasing effect
+        let softerColor = UIColor(red: 0.2, green: 0.17, blue: 0.15, alpha: 0.3)
+        softerColor.setStroke()
+        context.setLineWidth(startWidth + 0.5)
+
+        context.beginPath()
+        context.move(to: points[0])
+
+        for i in 1..<points.count {
+            if i < points.count - 1 {
+                let current = points[i]
+                let next = points[i + 1]
+                let controlX = current.x + (next.x - current.x) * 0.3
+                let controlY = current.y + (next.y - current.y) * 0.3
+                let control = CGPoint(x: controlX, y: controlY)
+                context.addQuadCurve(to: current, control: control)
+            } else {
+                context.addLine(to: points[i])
+            }
+        }
+
+        context.strokePath()
+
+        // Restore graphics state
+        context.restoreGState()
     }
 
     // Helper to get random point on edge of texture

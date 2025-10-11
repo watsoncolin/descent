@@ -123,58 +123,48 @@ class TerrainManager {
     // MARK: - Obstacle Generation
 
     private func generateObstaclesForChunk(chunkNumber: Int, startY: Int, endY: Int) {
-        // Define obstacle coverage by depth ranges
-        // Based on Mars level design: [Depth Range: (Bedrock%, HardCrystal%, ReinforcedRock%)]
-        let obstacleRules: [(depthRange: ClosedRange<Double>, bedrock: Double, hardCrystal: Double, reinforcedRock: Double)] = [
-            (0...30, 0.0, 0.0, 0.0),      // Layer 1: Surface
-            (30...80, 0.03, 0.0, 0.0),    // Layer 2: First bedrock
-            (80...150, 0.08, 0.02, 0.0),  // Layer 3: Bedrock + crystals
-            (150...220, 0.10, 0.03, 0.0), // Layer 4
-            (220...300, 0.12, 0.04, 0.0), // Layer 5
-            (300...380, 0.15, 0.05, 0.03), // Layer 6: Reinforced rock appears
-            (380...450, 0.18, 0.08, 0.05), // Layer 7
-            (450...490, 0.20, 0.06, 0.08)  // Layer 8: Deep zone
-        ]
-
         // Process each Y level in this chunk
         for y in startY..<endY {
             let depth = Double(y)
 
-            // Find which obstacle rule applies to this depth
-            guard let rule = obstacleRules.first(where: { $0.depthRange.contains(depth) }) else {
+            // Get the strata layer for this depth
+            guard let layer = planetConfig.strata.first(where: { $0.contains(depth: depth) }) else {
                 continue
             }
 
-            // Generate bedrock obstacles
-            if rule.bedrock > 0 {
-                generateObstacleType(
-                    .bedrock,
-                    coverage: rule.bedrock,
-                    y: y,
-                    formationSizes: [(2, 2), (3, 3), (4, 4)],
-                    offsetBase: 10000
-                )
-            }
+            // Generate obstacles for each type defined in this layer
+            for (obstacleIndex, obstacle) in layer.obstacles.enumerated() {
+                // Skip if no coverage
+                guard obstacle.coverage > 0 else { continue }
 
-            // Generate hard crystal obstacles
-            if rule.hardCrystal > 0 {
-                generateObstacleType(
-                    .hardCrystal,
-                    coverage: rule.hardCrystal,
-                    y: y,
-                    formationSizes: [(2, 2), (3, 3)],
-                    offsetBase: 20000
-                )
-            }
+                // Map obstacle type string to BlockType enum
+                let blockType: TerrainBlock.BlockType
+                switch obstacle.type {
+                case "bedrock":
+                    blockType = .bedrock
+                case "hardCrystal":
+                    blockType = .hardCrystal
+                case "reinforcedRock":
+                    blockType = .reinforcedRock
+                default:
+                    print("⚠️ Unknown obstacle type: \(obstacle.type)")
+                    continue
+                }
 
-            // Generate reinforced rock obstacles
-            if rule.reinforcedRock > 0 {
+                // Convert FormationSize structs to tuples
+                let formationSizes: [(width: Int, height: Int)] = obstacle.formationSizes.map {
+                    ($0.width, $0.height)
+                }
+
+                // Use unique offset base for each obstacle type to ensure different patterns
+                let offsetBase = 10000 * (obstacleIndex + 1)
+
                 generateObstacleType(
-                    .reinforcedRock,
-                    coverage: rule.reinforcedRock,
+                    blockType,
+                    coverage: obstacle.coverage,
                     y: y,
-                    formationSizes: [(2, 2), (3, 3)],
-                    offsetBase: 30000
+                    formationSizes: formationSizes,
+                    offsetBase: offsetBase
                 )
             }
         }
@@ -188,33 +178,46 @@ class TerrainManager {
         formationSizes: [(width: Int, height: Int)],
         offsetBase: Int
     ) {
-        // Calculate number of obstacle seeds for this row
-        let numSeeds = Int(floor(Double(width) * coverage))
+        // Calculate average formation size to adjust seed rate
+        let avgFormationSize = formationSizes.reduce(0.0) { sum, size in
+            sum + Double(size.width * size.height)
+        } / Double(formationSizes.count)
 
-        // Place obstacle seeds
-        for seedIndex in 0..<numSeeds {
-            // Use deterministic seed based on position and type
-            let positionSeed = generateSeed(x: y, y: offsetBase, offset: seedIndex)
-            let seedX = seededRandom(min: 0, max: width - 1, seed: positionSeed)
-            let seedKey = "\(seedX),\(y)"
+        // Adjust coverage to account for formation size
+        // If coverage = 8% and avg formation = 16 blocks, we need far fewer seeds
+        // Seed rate = coverage / (avg formation area / row width)
+        let adjustedCoverage = coverage / (avgFormationSize / Double(width))
 
-            // Skip if position already has an obstacle
-            guard obstacleMap[seedKey] == nil else { continue }
+        // Randomly decide if this row should have any obstacles at all
+        // Use the adjusted coverage as probability
+        let rowSeed = generateSeed(x: offsetBase, y: y, offset: y * 73)
+        let rowRandom = Double((rowSeed & 0xFFFF)) / Double(0xFFFF)
 
-            // Choose formation size
-            let sizeSeed = generateSeed(x: seedX, y: y, offset: offsetBase + seedIndex)
-            let sizeIndex = seededRandom(min: 0, max: formationSizes.count - 1, seed: sizeSeed)
-            let formationSize = formationSizes[sizeIndex]
+        // Only place obstacles on some rows based on adjusted coverage
+        guard rowRandom < adjustedCoverage else { return }
 
-            // Create formation around seed
-            placeObstacleFormation(
-                blockType: blockType,
-                centerX: seedX,
-                centerY: y,
-                width: formationSize.width,
-                height: formationSize.height
-            )
-        }
+        // Place 1 seed on this row (since formations are large)
+        // Use offsetBase + y as offset to add more variation for horizontal distribution
+        let positionSeed = generateSeed(x: y, y: offsetBase, offset: offsetBase + y)
+        let seedX = seededRandom(min: 0, max: width - 1, seed: positionSeed)
+        let seedKey = "\(seedX),\(y)"
+
+        // Skip if position already has an obstacle
+        guard obstacleMap[seedKey] == nil else { return }
+
+        // Choose formation size
+        let sizeSeed = generateSeed(x: seedX, y: y, offset: offsetBase * 2 + seedX)
+        let sizeIndex = seededRandom(min: 0, max: formationSizes.count - 1, seed: sizeSeed)
+        let formationSize = formationSizes[sizeIndex]
+
+        // Create formation around seed
+        placeObstacleFormation(
+            blockType: blockType,
+            centerX: seedX,
+            centerY: y,
+            width: formationSize.width,
+            height: formationSize.height
+        )
     }
 
     /// Place an obstacle formation (rectangular pattern)
@@ -459,5 +462,29 @@ class TerrainManager {
         let y = Int((surfaceY - position.y) / TerrainBlock.size)
 
         return (x, y)
+    }
+
+    /// Clear a 3×3 area around a position (for bomb)
+    /// Returns array of materials collected from destroyed blocks
+    func clearBombArea(at position: CGPoint) -> [Material] {
+        guard let centerGrid = worldToGrid(position) else { return [] }
+
+        var collectedMaterials: [Material] = []
+
+        // Clear 3×3 grid centered on position
+        for dy in -1...1 {
+            for dx in -1...1 {
+                let x = centerGrid.x + dx
+                let y = centerGrid.y + dy
+
+                // Remove block and collect material
+                if let material = removeBlock(x: x, y: y) {
+                    collectedMaterials.append(material)
+                }
+            }
+        }
+
+        print("💣 Bomb cleared \(collectedMaterials.count) blocks")
+        return collectedMaterials
     }
 }

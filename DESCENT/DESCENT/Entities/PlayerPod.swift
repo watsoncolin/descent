@@ -38,7 +38,7 @@ class PlayerPod: SKSpriteNode {
 
     init() {
         // Create the pod as a custom shape (narrower: 24px × 36px)
-        super.init(texture: nil, color: .clear, size: CGSize(width: 24, height: 36))
+        super.init(texture: nil, color: .clear, size: CGSize(width: 48, height: 72))
 
         setupPhysics()
         setupVisuals()
@@ -127,8 +127,8 @@ class PlayerPod: SKSpriteNode {
     // MARK: - Setup
 
     private func setupPhysics() {
-        // Create capsule-shaped physics body (width: 24px, height: 36px)
-        physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 22, height: 34))  // Slightly smaller for better collisions
+        // Create capsule-shaped physics body (width: 48px, height: 72px)
+        physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 44, height: 68))  // Slightly smaller for better collisions
         physicsBody?.isDynamic = true
         physicsBody?.affectedByGravity = true
         physicsBody?.allowsRotation = false  // Keep pod upright always

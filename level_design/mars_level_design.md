@@ -230,14 +230,14 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Carbon (Coal)**: 20% vein seed rate
+- **Carbon (Coal)**: 10% vein seed rate
   - Value: $10, Size: 5 units
   - Vein size: 1-2 tiles (clustered)
-  - Expected coverage: ~30-40% of layer
-- **Iron**: 12% vein seed rate
+  - Expected coverage: ~15-20% of layer
+- **Iron**: 6% vein seed rate
   - Value: $25, Size: 3 units
   - Vein size: 2-3 tiles (clustered)
-  - Expected coverage: ~20-30% of layer
+  - Expected coverage: ~10-15% of layer
 
 **Special Features:**
 
@@ -261,17 +261,17 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Iron**: 25% vein seed rate (common)
+- **Iron**: 12.5% vein seed rate (common)
   - Vein size: 3-5 tiles (larger veins)
-  - Expected coverage: ~40-50% of layer
-- **Copper**: 15% vein seed rate
+  - Expected coverage: ~20-25% of layer
+- **Copper**: 7.5% vein seed rate
   - Value: $30, Size: 3 units
   - Vein size: 2-3 tiles
-  - Expected coverage: ~20-25% of layer
-- **Silicon**: 10% vein seed rate
+  - Expected coverage: ~10-12% of layer
+- **Silicon**: 5% vein seed rate
   - Value: $50, Size: 2 units
   - Vein size: 1-2 tiles (small deposits)
-  - Expected coverage: ~10-15% of layer
+  - Expected coverage: ~5-7% of layer
 
 **Special Features:**
 
@@ -299,12 +299,12 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Iron**: 30% spawn rate (still common)
-- **Copper**: 35% spawn rate (more abundant here)
-- **Silver**: 15% spawn rate
+- **Iron**: 15% spawn rate (still common)
+- **Copper**: 17.5% spawn rate (more abundant here)
+- **Silver**: 7.5% spawn rate
   - Value: $75, Size: 2 units
   - 2-4 tile veins
-- **Aluminum**: 10% spawn rate
+- **Aluminum**: 5% spawn rate
   - Value: $60, Size: 2 units
 
 **Special Features:**
@@ -333,12 +333,12 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Silver**: 30% spawn rate (common here)
-- **Gold**: 15% spawn rate (first appearance!)
+- **Silver**: 15% spawn rate (common here)
+- **Gold**: 7.5% spawn rate (first appearance!)
   - Value: $150, Size: 2 units
   - 2-4 tile veins with golden color
-- **Copper**: 25% spawn rate
-- **Aluminum**: 10% spawn rate
+- **Copper**: 12.5% spawn rate
+- **Aluminum**: 5% spawn rate
 
 **Special Features:**
 
@@ -370,12 +370,12 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Gold**: 25% spawn rate (more common)
-- **Silver**: 20% spawn rate
-- **Platinum**: 8% spawn rate (first appearance!)
+- **Gold**: 12.5% spawn rate (more common)
+- **Silver**: 10% spawn rate
+- **Platinum**: 4% spawn rate (first appearance!)
   - Value: $250, Size: 2 units
   - 2-3 tile veins, bright silver color
-- **Neodymium**: 5% spawn rate
+- **Neodymium**: 2.5% spawn rate
   - Value: $300, Size: 1.5 units
   - Rare purple-silver crystals
 
@@ -409,15 +409,15 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Gold**: 35% spawn rate (abundant)
-- **Platinum**: 20% spawn rate
-- **Titanium**: 12% spawn rate
+- **Gold**: 17.5% spawn rate (abundant)
+- **Platinum**: 10% spawn rate
+- **Titanium**: 6% spawn rate
   - Value: $200, Size: 1.5 units
   - Dark gray metallic veins
-- **Ruby**: 5% spawn rate (first gem!)
+- **Ruby**: 2.5% spawn rate (first gem!)
   - Value: $500, Size: 0.5 units
   - Small red crystals, 1-2 tiles
-- **Neodymium**: 8% spawn rate
+- **Neodymium**: 4% spawn rate
 
 **Special Features:**
 
@@ -447,16 +447,16 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Platinum**: 30% spawn rate
-- **Ruby**: 12% spawn rate
-- **Emerald**: 8% spawn rate
+- **Platinum**: 15% spawn rate
+- **Ruby**: 6% spawn rate
+- **Emerald**: 4% spawn rate
   - Value: $600, Size: 0.5 units
   - Green crystals
-- **Diamond**: 5% spawn rate
+- **Diamond**: 2.5% spawn rate
   - Value: $800, Size: 0.5 units
   - Brilliant white crystals, 1-2 tiles
-- **Titanium**: 15% spawn rate
-- **Gold**: 20% spawn rate (still present)
+- **Titanium**: 7.5% spawn rate
+- **Gold**: 10% spawn rate (still present)
 
 **Special Features:**
 
@@ -488,14 +488,14 @@ Before bomb:          After bomb:
 
 **Resources Found:**
 
-- **Platinum**: 40% spawn rate (very common)
-- **Diamond**: 10% spawn rate
-- **Emerald**: 10% spawn rate
-- **Ruby**: 15% spawn rate
-- **Rhodium**: 3% spawn rate (rare!)
+- **Platinum**: 20% spawn rate (very common)
+- **Diamond**: 5% spawn rate
+- **Emerald**: 5% spawn rate
+- **Ruby**: 7.5% spawn rate
+- **Rhodium**: 1.5% spawn rate (rare!)
   - Value: $900, Size: 1 units
   - Ultra-reflective silver metal
-- **Titanium**: 12% spawn rate
+- **Titanium**: 6% spawn rate
 
 **Special Features:**
 

@@ -34,10 +34,12 @@
                 }
             ],
             "hazards": [],
+            "obstacles": [],
             "specialFeatures": [
                 "No hazards",
                 "Clear visibility",
-                "Tutorial zone"
+                "Tutorial zone",
+                "No obstacles - straight vertical drilling"
             ]
         },
         {
@@ -51,7 +53,7 @@
             "resources": [
                 {
                     "type": "iron",
-                    "seedRate": 0.12,
+                    "seedRate": 0.125,
                     "value": 25,
                     "size": 3,
                     "veinSizeMin": 3,
@@ -60,7 +62,7 @@
                 },
                 {
                     "type": "copper",
-                    "seedRate": 0.08,
+                    "seedRate": 0.075,
                     "value": 30,
                     "size": 3,
                     "veinSizeMin": 2,
@@ -86,8 +88,20 @@
                     "description": "Small gas pocket"
                 }
             ],
+            "obstacles": [
+                {
+                    "type": "bedrock",
+                    "coverage": 0.03,
+                    "formationSizes": [
+                        {"width": 2, "height": 2},
+                        {"width": 3, "height": 3}
+                    ]
+                }
+            ],
             "specialFeatures": [
-                "First gas pockets appear"
+                "First gas pockets appear",
+                "Bedrock obstacles (3% coverage)",
+                "Small 3x3 formations teach navigation"
             ]
         },
         {
@@ -110,7 +124,7 @@
                 },
                 {
                     "type": "copper",
-                    "seedRate": 0.18,
+                    "seedRate": 0.175,
                     "value": 30,
                     "size": 3,
                     "veinSizeMin": 2,
@@ -119,7 +133,7 @@
                 },
                 {
                     "type": "silver",
-                    "seedRate": 0.07,
+                    "seedRate": 0.075,
                     "value": 75,
                     "size": 2,
                     "veinSizeMin": 2,
@@ -152,9 +166,30 @@
                     "description": "Gas pocket"
                 }
             ],
+            "obstacles": [
+                {
+                    "type": "bedrock",
+                    "coverage": 0.08,
+                    "formationSizes": [
+                        {"width": 3, "height": 3},
+                        {"width": 4, "height": 4},
+                        {"width": 5, "height": 5}
+                    ]
+                },
+                {
+                    "type": "hardCrystal",
+                    "coverage": 0.02,
+                    "formationSizes": [
+                        {"width": 2, "height": 2},
+                        {"width": 3, "height": 3}
+                    ]
+                }
+            ],
             "specialFeatures": [
                 "Volcanic rock layer",
-                "Unstable rock formations"
+                "Unstable rock formations",
+                "Bedrock 8%, Hard Crystal 2%",
+                "5x5 to 8x8 formations force navigation"
             ]
         },
         {
@@ -177,7 +212,7 @@
                 },
                 {
                     "type": "gold",
-                    "seedRate": 0.08,
+                    "seedRate": 0.075,
                     "value": 150,
                     "size": 2,
                     "veinSizeMin": 2,
@@ -186,7 +221,7 @@
                 },
                 {
                     "type": "copper",
-                    "seedRate": 0.12,
+                    "seedRate": 0.125,
                     "value": 30,
                     "size": 3,
                     "veinSizeMin": 2,
@@ -219,10 +254,31 @@
                     "description": "Large gas pocket"
                 }
             ],
+            "obstacles": [
+                {
+                    "type": "bedrock",
+                    "coverage": 0.10,
+                    "formationSizes": [
+                        {"width": 4, "height": 4},
+                        {"width": 5, "height": 5},
+                        {"width": 6, "height": 6}
+                    ]
+                },
+                {
+                    "type": "hardCrystal",
+                    "coverage": 0.03,
+                    "formationSizes": [
+                        {"width": 2, "height": 2},
+                        {"width": 3, "height": 3}
+                    ]
+                }
+            ],
             "specialFeatures": [
                 "Cracked unstable geology",
                 "Visual cracks appear",
-                "First gold appearance"
+                "First gold appearance",
+                "Bedrock 10%, Hard Crystal 3%",
+                "8x10 formations, bombs useful"
             ]
         },
         {
@@ -236,7 +292,7 @@
             "resources": [
                 {
                     "type": "gold",
-                    "seedRate": 0.14,
+                    "seedRate": 0.125,
                     "value": 150,
                     "size": 2,
                     "veinSizeMin": 2,
@@ -263,7 +319,7 @@
                 },
                 {
                     "type": "neodymium",
-                    "seedRate": 0.03,
+                    "seedRate": 0.025,
                     "value": 300,
                     "size": 1.5,
                     "veinSizeMin": 1,
@@ -280,11 +336,32 @@
                     "description": "Gas pocket"
                 }
             ],
+            "obstacles": [
+                {
+                    "type": "bedrock",
+                    "coverage": 0.12,
+                    "formationSizes": [
+                        {"width": 5, "height": 5},
+                        {"width": 6, "height": 6},
+                        {"width": 7, "height": 7}
+                    ]
+                },
+                {
+                    "type": "hardCrystal",
+                    "coverage": 0.04,
+                    "formationSizes": [
+                        {"width": 2, "height": 2},
+                        {"width": 3, "height": 3}
+                    ]
+                }
+            ],
             "specialFeatures": [
                 "Old volcanic channels",
                 "Empty cave pockets (5x5)",
                 "First platinum appearance",
-                "Lava remnants (decorative)"
+                "Lava remnants (decorative)",
+                "Bedrock 12%, Hard Crystal 4%",
+                "10x15 formations, complex navigation"
             ]
         },
         {
@@ -298,7 +375,7 @@
             "resources": [
                 {
                     "type": "gold",
-                    "seedRate": 0.16,
+                    "seedRate": 0.175,
                     "value": 150,
                     "size": 2,
                     "veinSizeMin": 2,
@@ -325,7 +402,7 @@
                 },
                 {
                     "type": "ruby",
-                    "seedRate": 0.02,
+                    "seedRate": 0.025,
                     "value": 500,
                     "size": 0.5,
                     "veinSizeMin": 1,
@@ -351,11 +428,40 @@
                     "description": "Heavy cave-in"
                 }
             ],
+            "obstacles": [
+                {
+                    "type": "bedrock",
+                    "coverage": 0.15,
+                    "formationSizes": [
+                        {"width": 6, "height": 6},
+                        {"width": 7, "height": 7},
+                        {"width": 8, "height": 8}
+                    ]
+                },
+                {
+                    "type": "hardCrystal",
+                    "coverage": 0.05,
+                    "formationSizes": [
+                        {"width": 3, "height": 3},
+                        {"width": 4, "height": 4}
+                    ]
+                },
+                {
+                    "type": "reinforcedRock",
+                    "coverage": 0.03,
+                    "formationSizes": [
+                        {"width": 2, "height": 2},
+                        {"width": 3, "height": 3}
+                    ]
+                }
+            ],
             "specialFeatures": [
                 "Extremely hard compressed rock",
                 "High pressure zone",
                 "First ruby appearance",
-                "Movement slightly slower"
+                "Movement slightly slower",
+                "Bedrock 15%, Hard Crystal 5%, Reinforced Rock 3%",
+                "15x20 formations, bombs highly valuable"
             ]
         },
         {
@@ -396,7 +502,7 @@
                 },
                 {
                     "type": "diamond",
-                    "seedRate": 0.02,
+                    "seedRate": 0.025,
                     "value": 800,
                     "size": 0.5,
                     "veinSizeMin": 1,
@@ -405,7 +511,7 @@
                 },
                 {
                     "type": "titanium",
-                    "seedRate": 0.07,
+                    "seedRate": 0.075,
                     "value": 200,
                     "size": 1.5,
                     "veinSizeMin": 2,
@@ -423,12 +529,42 @@
                 }
             ],
             "hazards": [],
+            "obstacles": [
+                {
+                    "type": "bedrock",
+                    "coverage": 0.18,
+                    "formationSizes": [
+                        {"width": 7, "height": 7},
+                        {"width": 8, "height": 8},
+                        {"width": 9, "height": 9}
+                    ]
+                },
+                {
+                    "type": "hardCrystal",
+                    "coverage": 0.08,
+                    "formationSizes": [
+                        {"width": 3, "height": 3},
+                        {"width": 4, "height": 4},
+                        {"width": 5, "height": 5}
+                    ]
+                },
+                {
+                    "type": "reinforcedRock",
+                    "coverage": 0.05,
+                    "formationSizes": [
+                        {"width": 3, "height": 3},
+                        {"width": 4, "height": 4}
+                    ]
+                }
+            ],
             "specialFeatures": [
                 "Gem-bearing formation",
                 "Glittering walls",
                 "Crystal reflections and sparkles",
                 "Brittle formations (chain reactions)",
-                "Minimal hazards as reward"
+                "Minimal hazards as reward",
+                "Bedrock 18%, Hard Crystal 8%, Reinforced Rock 5%",
+                "Highest obstacle density, gems behind obstacles"
             ]
         },
         {
@@ -469,7 +605,7 @@
                 },
                 {
                     "type": "ruby",
-                    "seedRate": 0.08,
+                    "seedRate": 0.075,
                     "value": 500,
                     "size": 0.5,
                     "veinSizeMin": 1,
@@ -487,7 +623,7 @@
                 },
                 {
                     "type": "titanium",
-                    "seedRate": 0.12,
+                    "seedRate": 0.06,
                     "value": 200,
                     "size": 1.5,
                     "veinSizeMin": 2,
@@ -496,12 +632,42 @@
                 }
             ],
             "hazards": [],
+            "obstacles": [
+                {
+                    "type": "bedrock",
+                    "coverage": 0.20,
+                    "formationSizes": [
+                        {"width": 8, "height": 8},
+                        {"width": 9, "height": 9},
+                        {"width": 10, "height": 10}
+                    ]
+                },
+                {
+                    "type": "hardCrystal",
+                    "coverage": 0.06,
+                    "formationSizes": [
+                        {"width": 3, "height": 3},
+                        {"width": 4, "height": 4},
+                        {"width": 5, "height": 5}
+                    ]
+                },
+                {
+                    "type": "reinforcedRock",
+                    "coverage": 0.08,
+                    "formationSizes": [
+                        {"width": 3, "height": 3},
+                        {"width": 4, "height": 4}
+                    ]
+                }
+            ],
             "specialFeatures": [
                 "Hottest zone on Mars",
                 "Final challenge before core",
                 "Heat signatures (visual red glow)",
                 "Magnetic interference (HUD flickers)",
-                "Dense pockets take 2x longer"
+                "Dense pockets take 2x longer",
+                "Bedrock 20%, Hard Crystal 6%, Reinforced Rock 8%",
+                "Most complex navigation in game"
             ]
         },
         {
@@ -524,12 +690,14 @@
                 }
             ],
             "hazards": [],
+            "obstacles": [],
             "specialFeatures": [
                 "The goal",
                 "Open 10x10 chamber",
                 "Glowing orange-red core",
                 "Safe zone - no hazards",
-                "Dark Matter Crystal triggers prestige"
+                "Dark Matter Crystal triggers prestige",
+                "Hard Crystal walls guard entry"
             ]
         }
     ],
@@ -541,13 +709,12 @@
         },
         {
             "depth": 220,
-            "requirement": "Lava tubes show need for better fuel capacity",
-            "recommendedDrillLevel": null
+            "requirement": "Lava tubes strongly encourage Drill Level 3",
+            "recommendedDrillLevel": 3
         },
         {
             "depth": 300,
-            "requirement":
-                "Dense mantle REQUIRES Drill Level 3 or progress is painfully slow",
+            "requirement": "Dense mantle REQUIRES Drill Level 3 or progress is painfully slow",
             "recommendedDrillLevel": 3
         },
         {
