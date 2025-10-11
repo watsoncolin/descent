@@ -16,6 +16,7 @@ class CurrentRun: Codable {
     let planetId: String
     let startTime: Date
     var currentDepth: Double = 0
+    var coreExtracted: Bool = false  // True if Dark Matter was collected
 
     // MARK: - Pod State
     var pod: PodState

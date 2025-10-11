@@ -16,6 +16,7 @@ class TerrainManager {
     private let chunkHeight: Int = 50  // Blocks per chunk
     private let planetConfig: PlanetConfig
     private var terrainSeed: Int  // Unique seed for this terrain generation
+    private let soulCrystalBonus: Double  // Soul Crystal earnings multiplier
 
     // Storage
     private var blocks: [String: TerrainBlock] = [:]  // Key: "x,y"
@@ -24,11 +25,15 @@ class TerrainManager {
     private var obstacleMap: [String: TerrainBlock.BlockType] = [:]  // Key: "x,y", stores obstacle type at each position
     private var drilledPositions: Set<String> = []  // Key: "x,y", positions that have been drilled (永久 removed)
 
+    // Core chamber
+    private var coreCrystalSpawned: Bool = false
+
     // MARK: - Initialization
 
-    init(scene: SKScene, planet: Planet, seed: Int? = nil) {
+    init(scene: SKScene, planet: Planet, soulCrystalBonus: Double = 1.0, seed: Int? = nil) {
         self.scene = scene
         self.planet = planet
+        self.soulCrystalBonus = soulCrystalBonus
 
         // Use provided seed or generate new one based on timestamp
         self.terrainSeed = seed ?? Int(Date().timeIntervalSince1970 * 1000) + Int.random(in: 0...9999)
@@ -49,6 +54,7 @@ class TerrainManager {
         print("   - Seed: \(terrainSeed)")
         print("   - Total depth: \(config.totalDepth)m")
         print("   - Strata layers: \(config.strata.count)")
+        print("   - Soul Crystal bonus: \(soulCrystalBonus)x")
     }
 
     // MARK: - Chunk Management
@@ -374,12 +380,21 @@ class TerrainManager {
         // Skip positions that have been drilled - keep the shaft open!
         guard !drilledPositions.contains(key) else { return }
 
+        // Calculate depth in meters (1 tile = 1 meter)
+        let depth = Double(y)  // Each tile is 1 meter deep
+
+        // Skip blocks inside core chamber (10×10 open area at 490-500m)
+        if isInCoreChamber(x: x, y: y) {
+            // Spawn Dark Matter crystal once when core chamber is first loaded
+            if !coreCrystalSpawned && depth >= planetConfig.coreDepth {
+                spawnCoreCrystal(surfaceY: surfaceY)
+            }
+            return
+        }
+
         // Calculate position
         let blockX = scene.frame.minX + CGFloat(x) * TerrainBlock.size + TerrainBlock.size / 2
         let blockY = surfaceY - CGFloat(y) * TerrainBlock.size - TerrainBlock.size / 2
-
-        // Calculate depth in meters (1 tile = 1 meter)
-        let depth = Double(y)  // Each tile is 1 meter deep
 
         // Check if this block has an obstacle type (takes priority over materials)
         let blockType = obstacleMap[key] ?? .normal
@@ -400,6 +415,57 @@ class TerrainManager {
         blocks[key] = block
     }
 
+    // MARK: - Core Chamber
+
+    /// Check if a position is inside the core chamber
+    private func isInCoreChamber(x: Int, y: Int) -> Bool {
+        let depth = Double(y)
+
+        // Core chamber is at 490-500m depth
+        guard depth >= planetConfig.coreDepth && depth < planetConfig.totalDepth else {
+            return false
+        }
+
+        // Calculate center X position (middle of terrain width)
+        let centerX = width / 2
+
+        // Core chamber is 10×10 tiles centered horizontally
+        let chamberRadius = 5  // 5 tiles on each side of center
+        let xDistance = abs(x - centerX)
+
+        return xDistance <= chamberRadius
+    }
+
+    /// Spawn the Dark Matter crystal at the center of the core chamber
+    private func spawnCoreCrystal(surfaceY: CGFloat) {
+        guard let scene = scene else { return }
+        guard !coreCrystalSpawned else { return }
+
+        // Calculate center position of core chamber
+        let centerX = width / 2
+        let centerY = Int(planetConfig.coreDepth) + 5  // Middle of 10-tile vertical chamber
+
+        // World position
+        let blockX = scene.frame.minX + CGFloat(centerX) * TerrainBlock.size + TerrainBlock.size / 2
+        let blockY = surfaceY - CGFloat(centerY) * TerrainBlock.size - TerrainBlock.size / 2
+
+        // Create Dark Matter crystal block
+        let darkMatter = Material(type: .darkMatter, planetMultiplier: planetConfig.valueMultiplier, soulCrystalBonus: soulCrystalBonus)
+        let strataHardness = planetConfig.strata.first(where: { $0.contains(depth: Double(centerY)) })?.hardness ?? 5.0
+
+        let crystalBlock = TerrainBlock(material: darkMatter, depth: Double(centerY), strataHardness: strataHardness, blockType: .normal)
+        crystalBlock.position = CGPoint(x: blockX, y: blockY)
+        crystalBlock.zPosition = 1
+        crystalBlock.name = "\(centerX),\(centerY)"
+
+        scene.addChild(crystalBlock)
+        blocks["\(centerX),\(centerY)"] = crystalBlock
+
+        coreCrystalSpawned = true
+
+        print("💎 Dark Matter core crystal spawned at (\(centerX), \(centerY)) - depth \(centerY)m")
+    }
+
     // MARK: - Material Creation
 
     /// Create a Material instance from a ResourceConfig
@@ -410,7 +476,7 @@ class TerrainManager {
             return nil
         }
 
-        return Material(type: materialType, planetMultiplier: planetConfig.valueMultiplier)
+        return Material(type: materialType, planetMultiplier: planetConfig.valueMultiplier, soulCrystalBonus: soulCrystalBonus)
     }
 
     // MARK: - Block Access
@@ -449,6 +515,7 @@ class TerrainManager {
         veinMap.removeAll()
         obstacleMap.removeAll()
         drilledPositions.removeAll()
+        coreCrystalSpawned = false
 
         print("🗑️ Cleared all terrain - blocks: 0, chunks: 0, veins: 0, obstacles: 0, drilled: 0")
     }

@@ -104,10 +104,10 @@ struct Material {
         }
     }
 
-    /// Create a material instance with planet multiplier applied
-    init(type: MaterialType, planetMultiplier: Double = 1.0) {
+    /// Create a material instance with planet multiplier and Soul Crystal bonus applied
+    init(type: MaterialType, planetMultiplier: Double = 1.0, soulCrystalBonus: Double = 1.0) {
         self.type = type
-        self.value = type.baseValue * planetMultiplier
+        self.value = type.baseValue * planetMultiplier * soulCrystalBonus
         self.volume = type.volume
         self.hardness = type.hardness
     }

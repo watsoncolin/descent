@@ -32,6 +32,7 @@ class GameScene: SKScene {
     private var surfaceUI: SurfaceUI!
     private var sellDialog: SellDialog!
     private var gameOverDialog: GameOverDialog!
+    private var prestigeDialog: PrestigeDialog!
 
     // Terrain
     private var terrainManager: TerrainManager!
@@ -82,7 +83,8 @@ class GameScene: SKScene {
         addChild(cameraNode)
 
         // Create terrain manager
-        terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet)
+        let soulCrystalBonus = gameState.profile.totalMineralValueMultiplier
+        terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet, soulCrystalBonus: soulCrystalBonus)
 
         // Create shop building at surface
         setupShop()
@@ -206,6 +208,17 @@ class GameScene: SKScene {
             self?.completeGameOverReset()
         }
         cameraNode.addChild(gameOverDialog)
+
+        // Create Prestige Dialog (attach to camera)
+        prestigeDialog = PrestigeDialog(screenSize: view!.bounds.size)
+        prestigeDialog.zPosition = 350  // Above sell dialog
+        prestigeDialog.onPrestige = { [weak self] in
+            self?.performPrestige()
+        }
+        prestigeDialog.onContinue = { [weak self] in
+            self?.prestigeDialog.hide()
+        }
+        cameraNode.addChild(prestigeDialog)
 
         // Start at surface
         surfaceUI.show(gameState: gameState, hideHUD: { [weak self] hide in
@@ -336,6 +349,13 @@ class GameScene: SKScene {
         // If game over dialog is visible, handle touches there first
         if !gameOverDialog.isHidden {
             if gameOverDialog.handleTouch(at: locationInCamera) {
+                return
+            }
+        }
+
+        // If prestige dialog is visible, handle touches there first
+        if !prestigeDialog.isHidden {
+            if prestigeDialog.handleTouch(at: locationInCamera) {
                 return
             }
         }
@@ -607,7 +627,8 @@ class GameScene: SKScene {
         print("🗑️ Clearing terrain...")
         terrainManager.removeAllTerrain()
         print("🌍 Creating new terrain...")
-        terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet)
+        let soulCrystalBonus = gameState.profile.totalMineralValueMultiplier
+        terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet, soulCrystalBonus: soulCrystalBonus)
         print("📍 Loading chunks at surface position...")
         terrainManager.updateChunks(playerY: player.position.y)
 
@@ -622,6 +643,54 @@ class GameScene: SKScene {
 
         // Reset game over flag
         isGameOverInProgress = false
+    }
+
+    /// Perform prestige: sell cargo, earn Soul Crystals, reset planet
+    private func performPrestige() {
+        print("🌟 PERFORMING PRESTIGE!")
+
+        // Hide prestige dialog
+        prestigeDialog.hide()
+
+        // Sell all cargo first (adds to credits and completes run)
+        gameState.endRunSuccess()
+        print("💰 Cargo sold and added to earnings!")
+
+        // Perform prestige (this calculates Soul Crystals and resets planet)
+        let soulCrystalsEarned = gameState.prestige()
+        print("💎 Earned \(soulCrystalsEarned) Soul Crystals!")
+        print("💎 Total Soul Crystals: \(gameState.profile.soulCrystals)")
+        print("📈 New Earnings Bonus: \(Int((gameState.profile.soulCrystalEarningsBonus - 1.0) * 100))%")
+
+        // Reset player position to surface
+        player.position = CGPoint(x: frame.midX, y: frame.maxY - 100)
+        player.physicsBody?.velocity = .zero
+        player.stopThrust()
+
+        // Clear touch state
+        inputManager.reset()
+        isMovementLocked = false
+
+        // Reset camera to surface
+        cameraNode.position = CGPoint(x: frame.midX, y: frame.maxY - 100)
+
+        // Clear and regenerate terrain with new Soul Crystal bonus
+        print("🗑️ Clearing terrain...")
+        terrainManager.removeAllTerrain()
+        print("🌍 Creating new terrain with Soul Crystal bonus...")
+        let soulCrystalBonus = gameState.profile.totalMineralValueMultiplier
+        terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet, soulCrystalBonus: soulCrystalBonus)
+        print("📍 Loading chunks at surface position...")
+        terrainManager.updateChunks(playerY: player.position.y)
+
+        // Show surface UI
+        print("🎮 Showing surface UI...")
+        print("💵 Current credits: $\(Int(gameState.credits))")
+        surfaceUI.show(gameState: gameState, hideHUD: { [weak self] hide in
+            self?.hud.isHidden = hide
+        })
+
+        print("✨ Prestige complete!")
     }
 
     private func launchMiningRun() {
@@ -647,7 +716,8 @@ class GameScene: SKScene {
 
         // Regenerate terrain with new seed for this run
         terrainManager.removeAllTerrain()
-        terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet)
+        let soulCrystalBonus = gameState.profile.totalMineralValueMultiplier
+        terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet, soulCrystalBonus: soulCrystalBonus)
         terrainManager.updateChunks(playerY: player.position.y)
 
         gameState.startMiningRun()
@@ -978,6 +1048,12 @@ extension GameScene {
 
                     // Collect material if present
                     if let material = terrainManager.removeBlock(x: blockPos.x, y: blockPos.y) {
+                        // Check if Dark Matter (planet core) was collected
+                        if material.type == .darkMatter {
+                            gameState.currentRun?.coreExtracted = true
+                            print("💎 CORE EXTRACTED! You can now prestige at the surface!")
+                        }
+
                         if gameState.addToCargo(material) {
                             print("⛏️ Mined \(material.type.rawValue) worth $\(Int(material.value)) (fuel: -\(String(format: "%.1f", fuelCost)))")
                         } else {
@@ -1049,13 +1125,18 @@ extension GameScene: SKPhysicsContactDelegate {
         supplyDropUI.isHidden = true
         supplyDropSystem.reset()
 
-        // Update phase (but don't process the sale yet - wait for user to click "Sell All")
+        // Update phase (but don't process the sale yet - wait for user to click "Sell All" or prestige)
         gameState.phase = .surface
 
-        // Show sell dialog with run results BEFORE processing the sale
-        sellDialog.show(gameState: gameState)
-
-        print("🏁 Run ended - reached surface!")
+        // Check if core was extracted - show prestige dialog if so
+        if gameState.currentRun?.coreExtracted == true {
+            prestigeDialog.show(gameState: gameState)
+            print("🏁 Run ended - Core extracted! Prestige available!")
+        } else {
+            // Show sell dialog with run results BEFORE processing the sale
+            sellDialog.show(gameState: gameState)
+            print("🏁 Run ended - reached surface!")
+        }
         print("   - Cargo Value: $\(Int(gameState.cargoValue))")
         print("   - Depth Reached: \(Int(gameState.currentDepth))m")
     }

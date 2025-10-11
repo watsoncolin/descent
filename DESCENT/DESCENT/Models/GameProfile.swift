@@ -86,6 +86,18 @@ class GameProfile: Codable {
         let achievement = Achievement(id: achievementId, unlockedAt: Date(), planetId: planetId)
         achievements.append(achievement)
     }
+
+    // MARK: - Soul Crystal Earnings Bonus
+
+    /// Total earnings bonus from Soul Crystals (each crystal = 10% or 12% with amplifier)
+    var soulCrystalEarningsBonus: Double {
+        return 1.0 + (Double(soulCrystals) * (epicUpgrades.soulCrystalMultiplier / 100.0))
+    }
+
+    /// Combined mineral value multiplier (Soul Crystals + Epic Mineral Value Boost)
+    var totalMineralValueMultiplier: Double {
+        return soulCrystalEarningsBonus * epicUpgrades.mineralValueMultiplier
+    }
 }
 
 // MARK: - Epic Upgrades
