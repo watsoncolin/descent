@@ -895,10 +895,10 @@ extension GameScene {
             // This ensures we drill the block directly below, not the one further down
             drillTipPosition.y -= (podHalfHeight + 8)  // Just 8px below pod bottom
         case .left:
-            // For horizontal drilling, reach into the center of adjacent block
-            drillTipPosition.x -= (podHalfWidth + TerrainBlock.size / 2)  // Drill tip to the left
+            // For horizontal drilling, position just beyond pod edge
+            drillTipPosition.x -= (podHalfWidth + 8)  // Just 8px left of pod edge
         case .right:
-            drillTipPosition.x += (podHalfWidth + TerrainBlock.size / 2)  // Drill tip to the right
+            drillTipPosition.x += (podHalfWidth + 8)  // Just 8px right of pod edge
         }
 
         // For horizontal drilling, drill the 2 tiles that the pod is currently occupying
