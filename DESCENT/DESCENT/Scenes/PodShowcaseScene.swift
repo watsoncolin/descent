@@ -11,6 +11,14 @@ class PodShowcaseScene: SKScene {
 
     private var pods: [[PlayerPod]] = []
     private var labels: [SKLabelNode] = []
+    private var contentNode: SKNode!
+    private var cameraNode: SKCameraNode!
+
+    // Scrolling properties
+    private var touchStartY: CGFloat = 0
+    private var cameraStartY: CGFloat = 0
+    private var lastTouchY: CGFloat = 0
+    private var isDragging: Bool = false
 
     override func didMove(to view: SKView) {
         backgroundColor = UIColor(red: 0.1, green: 0.05, blue: 0.15, alpha: 1.0)
@@ -18,24 +26,34 @@ class PodShowcaseScene: SKScene {
         // Disable physics for showcase scene
         physicsWorld.gravity = .zero
 
+        // Setup camera for scrolling
+        cameraNode = SKCameraNode()
+        cameraNode.position = CGPoint(x: frame.midX, y: frame.midY)
+        addChild(cameraNode)
+        camera = cameraNode
+
+        // Create content node to hold all showcase content
+        contentNode = SKNode()
+        addChild(contentNode)
+
         setupShowcase()
     }
 
     private func setupShowcase() {
-        // Title
+        // Title (fixed to camera, not scrollable)
         let title = SKLabelNode(fontNamed: "AvenirNext-Bold")
         title.text = "POD UPGRADE SHOWCASE"
         title.fontSize = 24
         title.fontColor = .white
-        title.position = CGPoint(x: frame.midX, y: frame.maxY - 50)
-        addChild(title)
+        title.position = CGPoint(x: 0, y: frame.height / 2 - 50)
+        cameraNode.addChild(title)
 
         let subtitle = SKLabelNode(fontNamed: "AvenirNext-Regular")
-        subtitle.text = "Tap anywhere to return to game"
+        subtitle.text = "Scroll to view all upgrades • Double-tap to return"
         subtitle.fontSize = 14
         subtitle.fontColor = UIColor(white: 0.7, alpha: 1.0)
-        subtitle.position = CGPoint(x: frame.midX, y: frame.maxY - 80)
-        addChild(subtitle)
+        subtitle.position = CGPoint(x: 0, y: frame.height / 2 - 80)
+        cameraNode.addChild(subtitle)
 
         // Create grid layout
         let startY = frame.maxY - 150
@@ -46,11 +64,11 @@ class PodShowcaseScene: SKScene {
         createPodRow(
             startY: startY - 30,
             configs: [
-                (drill: 1, hull: 1, engine: 1, label: "Lv 1"),
-                (drill: 2, hull: 1, engine: 1, label: "Lv 2"),
-                (drill: 3, hull: 1, engine: 1, label: "Lv 3"),
-                (drill: 4, hull: 1, engine: 1, label: "Lv 4"),
-                (drill: 5, hull: 1, engine: 1, label: "Lv 5")
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 1"),
+                (drill: 2, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 2"),
+                (drill: 3, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 3"),
+                (drill: 4, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 4"),
+                (drill: 5, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 5")
             ]
         )
 
@@ -59,12 +77,12 @@ class PodShowcaseScene: SKScene {
         createPodRow(
             startY: startY - spacing - 30,
             configs: [
-                (drill: 1, hull: 1, engine: 1, label: "Lv 1"),
-                (drill: 1, hull: 2, engine: 1, label: "Lv 2"),
-                (drill: 1, hull: 3, engine: 1, label: "Lv 3"),
-                (drill: 1, hull: 4, engine: 1, label: "Lv 4"),
-                (drill: 1, hull: 5, engine: 1, label: "Lv 5"),
-                (drill: 1, hull: 6, engine: 1, label: "Lv 6")
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 1"),
+                (drill: 1, hull: 2, engine: 1, fuel: 1, cargo: 1, label: "Lv 2"),
+                (drill: 1, hull: 3, engine: 1, fuel: 1, cargo: 1, label: "Lv 3"),
+                (drill: 1, hull: 4, engine: 1, fuel: 1, cargo: 1, label: "Lv 4"),
+                (drill: 1, hull: 5, engine: 1, fuel: 1, cargo: 1, label: "Lv 5"),
+                (drill: 1, hull: 6, engine: 1, fuel: 1, cargo: 1, label: "Lv 6")
             ]
         )
 
@@ -73,48 +91,76 @@ class PodShowcaseScene: SKScene {
         createPodRow(
             startY: startY - spacing * 2 - 30,
             configs: [
-                (drill: 1, hull: 1, engine: 1, label: "Lv 1"),
-                (drill: 1, hull: 1, engine: 2, label: "Lv 2"),
-                (drill: 1, hull: 1, engine: 3, label: "Lv 3"),
-                (drill: 1, hull: 1, engine: 4, label: "Lv 4"),
-                (drill: 1, hull: 1, engine: 5, label: "Lv 5")
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 1"),
+                (drill: 1, hull: 1, engine: 2, fuel: 1, cargo: 1, label: "Lv 2"),
+                (drill: 1, hull: 1, engine: 3, fuel: 1, cargo: 1, label: "Lv 3"),
+                (drill: 1, hull: 1, engine: 4, fuel: 1, cargo: 1, label: "Lv 4"),
+                (drill: 1, hull: 1, engine: 5, fuel: 1, cargo: 1, label: "Lv 5")
             ]
         )
 
-        // Section 4: Combined Examples
-        addSectionLabel("COMBINED UPGRADES", at: CGPoint(x: frame.midX, y: startY - spacing * 3))
+        // Section 4: Fuel Tank Levels
+        addSectionLabel("FUEL TANK", at: CGPoint(x: frame.midX, y: startY - spacing * 3))
         createPodRow(
             startY: startY - spacing * 3 - 30,
             configs: [
-                (drill: 1, hull: 1, engine: 1, label: "Basic"),
-                (drill: 3, hull: 3, engine: 3, label: "Mid Tier"),
-                (drill: 5, hull: 6, engine: 5, label: "Max Power"),
-                (drill: 2, hull: 5, engine: 1, label: "Tank Build"),
-                (drill: 5, hull: 2, engine: 5, label: "Speed Build")
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 1"),
+                (drill: 1, hull: 1, engine: 1, fuel: 2, cargo: 1, label: "Lv 2"),
+                (drill: 1, hull: 1, engine: 1, fuel: 3, cargo: 1, label: "Lv 3"),
+                (drill: 1, hull: 1, engine: 1, fuel: 4, cargo: 1, label: "Lv 4"),
+                (drill: 1, hull: 1, engine: 1, fuel: 5, cargo: 1, label: "Lv 5"),
+                (drill: 1, hull: 1, engine: 1, fuel: 6, cargo: 1, label: "Lv 6")
             ]
         )
 
-        // Section 5: Progressive Upgrade Path
-        addSectionLabel("PROGRESSION EXAMPLE", at: CGPoint(x: frame.midX, y: startY - spacing * 4))
+        // Section 5: Cargo Capacity Levels
+        addSectionLabel("CARGO CAPACITY", at: CGPoint(x: frame.midX, y: startY - spacing * 4))
         createPodRow(
             startY: startY - spacing * 4 - 30,
             configs: [
-                (drill: 1, hull: 1, engine: 1, label: "Start"),
-                (drill: 2, hull: 2, engine: 1, label: "Early"),
-                (drill: 3, hull: 3, engine: 2, label: "Mid"),
-                (drill: 4, hull: 4, engine: 3, label: "Late"),
-                (drill: 5, hull: 5, engine: 4, label: "End"),
-                (drill: 5, hull: 6, engine: 5, label: "Max")
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Lv 1"),
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 2, label: "Lv 2"),
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 3, label: "Lv 3"),
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 4, label: "Lv 4"),
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 5, label: "Lv 5"),
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 6, label: "Lv 6")
             ]
         )
 
-        // Section 6: Material Blocks (embedded in soil)
-        addSectionLabel("MATERIALS (Embedded in Soil)", at: CGPoint(x: frame.midX, y: startY - spacing * 5))
-        createMaterialRow(startY: startY - spacing * 5 - 30)
+        // Section 7: Combined Examples
+        addSectionLabel("COMBINED UPGRADES", at: CGPoint(x: frame.midX, y: startY - spacing * 5))
+        createPodRow(
+            startY: startY - spacing * 5 - 30,
+            configs: [
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Basic"),
+                (drill: 3, hull: 3, engine: 3, fuel: 3, cargo: 3, label: "Mid Tier"),
+                (drill: 5, hull: 6, engine: 5, fuel: 6, cargo: 6, label: "Max Power"),
+                (drill: 2, hull: 5, engine: 1, fuel: 4, cargo: 2, label: "Tank Build"),
+                (drill: 5, hull: 2, engine: 5, fuel: 2, cargo: 5, label: "Speed Build")
+            ]
+        )
 
-        // Section 7: Terrain Strata Types
-        addSectionLabel("TERRAIN STRATA", at: CGPoint(x: frame.midX, y: startY - spacing * 6.5))
-        createStrataRow(startY: startY - spacing * 6.5 - 30)
+        // Section 8: Progressive Upgrade Path
+        addSectionLabel("PROGRESSION EXAMPLE", at: CGPoint(x: frame.midX, y: startY - spacing * 6))
+        createPodRow(
+            startY: startY - spacing * 6 - 30,
+            configs: [
+                (drill: 1, hull: 1, engine: 1, fuel: 1, cargo: 1, label: "Start"),
+                (drill: 2, hull: 2, engine: 1, fuel: 2, cargo: 2, label: "Early"),
+                (drill: 3, hull: 3, engine: 2, fuel: 3, cargo: 3, label: "Mid"),
+                (drill: 4, hull: 4, engine: 3, fuel: 4, cargo: 4, label: "Late"),
+                (drill: 5, hull: 5, engine: 4, fuel: 5, cargo: 5, label: "End"),
+                (drill: 5, hull: 6, engine: 5, fuel: 6, cargo: 6, label: "Max")
+            ]
+        )
+
+        // Section 9: Material Blocks (embedded in soil)
+        addSectionLabel("MATERIALS (Embedded in Soil)", at: CGPoint(x: frame.midX, y: startY - spacing * 7))
+        createMaterialRow(startY: startY - spacing * 7 - 30)
+
+        // Section 10: Terrain Strata Types
+        addSectionLabel("TERRAIN STRATA", at: CGPoint(x: frame.midX, y: startY - spacing * 8.5))
+        createStrataRow(startY: startY - spacing * 8.5 - 30)
     }
 
     private func addSectionLabel(_ text: String, at position: CGPoint) {
@@ -123,10 +169,10 @@ class PodShowcaseScene: SKScene {
         label.fontSize = 18
         label.fontColor = UIColor(red: 1.0, green: 0.84, blue: 0.0, alpha: 1.0)  // Gold
         label.position = position
-        addChild(label)
+        contentNode.addChild(label)
     }
 
-    private func createPodRow(startY: CGFloat, configs: [(drill: Int, hull: Int, engine: Int, label: String)]) {
+    private func createPodRow(startY: CGFloat, configs: [(drill: Int, hull: Int, engine: Int, fuel: Int, cargo: Int, label: String)]) {
         let totalWidth = frame.width * 0.9
         let spacing = totalWidth / CGFloat(configs.count)
         let startX = (frame.width - totalWidth) / 2 + spacing / 2
@@ -138,13 +184,19 @@ class PodShowcaseScene: SKScene {
             // Create pod
             let pod = PlayerPod()
             pod.position = CGPoint(x: x, y: y)
-            pod.updateUpgrades(drillLevel: config.drill, hullLevel: config.hull, engineLevel: config.engine)
+            pod.forceUpdateUpgrades(
+                drillLevel: config.drill,
+                hullLevel: config.hull,
+                engineLevel: config.engine,
+                fuelLevel: config.fuel,
+                cargoLevel: config.cargo
+            )
 
             // Disable physics for showcase (these are static displays)
             pod.physicsBody?.isDynamic = false
             pod.physicsBody?.affectedByGravity = false
 
-            addChild(pod)
+            contentNode.addChild(pod)
 
             // Add label below pod
             let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
@@ -152,15 +204,15 @@ class PodShowcaseScene: SKScene {
             label.fontSize = 12
             label.fontColor = .white
             label.position = CGPoint(x: x, y: y - 35)
-            addChild(label)
+            contentNode.addChild(label)
 
-            // Add detail labels (smaller, showing D/H/E levels)
+            // Add detail labels (smaller, showing D/H/E/F/C levels)
             let detailLabel = SKLabelNode(fontNamed: "AvenirNext-Regular")
-            detailLabel.text = "D:\(config.drill) H:\(config.hull) E:\(config.engine)"
+            detailLabel.text = "D:\(config.drill) H:\(config.hull) E:\(config.engine) F:\(config.fuel) C:\(config.cargo)"
             detailLabel.fontSize = 9
             detailLabel.fontColor = UIColor(white: 0.6, alpha: 1.0)
             detailLabel.position = CGPoint(x: x, y: y - 48)
-            addChild(detailLabel)
+            contentNode.addChild(detailLabel)
 
             // Add background panel for each pod
             let panel = SKShapeNode(rectOf: CGSize(width: spacing * 0.9, height: 90), cornerRadius: 5)
@@ -169,7 +221,7 @@ class PodShowcaseScene: SKScene {
             panel.lineWidth = 1
             panel.position = CGPoint(x: x, y: y - 5)
             panel.zPosition = -1
-            addChild(panel)
+            contentNode.addChild(panel)
         }
     }
 
@@ -201,7 +253,7 @@ class PodShowcaseScene: SKScene {
                 let block = TerrainBlock(material: material, depth: 150)
                 block.position = CGPoint(x: x, y: y)
                 block.physicsBody?.isDynamic = false
-                addChild(block)
+                contentNode.addChild(block)
 
                 // Add material name label
                 let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
@@ -209,7 +261,7 @@ class PodShowcaseScene: SKScene {
                 label.fontSize = 10
                 label.fontColor = .white
                 label.position = CGPoint(x: x, y: y - 35)
-                addChild(label)
+                contentNode.addChild(label)
 
                 // Add visual type label (ore/crystal)
                 let typeLabel = SKLabelNode(fontNamed: "AvenirNext-Regular")
@@ -217,7 +269,7 @@ class PodShowcaseScene: SKScene {
                 typeLabel.fontSize = 8
                 typeLabel.fontColor = UIColor(white: 0.6, alpha: 1.0)
                 typeLabel.position = CGPoint(x: x, y: y - 47)
-                addChild(typeLabel)
+                contentNode.addChild(typeLabel)
 
                 // Add background panel
                 let panel = SKShapeNode(rectOf: CGSize(width: 65, height: 75), cornerRadius: 3)
@@ -226,7 +278,7 @@ class PodShowcaseScene: SKScene {
                 panel.lineWidth = 1
                 panel.position = CGPoint(x: x, y: y - 5)
                 panel.zPosition = -1
-                addChild(panel)
+                contentNode.addChild(panel)
             }
         }
     }
@@ -255,7 +307,7 @@ class PodShowcaseScene: SKScene {
             let block = TerrainBlock(material: nil, depth: depthInfo.depth)
             block.position = CGPoint(x: x, y: y)
             block.physicsBody?.isDynamic = false
-            addChild(block)
+            contentNode.addChild(block)
 
             // Add depth label
             let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
@@ -266,7 +318,7 @@ class PodShowcaseScene: SKScene {
             label.position = CGPoint(x: x, y: y - 40)
             label.verticalAlignmentMode = .top
             label.horizontalAlignmentMode = .center
-            addChild(label)
+            contentNode.addChild(label)
 
             // Add background panel
             let panel = SKShapeNode(rectOf: CGSize(width: 80, height: 95), cornerRadius: 3)
@@ -275,14 +327,52 @@ class PodShowcaseScene: SKScene {
             panel.lineWidth = 1
             panel.position = CGPoint(x: x, y: y - 5)
             panel.zPosition = -1
-            addChild(panel)
+            contentNode.addChild(panel)
         }
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // Return to game scene
-        let gameScene = GameScene(size: size)
-        gameScene.scaleMode = .aspectFill
-        view?.presentScene(gameScene, transition: SKTransition.fade(withDuration: 0.5))
+        guard let touch = touches.first else { return }
+
+        // Check for double-tap to return to game
+        if touch.tapCount == 2 {
+            let gameScene = GameScene(size: size)
+            gameScene.scaleMode = .aspectFill
+            view?.presentScene(gameScene, transition: SKTransition.fade(withDuration: 0.5))
+            return
+        }
+
+        // Start drag for scrolling
+        touchStartY = touch.location(in: self).y
+        cameraStartY = cameraNode.position.y
+        lastTouchY = touchStartY
+        isDragging = true
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first, isDragging else { return }
+
+        let currentY = touch.location(in: self).y
+        let deltaY = currentY - touchStartY
+
+        // Move camera (invert direction for natural scrolling)
+        let newY = cameraStartY - deltaY
+
+        // Clamp camera position to content bounds
+        // Content extends from top (frame.maxY - 150) down to bottom (frame.maxY - 1200)
+        // Allow scrolling down to see bottom content and up to see top content
+        let minY = frame.midY - 800  // Allow scrolling down to see bottom content
+        let maxY = frame.midY + 200   // Allow scrolling up slightly from start position
+        cameraNode.position.y = max(minY, min(newY, maxY))
+
+        lastTouchY = currentY
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        isDragging = false
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        isDragging = false
     }
 }

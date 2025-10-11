@@ -23,12 +23,16 @@ class PlayerPod: SKSpriteNode {
     private var drillStrengthLevel: Int = 1
     private var hullArmorLevel: Int = 1
     private var engineSpeedLevel: Int = 1
+    private var fuelTankLevel: Int = 1
+    private var cargoLevel: Int = 1
 
     // Visual elements (named for easy updates)
     private var bodyNode: SKShapeNode?
     private var armorPlates: [SKShapeNode] = []
     private var drillBits: [SKShapeNode] = []
     private var engineThrusters: [SKShapeNode] = []
+    private var fuelTanks: [SKShapeNode] = []
+    private var cargoPods: [SKShapeNode] = []
 
     // Particle effects
     private var exhaustEmitter: SKEmitterNode?
@@ -332,21 +336,42 @@ class PlayerPod: SKSpriteNode {
     // MARK: - Visual Upgrades
 
     /// Update pod visuals based on upgrade levels
-    func updateUpgrades(drillLevel: Int, hullLevel: Int, engineLevel: Int) {
+    func updateUpgrades(drillLevel: Int, hullLevel: Int, engineLevel: Int, fuelLevel: Int = 1, cargoLevel: Int = 1) {
         // Only update if levels actually changed
         let needsUpdate = drillLevel != drillStrengthLevel ||
                          hullLevel != hullArmorLevel ||
-                         engineLevel != engineSpeedLevel
+                         engineLevel != engineSpeedLevel ||
+                         fuelLevel != fuelTankLevel ||
+                         cargoLevel != self.cargoLevel
 
         guard needsUpdate else { return }
 
         drillStrengthLevel = drillLevel
         hullArmorLevel = hullLevel
         engineSpeedLevel = engineLevel
+        fuelTankLevel = fuelLevel
+        self.cargoLevel = cargoLevel
 
         updateDrillVisuals()
         updateHullVisuals()
         updateEngineVisuals()
+        updateFuelTankVisuals()
+        updateCargoVisuals()
+    }
+
+    /// Force update pod visuals without checking if levels changed (for preview/showcase)
+    func forceUpdateUpgrades(drillLevel: Int, hullLevel: Int, engineLevel: Int, fuelLevel: Int = 1, cargoLevel: Int = 1) {
+        drillStrengthLevel = drillLevel
+        hullArmorLevel = hullLevel
+        engineSpeedLevel = engineLevel
+        fuelTankLevel = fuelLevel
+        self.cargoLevel = cargoLevel
+
+        updateDrillVisuals()
+        updateHullVisuals()
+        updateEngineVisuals()
+        updateFuelTankVisuals()
+        updateCargoVisuals()
     }
 
     private func updateDrillVisuals() {
@@ -490,6 +515,137 @@ class PlayerPod: SKSpriteNode {
         thruster.zPosition = 1
         addChild(thruster)
         engineThrusters.append(thruster)
+    }
+
+    private func updateFuelTankVisuals() {
+        // Remove old fuel tanks
+        fuelTanks.forEach { $0.removeFromParent() }
+        fuelTanks.removeAll()
+
+        // Add external fuel tanks based on level (1-6)
+        if fuelTankLevel >= 2 {
+            // Level 2+: Small external tanks on sides
+            addFuelTank(at: CGPoint(x: -20, y: 10), width: 4, height: 16)
+            addFuelTank(at: CGPoint(x: 20, y: 10), width: 4, height: 16)
+        }
+
+        if fuelTankLevel >= 3 {
+            // Level 3+: Larger tanks
+            addFuelTank(at: CGPoint(x: -22, y: 8), width: 5, height: 20)
+            addFuelTank(at: CGPoint(x: 22, y: 8), width: 5, height: 20)
+        }
+
+        if fuelTankLevel >= 4 {
+            // Level 4+: Extended tanks with caps
+            addFuelTank(at: CGPoint(x: -24, y: 6), width: 6, height: 24)
+            addFuelTank(at: CGPoint(x: 24, y: 6), width: 6, height: 24)
+            // Add cap indicators (fuel level indicators)
+            addFuelCap(at: CGPoint(x: -24, y: 18))
+            addFuelCap(at: CGPoint(x: 24, y: 18))
+        }
+
+        if fuelTankLevel >= 5 {
+            // Level 5+: Dual tank configuration
+            addFuelTank(at: CGPoint(x: -26, y: 12), width: 5, height: 12)
+            addFuelTank(at: CGPoint(x: 26, y: 12), width: 5, height: 12)
+            addFuelTank(at: CGPoint(x: -26, y: -6), width: 5, height: 12)
+            addFuelTank(at: CGPoint(x: 26, y: -6), width: 5, height: 12)
+        }
+
+        if fuelTankLevel >= 6 {
+            // Level 6: Maximum capacity - glowing tanks with orange fuel color
+            fuelTanks.forEach { tank in
+                tank.glowWidth = 2
+                tank.fillColor = UIColor(red: 1.0, green: 0.6, blue: 0.2, alpha: 0.8)
+            }
+        }
+    }
+
+    private func addFuelTank(at position: CGPoint, width: CGFloat, height: CGFloat) {
+        let tank = SKShapeNode(rectOf: CGSize(width: width, height: height), cornerRadius: 2)
+        tank.fillColor = UIColor(red: 0.9, green: 0.5, blue: 0.1, alpha: 0.7)  // Orange fuel
+        tank.strokeColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)  // Gray metal
+        tank.lineWidth = 1
+        tank.position = position
+        tank.zPosition = 0.5  // Behind armor but above body
+        addChild(tank)
+        fuelTanks.append(tank)
+    }
+
+    private func addFuelCap(at position: CGPoint) {
+        let cap = SKShapeNode(circleOfRadius: 2)
+        cap.fillColor = UIColor(red: 0.7, green: 0.7, blue: 0.7, alpha: 1.0)
+        cap.strokeColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1.0)
+        cap.lineWidth = 1
+        cap.position = position
+        cap.zPosition = 1.5
+        addChild(cap)
+        fuelTanks.append(cap)
+    }
+
+    private func updateCargoVisuals() {
+        // Remove old cargo pods
+        cargoPods.forEach { $0.removeFromParent() }
+        cargoPods.removeAll()
+
+        // Add cargo containers based on level (1-6)
+        if cargoLevel >= 2 {
+            // Level 2+: Small cargo compartments
+            addCargoPod(at: CGPoint(x: -18, y: -10), width: 8, height: 8)
+            addCargoPod(at: CGPoint(x: 18, y: -10), width: 8, height: 8)
+        }
+
+        if cargoLevel >= 3 {
+            // Level 3+: Expanded cargo bays
+            addCargoPod(at: CGPoint(x: -20, y: -8), width: 10, height: 10)
+            addCargoPod(at: CGPoint(x: 20, y: -8), width: 10, height: 10)
+        }
+
+        if cargoLevel >= 4 {
+            // Level 4+: Large cargo containers
+            addCargoPod(at: CGPoint(x: -22, y: -6), width: 12, height: 14)
+            addCargoPod(at: CGPoint(x: 22, y: -6), width: 12, height: 14)
+            // Add cargo straps/indicators
+            addCargoStrap(at: CGPoint(x: -22, y: -2))
+            addCargoStrap(at: CGPoint(x: 22, y: -2))
+        }
+
+        if cargoLevel >= 5 {
+            // Level 5+: Reinforced cargo with multiple compartments
+            addCargoPod(at: CGPoint(x: -24, y: 2), width: 10, height: 10)
+            addCargoPod(at: CGPoint(x: 24, y: 2), width: 10, height: 10)
+            addCargoPod(at: CGPoint(x: -24, y: -14), width: 10, height: 10)
+            addCargoPod(at: CGPoint(x: 24, y: -14), width: 10, height: 10)
+        }
+
+        if cargoLevel >= 6 {
+            // Level 6: Maximum capacity - metallic sheen with golden trim
+            cargoPods.forEach { pod in
+                pod.strokeColor = UIColor(red: 1.0, green: 0.84, blue: 0.0, alpha: 1.0)
+                pod.lineWidth = 2
+            }
+        }
+    }
+
+    private func addCargoPod(at position: CGPoint, width: CGFloat, height: CGFloat) {
+        let pod = SKShapeNode(rectOf: CGSize(width: width, height: height), cornerRadius: 2)
+        pod.fillColor = UIColor(red: 0.4, green: 0.3, blue: 0.2, alpha: 0.8)  // Brown cargo
+        pod.strokeColor = UIColor(red: 0.6, green: 0.5, blue: 0.4, alpha: 1.0)  // Tan trim
+        pod.lineWidth = 1
+        pod.position = position
+        pod.zPosition = 0.5  // Behind armor but above body
+        addChild(pod)
+        cargoPods.append(pod)
+    }
+
+    private func addCargoStrap(at position: CGPoint) {
+        let strap = SKShapeNode(rectOf: CGSize(width: 2, height: 6))
+        strap.fillColor = UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0)
+        strap.strokeColor = .clear
+        strap.position = position
+        strap.zPosition = 1.5
+        addChild(strap)
+        cargoPods.append(strap)
     }
 
     // MARK: - Update

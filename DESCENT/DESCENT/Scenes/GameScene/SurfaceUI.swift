@@ -17,6 +17,8 @@ class SurfaceUI: SKNode {
     private var titleLabel: SKLabelNode!
     private var creditsLabel: SKLabelNode!
     private var launchButton: SKShapeNode!
+    private var podPreview: PlayerPod!
+    private var podPreviewLabel: SKLabelNode!
 
     // Tab system
     private var upgradesTab: SKShapeNode!
@@ -95,6 +97,23 @@ class SurfaceUI: SKNode {
         creditsLabel.zPosition = 1
         addChild(creditsLabel)
 
+        // Pod preview (centered, below tabs, above upgrade list)
+        podPreview = PlayerPod()
+        podPreview.position = CGPoint(x: 0, y: screenHeight / 2 - topMargin - 200)
+        podPreview.zPosition = 2
+        podPreview.setScale(1.8)  // Make it bigger for visibility
+        podPreview.physicsBody?.isDynamic = false  // Static display
+        addChild(podPreview)
+
+        // Pod preview label
+        podPreviewLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        podPreviewLabel.text = "YOUR POD"
+        podPreviewLabel.fontSize = 14
+        podPreviewLabel.fontColor = UIColor(white: 0.7, alpha: 1.0)
+        podPreviewLabel.position = CGPoint(x: 0, y: screenHeight / 2 - topMargin - 300)
+        podPreviewLabel.zPosition = 2
+        addChild(podPreviewLabel)
+
         // Tab buttons
         let tabWidth: CGFloat = 150
         let tabHeight: CGFloat = 40
@@ -158,19 +177,19 @@ class SurfaceUI: SKNode {
         launchLabel.verticalAlignmentMode = .center
         launchButton.addChild(launchLabel)
 
-        // Reset button (for testing) - positioned to the left of launch button
-        let resetButton = SKShapeNode(rectOf: CGSize(width: 140, height: 40), cornerRadius: 8)
-        resetButton.fillColor = UIColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 1.0)
+        // Reset button (for testing) - small button in bottom-left corner
+        let resetButton = SKShapeNode(rectOf: CGSize(width: 80, height: 30), cornerRadius: 5)
+        resetButton.fillColor = UIColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 0.8)
         resetButton.strokeColor = .white
-        resetButton.lineWidth = 2
-        resetButton.position = CGPoint(x: -screenWidth / 2 + 90, y: -screenHeight / 2 + bottomMargin)
+        resetButton.lineWidth = 1
+        resetButton.position = CGPoint(x: -screenWidth / 2 + 50, y: -screenHeight / 2 + 25)
         resetButton.zPosition = 1
         resetButton.name = "resetButton"
         addChild(resetButton)
 
         let resetLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        resetLabel.text = "RESET ALL"
-        resetLabel.fontSize = 16
+        resetLabel.text = "RESET"
+        resetLabel.fontSize = 12
         resetLabel.fontColor = .white
         resetLabel.verticalAlignmentMode = .center
         resetButton.addChild(resetLabel)
@@ -203,9 +222,36 @@ class SurfaceUI: SKNode {
         // Update credits display
         creditsLabel.text = "Credits: $\(Int(gameState.credits))"
 
+        // Update pod preview with current upgrades
+        updatePodPreview(gameState: gameState)
+
         // Rebuild shop items
         rebuildUpgradesShop(gameState: gameState)
         rebuildConsumablesShop(gameState: gameState)
+    }
+
+    /// Update the pod preview to show current upgrade levels
+    func updatePodPreview(gameState: GameState) {
+        // Remove old pod preview
+        podPreview.removeFromParent()
+
+        // Create new pod preview
+        podPreview = PlayerPod()
+        podPreview.position = CGPoint(x: 0, y: screenHeight / 2 - 100 - 200)
+        podPreview.zPosition = 2
+        podPreview.setScale(1.8)
+        podPreview.physicsBody?.isDynamic = false
+
+        // Force update upgrades by setting them directly before adding to scene
+        podPreview.forceUpdateUpgrades(
+            drillLevel: gameState.drillStrengthLevel,
+            hullLevel: gameState.hullArmorLevel,
+            engineLevel: gameState.engineSpeedLevel,
+            fuelLevel: gameState.fuelTankLevel,
+            cargoLevel: gameState.cargoLevel
+        )
+
+        addChild(podPreview)
     }
 
     func hide(showHUD: ((Bool) -> Void)? = nil) {
@@ -216,7 +262,7 @@ class SurfaceUI: SKNode {
     private func rebuildUpgradesShop(gameState: GameState) {
         upgradesContainer.removeAllChildren()
 
-        var yPos: CGFloat = 50
+        var yPos: CGFloat = -100  // Start lower to make room for pod preview
         let spacing: CGFloat = 50
 
         // Fuel Tank
@@ -270,7 +316,7 @@ class SurfaceUI: SKNode {
     private func rebuildConsumablesShop(gameState: GameState) {
         consumablesContainer.removeAllChildren()
 
-        var yPos: CGFloat = 50
+        var yPos: CGFloat = -100  // Start lower to make room for pod preview
         let spacing: CGFloat = 50
 
         // Repair Kit

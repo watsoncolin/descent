@@ -103,6 +103,7 @@ struct EpicUpgrades: Codable {
     var coldResistance: Int = 0             // 0-3
     var cheaperUpgrades: Int = 0            // 0-5
     var fasterDrilling: Int = 0             // 0-3
+    var supplyPodCapacity: Int = 1          // 1-5 (default: 5 items)
 
     // Calculated multipliers
     var soulCrystalMultiplier: Double {
@@ -115,6 +116,18 @@ struct EpicUpgrades: Codable {
 
     var upgradeDiscountMultiplier: Double {
         return pow(0.8, Double(cheaperUpgrades))
+    }
+
+    // Supply pod capacity based on level
+    var actualSupplyPodCapacity: Int {
+        switch supplyPodCapacity {
+        case 1: return 5
+        case 2: return 8
+        case 3: return 12
+        case 4: return 15
+        case 5: return 20
+        default: return 5
+        }
     }
 
     var drillSpeedMultiplier: Double {

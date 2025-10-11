@@ -25,6 +25,10 @@ class TerrainBlock: SKSpriteNode {
     let maxHealth: Int  // Store initial health for damage percentage calculation
     let strataHardness: Double  // Strata layer hardness for fuel consumption
 
+    // Track the primary drill direction (most recent direction drilled from)
+    private var primaryDrillDirection: DrillDirection?
+    private var originalPosition: CGPoint = .zero  // Store initial position
+
     // Crack overlay sprites (additive layers)
     private var crackOverlay1: SKSpriteNode?  // Light cracks (generated once)
     private var crackOverlay2: SKSpriteNode?  // Medium cracks (generated once)
@@ -182,8 +186,8 @@ class TerrainBlock: SKSpriteNode {
         }
     }
 
-    /// Apply damage to the block, returns true if destroyed
-    func takeDamage(_ amount: Int, drillLevel: Int = 1) -> Bool {
+    /// Apply damage to the block from a specific direction, returns true if destroyed
+    func takeDamage(_ amount: Int, drillLevel: Int = 1, from direction: DrillDirection) -> Bool {
         // Check if block can be drilled
         if !canDrill(withDrillLevel: drillLevel) {
             // Visual feedback for hitting indestructible block
@@ -194,6 +198,19 @@ class TerrainBlock: SKSpriteNode {
             run(flash)
             return false
         }
+
+        // If drill direction changed, reset original position to current position
+        if primaryDrillDirection != direction {
+            originalPosition = position
+        }
+
+        // Store original position on first damage
+        if primaryDrillDirection == nil {
+            originalPosition = position
+        }
+
+        // Update primary drill direction to current direction
+        primaryDrillDirection = direction
 
         health -= amount
 
@@ -206,21 +223,8 @@ class TerrainBlock: SKSpriteNode {
             return true
         }
 
-        // Calculate health percentage
-        let healthPercent = CGFloat(health) / CGFloat(maxHealth)
-
-        // Progressively scale block down as it takes damage (from 100% to 20% size)
-        let minScale: CGFloat = 0.2
-        let scale = minScale + (1.0 - minScale) * healthPercent
-        setScale(scale)
-
-        // Update physics body to match new size
-        let scaledSize = CGSize(width: TerrainBlock.size * scale, height: TerrainBlock.size * scale)
-        physicsBody = SKPhysicsBody(rectangleOf: scaledSize)
-        physicsBody?.isDynamic = false
-        physicsBody?.categoryBitMask = 2  // Terrain
-        physicsBody?.contactTestBitMask = 1  // Player
-        physicsBody?.collisionBitMask = 1  // Player
+        // Apply directional scaling and positioning based on current direction
+        updateDirectionalAppearance()
 
         // Update crack overlay based on new health
         updateCrackOverlay()
@@ -233,6 +237,58 @@ class TerrainBlock: SKSpriteNode {
         run(flash)
 
         return false
+    }
+
+    /// Update block appearance based on directional drilling progress
+    private func updateDirectionalAppearance() {
+        guard let direction = primaryDrillDirection else { return }
+
+        // Calculate total damage percentage
+        let healthPercent = CGFloat(health) / CGFloat(maxHealth)
+        let damagePercent = 1.0 - healthPercent
+
+        // Scale: from 100% to 20% (keep 20% minimum so block doesn't disappear)
+        let minScale: CGFloat = 0.2
+        let scaleReduction = damagePercent * 0.8  // Max 80% reduction
+
+        var horizontalScale: CGFloat = 1.0
+        var verticalScale: CGFloat = 1.0
+        var offset = CGPoint.zero
+        let blockHalf = TerrainBlock.size / 2
+
+        // Apply scaling and offset based on primary drill direction
+        switch direction {
+        case .left:
+            // Pod drilling LEFT (from right side) → remove RIGHT side of block → shift left
+            horizontalScale = max(minScale, 1.0 - scaleReduction)
+            offset.x = -blockHalf * scaleReduction
+        case .right:
+            // Pod drilling RIGHT (from left side) → remove LEFT side of block → shift right
+            horizontalScale = max(minScale, 1.0 - scaleReduction)
+            offset.x = blockHalf * scaleReduction
+        case .down:
+            // Pod drilling DOWN (from above) → remove TOP of block → shift down
+            verticalScale = max(minScale, 1.0 - scaleReduction)
+            offset.y = -blockHalf * scaleReduction
+        }
+
+        // Apply scaling
+        xScale = horizontalScale
+        yScale = verticalScale
+
+        // Apply position offset
+        position = CGPoint(x: originalPosition.x + offset.x, y: originalPosition.y + offset.y)
+
+        // Update physics body to match new size and position
+        let scaledSize = CGSize(
+            width: TerrainBlock.size * horizontalScale,
+            height: TerrainBlock.size * verticalScale
+        )
+        physicsBody = SKPhysicsBody(rectangleOf: scaledSize)
+        physicsBody?.isDynamic = false
+        physicsBody?.categoryBitMask = 2  // Terrain
+        physicsBody?.contactTestBitMask = 1  // Player
+        physicsBody?.collisionBitMask = 1  // Player
     }
 
     // MARK: - Particle Effects

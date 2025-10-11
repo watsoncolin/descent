@@ -11,6 +11,7 @@ class GameScene: SKScene {
     private var inputManager: InputManager!
     private var damageSystem: DamageSystem!
     private var consumableSystem: ConsumableSystem!
+    private var supplyDropSystem: SupplyDropSystem!
 
     // Debug showcase (triple tap to activate)
     private var lastTapTime: TimeInterval = 0
@@ -22,6 +23,7 @@ class GameScene: SKScene {
     // HUD
     private var hud: HUD!
     private var consumableUI: ConsumableUI!
+    private var supplyDropUI: SupplyDropUI!
 
     // Visual effects
     private var shieldEffect: SKShapeNode?
@@ -69,6 +71,10 @@ class GameScene: SKScene {
 
         consumableSystem = ConsumableSystem(gameState: gameState)
         consumableSystem.delegate = self
+
+        supplyDropSystem = SupplyDropSystem()
+        supplyDropSystem.delegate = self
+        supplyDropSystem.updateCapacity(gameState.profile.epicUpgrades.actualSupplyPodCapacity)
 
         // Create camera
         cameraNode = SKCameraNode()
@@ -131,6 +137,25 @@ class GameScene: SKScene {
         }
         consumableUI.isHidden = true  // Hidden until mining starts
         cameraNode.addChild(consumableUI)
+
+        // Create Supply Drop UI (attach to camera)
+        supplyDropUI = SupplyDropUI(screenSize: view!.bounds.size, supplyDropSystem: supplyDropSystem)
+        supplyDropUI.zPosition = 160  // Above consumable UI, below dialogs
+        supplyDropUI.onOrderConfirmed = { [weak self] in
+            guard let self = self else { return }
+            let success = self.supplyDropSystem.orderSupplyDrop(
+                playerPosition: self.player.position,
+                gameState: self.gameState
+            )
+            if !success {
+                print("❌ Cannot order supply drop - insufficient credits or delivery in progress")
+            }
+        }
+        supplyDropUI.onClearOrder = { [weak self] in
+            self?.supplyDropSystem.clearOrder()
+        }
+        supplyDropUI.isHidden = true  // Hidden until mining starts
+        cameraNode.addChild(supplyDropUI)
 
         // Create Surface UI (attach to camera)
         surfaceUI = SurfaceUI(screenSize: view!.bounds.size)
@@ -336,6 +361,13 @@ class GameScene: SKScene {
             }
         }
 
+        // Check if touch hit supply drop UI
+        if !supplyDropUI.isHidden {
+            if supplyDropUI.handleTouch(at: locationInCamera, gameState: gameState) {
+                return
+            }
+        }
+
         // Normal movement controls - delegate to InputManager
         inputManager.handleTouchesBegan(touches, in: self)
     }
@@ -450,6 +482,25 @@ class GameScene: SKScene {
 
         // Update Consumable UI
         consumableUI.update(gameState: gameState)
+
+        // Update Supply Drop System
+        if gameState.phase == .mining {
+            supplyDropSystem.update(
+                deltaTime: clampedDeltaTime,
+                playerPosition: player.position,
+                playerVelocity: player.physicsBody?.velocity ?? .zero
+            )
+
+            // Update supply drop UI
+            if let countdown = supplyDropSystem.getCurrentCountdown() {
+                let isMoving = supplyDropSystem.isPlayerMoving(velocity: player.physicsBody?.velocity ?? .zero)
+                supplyDropUI.showCountdown(timeRemaining: countdown, isMoving: isMoving)
+                supplyDropUI.updateSupplyButton(countdown: countdown)
+            } else {
+                supplyDropUI.hideCountdown()
+                supplyDropUI.updateSupplyButton(countdown: nil)
+            }
+        }
     }
 
     private func updateCamera() {
@@ -522,8 +573,10 @@ class GameScene: SKScene {
         // Clear touch state
         inputManager.reset()
 
-        // Hide consumable UI
+        // Hide consumable UI and supply drop UI
         consumableUI.isHidden = true
+        supplyDropUI.isHidden = true
+        supplyDropSystem.reset()
     }
 
     private func completeGameOverReset() {
@@ -587,7 +640,9 @@ class GameScene: SKScene {
         player.updateUpgrades(
             drillLevel: gameState.drillStrengthLevel,
             hullLevel: gameState.hullArmorLevel,
-            engineLevel: gameState.engineSpeedLevel
+            engineLevel: gameState.engineSpeedLevel,
+            fuelLevel: gameState.fuelTankLevel,
+            cargoLevel: gameState.cargoLevel
         )
 
         // Regenerate terrain with new seed for this run
@@ -599,6 +654,7 @@ class GameScene: SKScene {
         surfaceUI.hide(showHUD: { [weak self] _ in
             self?.hud.isHidden = false
             self?.consumableUI.isHidden = false  // Show consumable buttons
+            self?.supplyDropUI.isHidden = false  // Show supply drop button
         })
         isGameOverInProgress = false  // Reset game over flag
     }
@@ -656,11 +712,13 @@ class GameScene: SKScene {
                 gameState.credits -= cost
                 gameState.drillStrengthLevel += 1
                 print("⛏️ Upgraded Drill Strength to Level \(gameState.drillStrengthLevel)")
-                // Update pod visuals
+                // Update player pod visuals
                 player.updateUpgrades(
                     drillLevel: gameState.drillStrengthLevel,
                     hullLevel: gameState.hullArmorLevel,
-                    engineLevel: gameState.engineSpeedLevel
+                    engineLevel: gameState.engineSpeedLevel,
+                    fuelLevel: gameState.fuelTankLevel,
+                    cargoLevel: gameState.cargoLevel
                 )
             } else {
                 print("💸 Not enough credits! Need $\(Int(cost))")
@@ -692,11 +750,13 @@ class GameScene: SKScene {
                 gameState.credits -= cost
                 gameState.hullArmorLevel += 1
                 print("🛡️ Upgraded Hull Armor to Level \(gameState.hullArmorLevel) (Max Hull: \(gameState.maxHull))")
-                // Update pod visuals
+                // Update player pod visuals
                 player.updateUpgrades(
                     drillLevel: gameState.drillStrengthLevel,
                     hullLevel: gameState.hullArmorLevel,
-                    engineLevel: gameState.engineSpeedLevel
+                    engineLevel: gameState.engineSpeedLevel,
+                    fuelLevel: gameState.fuelTankLevel,
+                    cargoLevel: gameState.cargoLevel
                 )
             } else {
                 print("💸 Not enough credits! Need $\(Int(cost))")
@@ -713,11 +773,13 @@ class GameScene: SKScene {
                 gameState.credits -= cost
                 gameState.engineSpeedLevel += 1
                 print("🚀 Upgraded Engine Speed to Level \(gameState.engineSpeedLevel)")
-                // Update pod visuals
+                // Update player pod visuals
                 player.updateUpgrades(
                     drillLevel: gameState.drillStrengthLevel,
                     hullLevel: gameState.hullArmorLevel,
-                    engineLevel: gameState.engineSpeedLevel
+                    engineLevel: gameState.engineSpeedLevel,
+                    fuelLevel: gameState.fuelTankLevel,
+                    cargoLevel: gameState.cargoLevel
                 )
             } else {
                 print("💸 Not enough credits! Need $\(Int(cost))")
@@ -738,6 +800,9 @@ class GameScene: SKScene {
                 print("💸 Not enough credits! Need $\(Int(cost))")
             }
         }
+
+        // Refresh surface UI to show updated values and pod preview
+        surfaceUI.show(gameState: gameState)
     }
 
     private func purchaseConsumable(_ type: SurfaceUI.ConsumableType) {
@@ -895,7 +960,7 @@ extension GameScene {
         let drillPower = gameState.drillStrengthLevel
         for blockPos in blockPositions {
             if let targetBlock = terrainManager.getBlock(x: blockPos.x, y: blockPos.y) {
-                if targetBlock.takeDamage(drillPower, drillLevel: drillPower) {
+                if targetBlock.takeDamage(drillPower, drillLevel: drillPower, from: drillDirection) {
                     // Block destroyed! Consume fuel for THIS tile (FUEL_SYSTEM.md:45-68)
                     // Formula: fuelPerTile = baseDrillCost × strataHardness / drillLevel
                     let baseDrillCost = 1.0
@@ -977,8 +1042,10 @@ extension GameScene: SKPhysicsContactDelegate {
         // Clear touch state
         inputManager.reset()
 
-        // Hide consumable UI
+        // Hide consumable UI and supply drop UI
         consumableUI.isHidden = true
+        supplyDropUI.isHidden = true
+        supplyDropSystem.reset()
 
         // Update phase (but don't process the sale yet - wait for user to click "Sell All")
         gameState.phase = .surface
@@ -1272,6 +1339,38 @@ extension GameScene {
                 SKAction.group([moveOut, fade]),
                 removeDroplet
             ]))
+        }
+    }
+}
+
+// MARK: - SupplyDropSystemDelegate
+extension GameScene: SupplyDropSystemDelegate {
+    func supplyDropSystemDidStartDelivery() {
+        print("📦 Supply drop order placed - 30 second countdown started")
+    }
+
+    func supplyDropSystemDidCancelDelivery() {
+        print("⚠️ Supply drop cancelled - player moved too much!")
+        // Show cancellation message (could add a toast notification here)
+    }
+
+    func supplyDropSystemDidCompleteDelivery(items: [SupplyDropSystem.SupplyItem: Int]) {
+        let totalItems = items.values.reduce(0, +)
+        print("✅ Supply drop completed: \(totalItems) items")
+    }
+
+    func supplyDropSystemNeedsSupplyPod(at position: CGPoint, items: [SupplyDropSystem.SupplyItem: Int]) {
+        // Spawn the supply pod animation
+        let supplyPod = SupplyPod(items: items)
+        addChild(supplyPod)
+
+        // Animate the drop
+        supplyPod.animateDrop(to: position, screenHeight: view!.bounds.height)
+
+        // When pod lands, add items to inventory
+        supplyPod.onLanded = { [weak self] in
+            guard let self = self else { return }
+            self.supplyDropSystem.finishDelivery(items: items, gameState: self.gameState)
         }
     }
 }

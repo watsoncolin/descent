@@ -18,7 +18,7 @@ class DamageSystem {
     weak var delegate: DamageSystemDelegate?
 
     private var lastImpactTime: TimeInterval = 0
-    private let impactCooldown: TimeInterval = 0.3
+    private let impactCooldown: TimeInterval = 0.4  // Balanced to reduce excessive collision spam
 
     // MARK: - Impact Damage
 
@@ -56,11 +56,11 @@ class DamageSystem {
         // Base damage thresholds (tuned for 24x36 pod)
         let baseDamageThreshold: CGFloat
         switch gameState.impactDampenersLevel {
-        case 0: baseDamageThreshold = 10    // Very fragile
-        case 1: baseDamageThreshold = 25    // Can handle moderate falls
-        case 2: baseDamageThreshold = 50    // Can handle fast falls
+        case 0: baseDamageThreshold = 12    // More forgiving for early game
+        case 1: baseDamageThreshold = 30    // Can handle moderate falls
+        case 2: baseDamageThreshold = 55    // Can handle fast falls
         case 3: baseDamageThreshold = .infinity  // No fall damage ever
-        default: baseDamageThreshold = 10
+        default: baseDamageThreshold = 12
         }
 
         // Scale threshold by pod size (bigger pods need higher thresholds)
@@ -74,8 +74,8 @@ class DamageSystem {
             return false
         }
 
-        // Calculate and apply damage
-        let damage = (impactForce - damageThreshold) * 2.0
+        // Calculate and apply damage (reduced multiplier for early game survivability)
+        let damage = (impactForce - damageThreshold) * 1.0
         let hullDestroyed = gameState.takeDamage(damage)
         lastImpactTime = currentTime
 

@@ -60,6 +60,44 @@ A **run** is a single mining expedition from surface to core (or back to surface
 - **Prestige** (if core was extracted): Reset planet, gain Soul Crystals
 - **Switch planets**: Choose different planet (if unlocked)
 - **Quit to main menu**: Save progress
+- **Two options when returning to surface:**
+
+**Option A - Bank & Continue:**
+
+- Sell all minerals immediately for Credits
+- Credits are banked (safe, can't lose them)
+- Cargo empties
+- Pod refuels to max automatically
+- Hull repairs to max automatically
+- Can immediately descend again for another trip
+- Repeat as many times as fuel/skill allows
+- Run continues until you choose "End Run"
+
+**Option B - End Run:**
+
+- Sell all minerals for Credits
+- Credits are banked
+- Run ends, proceed to upgrade shop
+- View run statistics
+- Purchase upgrades with accumulated Credits
+
+**Strategic Depth:**
+
+- Multiple trips per run maximize earnings
+- Risk management: Continue for more or end while safe?
+- High fuel capacity enables 3-5 trips per run
+- Each trip deeper can collect better minerals
+
+**5. After Ending Run**
+
+- Spend Credits on Common Upgrades (fuel, cargo, drill, hull, speed, dampeners)
+- Use Golden Gems (if any) on Epic Upgrades (permanent unlocks)
+- View detailed run statistics (total earned, trips made, depth reached)
+- **Planet regenerates** - all drilled terrain respawns with fresh resources
+- **Start another run**: Same planet, with your new upgrades, but terrain is fresh
+- **Prestige** (if core was extracted): Reset planet, gain Soul Crystals
+- **Switch planets**: Choose different planet (if unlocked)
+- **Quit to main menu**: Save progress
 
 ### Planet Reset Behavior
 
