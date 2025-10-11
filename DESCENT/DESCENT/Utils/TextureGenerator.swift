@@ -977,6 +977,187 @@ class TextureGenerator {
             }
         }
     }
+
+    // MARK: - Embedded Material Textures
+
+    /// Generate texture showing an ore chunk embedded in soil
+    func embeddedOreTexture(materialColor: UIColor, soilColor: UIColor) -> SKTexture {
+        let size = 24
+        let scale: CGFloat = 3.0
+
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: size, height: size), false, scale)
+        guard let context = UIGraphicsGetCurrentContext() else {
+            UIGraphicsEndImageContext()
+            return SKTexture()
+        }
+
+        // Fill background with soil
+        soilColor.setFill()
+        context.fill(CGRect(x: 0, y: 0, width: size, height: size))
+
+        // Add soil texture noise
+        let darkSoil = soilColor.darker(by: 0.2)
+        let lightSoil = soilColor.lighter(by: 0.1)
+
+        for y in 0..<size {
+            for x in 0..<size {
+                let random = Double.random(in: 0...1)
+                if random < 0.15 {
+                    darkSoil.setFill()
+                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                } else if random > 0.85 {
+                    lightSoil.setFill()
+                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                }
+            }
+        }
+
+        // Draw irregular ore chunk in center (taking up ~60% of block)
+        let centerX = size / 2
+        let centerY = size / 2
+        let oreRadius = 6 // Approximate radius
+
+        materialColor.setFill()
+
+        // Create organic blob shape for ore
+        for y in 0..<size {
+            for x in 0..<size {
+                let dx = Double(x - centerX)
+                let dy = Double(y - centerY)
+                let distance = sqrt(dx * dx + dy * dy)
+
+                // Use noise-based threshold for irregular edge
+                let angle = atan2(dy, dx)
+                let noiseOffset = sin(angle * 3.0) * 2.0 + cos(angle * 5.0) * 1.5
+                let threshold = Double(oreRadius) + noiseOffset
+
+                if distance < threshold {
+                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                }
+            }
+        }
+
+        // Add highlights and shadows to ore for depth
+        let highlight = materialColor.lighter(by: 0.3)
+        let shadow = materialColor.darker(by: 0.3)
+
+        for y in 0..<size {
+            for x in 0..<size {
+                let dx = Double(x - centerX)
+                let dy = Double(y - centerY)
+                let distance = sqrt(dx * dx + dy * dy)
+                let angle = atan2(dy, dx)
+                let noiseOffset = sin(angle * 3.0) * 2.0 + cos(angle * 5.0) * 1.5
+                let threshold = Double(oreRadius) + noiseOffset
+
+                if distance < threshold {
+                    // Add highlights on top-left
+                    if x < centerX && y < centerY && Double.random(in: 0...1) < 0.2 {
+                        highlight.setFill()
+                        context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                    }
+                    // Add shadows on bottom-right
+                    else if x > centerX && y > centerY && Double.random(in: 0...1) < 0.15 {
+                        shadow.setFill()
+                        context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                    }
+                }
+            }
+        }
+
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return SKTexture(image: image ?? UIImage())
+    }
+
+    /// Generate texture showing a crystal formation embedded in soil
+    func embeddedCrystalTexture(materialColor: UIColor, soilColor: UIColor) -> SKTexture {
+        let size = 24
+        let scale: CGFloat = 3.0
+
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: size, height: size), false, scale)
+        guard let context = UIGraphicsGetCurrentContext() else {
+            UIGraphicsEndImageContext()
+            return SKTexture()
+        }
+
+        // Fill background with soil
+        soilColor.setFill()
+        context.fill(CGRect(x: 0, y: 0, width: size, height: size))
+
+        // Add soil texture noise
+        let darkSoil = soilColor.darker(by: 0.2)
+        let lightSoil = soilColor.lighter(by: 0.1)
+
+        for y in 0..<size {
+            for x in 0..<size {
+                let random = Double.random(in: 0...1)
+                if random < 0.15 {
+                    darkSoil.setFill()
+                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                } else if random > 0.85 {
+                    lightSoil.setFill()
+                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                }
+            }
+        }
+
+        // Draw crystal cluster in center
+        let centerX = size / 2
+        let centerY = size / 2
+
+        materialColor.setFill()
+
+        // Draw 3-5 crystal shards radiating from center
+        let numCrystals = Int.random(in: 3...5)
+        for i in 0..<numCrystals {
+            let angle = (Double(i) / Double(numCrystals)) * .pi * 2.0 + Double.random(in: -0.3...0.3)
+            let length = Double.random(in: 5...8)
+            let width = Double.random(in: 2...3)
+
+            // Draw crystal shard as elongated diamond shape
+            context.beginPath()
+
+            // Tip of crystal
+            let tipX = centerX + Int(cos(angle) * length)
+            let tipY = centerY + Int(sin(angle) * length)
+
+            // Perpendicular offset for width
+            let perpAngle = angle + .pi / 2.0
+            let w1X = centerX + Int(cos(perpAngle) * width)
+            let w1Y = centerY + Int(sin(perpAngle) * width)
+            let w2X = centerX - Int(cos(perpAngle) * width)
+            let w2Y = centerY - Int(sin(perpAngle) * width)
+
+            context.move(to: CGPoint(x: tipX, y: tipY))
+            context.addLine(to: CGPoint(x: w1X, y: w1Y))
+            context.addLine(to: CGPoint(x: centerX, y: centerY))
+            context.addLine(to: CGPoint(x: w2X, y: w2Y))
+            context.closePath()
+            context.fillPath()
+        }
+
+        // Add bright highlights to crystals for sparkle
+        let highlight = materialColor.lighter(by: 0.5)
+        highlight.setFill()
+
+        for _ in 0...(numCrystals * 2) {
+            let angle = Double.random(in: 0...(.pi * 2))
+            let distance = Double.random(in: 1...6)
+            let x = centerX + Int(cos(angle) * distance)
+            let y = centerY + Int(sin(angle) * distance)
+
+            if x >= 0 && x < size && y >= 0 && y < size {
+                context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+            }
+        }
+
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return SKTexture(image: image ?? UIImage())
+    }
 }
 
 // MARK: - UIColor Extensions

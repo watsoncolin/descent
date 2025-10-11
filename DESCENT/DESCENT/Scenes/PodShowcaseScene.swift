@@ -107,6 +107,14 @@ class PodShowcaseScene: SKScene {
                 (drill: 5, hull: 6, engine: 5, label: "Max")
             ]
         )
+
+        // Section 6: Material Blocks (embedded in soil)
+        addSectionLabel("MATERIALS (Embedded in Soil)", at: CGPoint(x: frame.midX, y: startY - spacing * 5))
+        createMaterialRow(startY: startY - spacing * 5 - 30)
+
+        // Section 7: Terrain Strata Types
+        addSectionLabel("TERRAIN STRATA", at: CGPoint(x: frame.midX, y: startY - spacing * 6.5))
+        createStrataRow(startY: startY - spacing * 6.5 - 30)
     }
 
     private func addSectionLabel(_ text: String, at position: CGPoint) {
@@ -156,6 +164,112 @@ class PodShowcaseScene: SKScene {
 
             // Add background panel for each pod
             let panel = SKShapeNode(rectOf: CGSize(width: spacing * 0.9, height: 90), cornerRadius: 5)
+            panel.fillColor = UIColor(white: 0.1, alpha: 0.3)
+            panel.strokeColor = UIColor(white: 0.3, alpha: 0.5)
+            panel.lineWidth = 1
+            panel.position = CGPoint(x: x, y: y - 5)
+            panel.zPosition = -1
+            addChild(panel)
+        }
+    }
+
+    private func createMaterialRow(startY: CGFloat) {
+        // Get all material types
+        let materials = Material.MaterialType.allCases
+
+        // Create multiple rows if needed (7 materials per row)
+        let materialsPerRow = 7
+        let rowCount = (materials.count + materialsPerRow - 1) / materialsPerRow
+        let blockSize: CGFloat = 48
+        let horizontalSpacing: CGFloat = 70
+        let verticalSpacing: CGFloat = 85
+
+        for row in 0..<rowCount {
+            let startIndex = row * materialsPerRow
+            let endIndex = min(startIndex + materialsPerRow, materials.count)
+            let rowMaterials = Array(materials[startIndex..<endIndex])
+
+            let totalWidth = CGFloat(rowMaterials.count - 1) * horizontalSpacing
+            let startX = frame.midX - totalWidth / 2
+            let y = startY - CGFloat(row) * verticalSpacing
+
+            for (index, materialType) in rowMaterials.enumerated() {
+                let x = startX + CGFloat(index) * horizontalSpacing
+
+                // Create material block embedded in soil (depth 150 for mid-level dirt)
+                let material = Material(type: materialType)
+                let block = TerrainBlock(material: material, depth: 150)
+                block.position = CGPoint(x: x, y: y)
+                block.physicsBody?.isDynamic = false
+                addChild(block)
+
+                // Add material name label
+                let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
+                label.text = materialType.rawValue.capitalized
+                label.fontSize = 10
+                label.fontColor = .white
+                label.position = CGPoint(x: x, y: y - 35)
+                addChild(label)
+
+                // Add visual type label (ore/crystal)
+                let typeLabel = SKLabelNode(fontNamed: "AvenirNext-Regular")
+                typeLabel.text = materialType.visualType == .ore ? "ore" : "crystal"
+                typeLabel.fontSize = 8
+                typeLabel.fontColor = UIColor(white: 0.6, alpha: 1.0)
+                typeLabel.position = CGPoint(x: x, y: y - 47)
+                addChild(typeLabel)
+
+                // Add background panel
+                let panel = SKShapeNode(rectOf: CGSize(width: 65, height: 75), cornerRadius: 3)
+                panel.fillColor = UIColor(white: 0.1, alpha: 0.3)
+                panel.strokeColor = UIColor(white: 0.3, alpha: 0.5)
+                panel.lineWidth = 1
+                panel.position = CGPoint(x: x, y: y - 5)
+                panel.zPosition = -1
+                addChild(panel)
+            }
+        }
+    }
+
+    private func createStrataRow(startY: CGFloat) {
+        // Create terrain blocks at different depths to show strata variations
+        let depths: [(depth: Double, label: String)] = [
+            (0, "0m\nShallow Dirt"),
+            (50, "50m\nLight Dirt"),
+            (100, "100m\nDeep Dirt"),
+            (200, "200m\nDark Dirt"),
+            (300, "300m\nStone"),
+            (500, "500m\nDeep Stone")
+        ]
+
+        let blockSize: CGFloat = 48
+        let spacing: CGFloat = 90
+        let totalWidth = CGFloat(depths.count - 1) * spacing
+        let startX = frame.midX - totalWidth / 2
+
+        for (index, depthInfo) in depths.enumerated() {
+            let x = startX + CGFloat(index) * spacing
+            let y = startY
+
+            // Create plain terrain block (no material)
+            let block = TerrainBlock(material: nil, depth: depthInfo.depth)
+            block.position = CGPoint(x: x, y: y)
+            block.physicsBody?.isDynamic = false
+            addChild(block)
+
+            // Add depth label
+            let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
+            label.text = depthInfo.label
+            label.numberOfLines = 2
+            label.fontSize = 10
+            label.fontColor = .white
+            label.position = CGPoint(x: x, y: y - 40)
+            label.verticalAlignmentMode = .top
+            label.horizontalAlignmentMode = .center
+            addChild(label)
+
+            // Add background panel
+            let panel = SKShapeNode(rectOf: CGSize(width: 80, height: 95), cornerRadius: 3)
             panel.fillColor = UIColor(white: 0.1, alpha: 0.3)
             panel.strokeColor = UIColor(white: 0.3, alpha: 0.5)
             panel.lineWidth = 1

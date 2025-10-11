@@ -23,6 +23,9 @@ class GameScene: SKScene {
     private var hud: HUD!
     private var consumableUI: ConsumableUI!
 
+    // Visual effects
+    private var shieldEffect: SKShapeNode?
+
     // Surface UI
     private var surfaceUI: SurfaceUI!
     private var sellDialog: SellDialog!
@@ -98,12 +101,14 @@ class GameScene: SKScene {
             guard let self = self else { return }
             if self.consumableSystem.useConsumable(.repairKit) {
                 print("🔧 Repair Kit used!")
+                self.createRepairEffect()
             }
         }
         consumableUI.onUseFuelCell = { [weak self] in
             guard let self = self else { return }
             if self.consumableSystem.useConsumable(.fuelCell) {
                 print("⛽ Fuel Cell used!")
+                self.createFuelEffect()
             }
         }
         consumableUI.onUseBomb = { [weak self] in
@@ -285,7 +290,6 @@ class GameScene: SKScene {
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
         let locationInCamera = touch.location(in: cameraNode)
 
         // Debug: Triple tap to open showcase (only at surface)
@@ -739,11 +743,14 @@ class GameScene: SKScene {
     private func purchaseConsumable(_ type: SurfaceUI.ConsumableType) {
         guard let planet = gameState.planetState else { return }
 
+        let maxConsumables = 99
         let cost: Double
         switch type {
         case .repairKit:
             cost = 150  // HULL_SYSTEM.md:369
-            if gameState.credits >= cost {
+            if planet.consumables.repairKits >= maxConsumables {
+                print("🔧 Repair Kit inventory full (max: \(maxConsumables))")
+            } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.repairKits += 1
                 print("🔧 Purchased Repair Kit (x\(planet.consumables.repairKits))")
@@ -753,7 +760,9 @@ class GameScene: SKScene {
 
         case .fuelCell:
             cost = 200  // FUEL_SYSTEM.md:203
-            if gameState.credits >= cost {
+            if planet.consumables.fuelCells >= maxConsumables {
+                print("⛽ Fuel Cell inventory full (max: \(maxConsumables))")
+            } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.fuelCells += 1
                 print("⛽ Purchased Fuel Cell (x\(planet.consumables.fuelCells))")
@@ -763,7 +772,9 @@ class GameScene: SKScene {
 
         case .bomb:
             cost = 75
-            if gameState.credits >= cost {
+            if planet.consumables.bombs >= maxConsumables {
+                print("💣 Mining Bomb inventory full (max: \(maxConsumables))")
+            } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.bombs += 1
                 print("💣 Purchased Mining Bomb (x\(planet.consumables.bombs))")
@@ -773,7 +784,9 @@ class GameScene: SKScene {
 
         case .teleporter:
             cost = 150
-            if gameState.credits >= cost {
+            if planet.consumables.teleporters >= maxConsumables {
+                print("🌀 Teleporter inventory full (max: \(maxConsumables))")
+            } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.teleporters += 1
                 print("🌀 Purchased Teleporter (x\(planet.consumables.teleporters))")
@@ -783,7 +796,9 @@ class GameScene: SKScene {
 
         case .shield:
             cost = 600  // HULL_SYSTEM.md:517-519
-            if gameState.credits >= cost {
+            if planet.consumables.shields >= maxConsumables {
+                print("🛡️ Shield inventory full (max: \(maxConsumables))")
+            } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.shields += 1
                 print("🛡️ Purchased Shield (x\(planet.consumables.shields))")
@@ -804,9 +819,9 @@ extension GameScene {
         }
 
         // Calculate the drill tip position (at the edge of the pod)
-        // Pod dimensions: 24px wide × 36px tall (same width as a single tile)
-        let podHalfWidth: CGFloat = 12   // Half of 24px width
-        let podHalfHeight: CGFloat = 18  // Half of 36px height
+        // Pod dimensions: 48px wide × 72px tall (same width as a single tile)
+        let podHalfWidth: CGFloat = 24   // Half of 48px width
+        let podHalfHeight: CGFloat = 36  // Half of 72px height
         let drillTipOffset: CGFloat = podHalfHeight + (TerrainBlock.size / 2)
         var drillTipPosition = player.position
 
@@ -820,17 +835,17 @@ extension GameScene {
         }
 
         // For horizontal drilling, drill the 2 tiles that the pod is currently occupying
-        // Pod is 36px tall (1.5 tiles), so it spans at most 2 tile rows
+        // Pod is 72px tall (1.5 tiles), so it spans at most 2 tile rows
         var blockPositions: [(x: Int, y: Int)] = []
 
         if drillDirection == .left || drillDirection == .right {
             // Find tiles that the pod's body occupies (not the absolute edges)
             // Use positions slightly inside the pod to avoid rounding to adjacent tiles
             var topPos = drillTipPosition
-            topPos.y = player.position.y + (podHalfHeight - 4)  // Just below top edge
+            topPos.y = player.position.y + (podHalfHeight - 8)  // Just below top edge
 
             var bottomPos = drillTipPosition
-            bottomPos.y = player.position.y - (podHalfHeight - 4)  // Just above bottom edge
+            bottomPos.y = player.position.y - (podHalfHeight - 8)  // Just above bottom edge
 
             guard let topGridPos = terrainManager.worldToGrid(topPos),
                   let bottomGridPos = terrainManager.worldToGrid(bottomPos) else {
@@ -942,6 +957,7 @@ extension GameScene: SKPhysicsContactDelegate {
             impulse: contact.collisionImpulse,
             playerPosition: player.position,
             surfaceY: surfaceY,
+            podSize: player.size,
             gameState: gameState
         )
     }
@@ -1009,7 +1025,16 @@ extension GameScene: DamageSystemDelegate {
 extension GameScene: ConsumableSystemDelegate {
     func consumableSystemDidUseTeleporter() {
         print("🌀 Teleporting to surface...")
-        handleRunEnd()
+        createTeleportEffect(at: player.position)
+
+        // Teleport pod to 200px above surface, centered
+        let surfaceY = frame.maxY - 100
+        let surfaceX = frame.midX + 50
+        let targetPosition = CGPoint(x: surfaceX, y: surfaceY + 200)
+        player.position = targetPosition
+        player.physicsBody?.velocity = .zero
+
+        print("   Teleported to (\(Int(targetPosition.x)), \(Int(targetPosition.y)))")
     }
 
     func consumableSystemDidUseBomb(at position: CGPoint) {
@@ -1025,11 +1050,228 @@ extension GameScene: ConsumableSystemDelegate {
             }
         }
 
-        // TODO: Add explosion visual effect
+        // Add explosion visual effect
+        createExplosionEffect(at: position)
     }
 
     func consumableSystemDidActivateShield(duration: TimeInterval) {
         print("🛡️ Shield activated for \(Int(duration))s")
-        // TODO: Add visual shield effect around pod
+        createShieldEffect(duration: duration)
+    }
+}
+
+// MARK: - Visual Effects
+
+extension GameScene {
+    private func createExplosionEffect(at position: CGPoint) {
+        // Create expanding orange circle
+        let explosion = SKShapeNode(circleOfRadius: 10)
+        explosion.fillColor = .orange
+        explosion.strokeColor = .red
+        explosion.lineWidth = 4
+        explosion.glowWidth = 10
+        explosion.position = position
+        explosion.zPosition = 200
+        addChild(explosion)
+
+        // Expand and fade out
+        let expand = SKAction.scale(to: 8.0, duration: 0.4)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.4)
+        let remove = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([
+            SKAction.group([expand, fadeOut]),
+            remove
+        ])
+        explosion.run(sequence)
+
+        // Add debris circles flying outward
+        for i in 0..<12 {
+            let angle = CGFloat(i) * .pi / 6
+            let debris = SKShapeNode(circleOfRadius: 6)
+            debris.fillColor = .orange
+            debris.strokeColor = .red
+            debris.lineWidth = 2
+            debris.position = position
+            debris.zPosition = 201
+            addChild(debris)
+
+            let distance: CGFloat = 120
+            let moveBy = CGVector(dx: cos(angle) * distance, dy: sin(angle) * distance)
+            let moveOut = SKAction.move(by: moveBy, duration: 0.5)
+            let fade = SKAction.fadeOut(withDuration: 0.5)
+            let removeDebris = SKAction.removeFromParent()
+            debris.run(SKAction.sequence([
+                SKAction.group([moveOut, fade]),
+                removeDebris
+            ]))
+        }
+    }
+
+    private func createShieldEffect(duration: TimeInterval) {
+        // Remove existing shield if any
+        shieldEffect?.removeFromParent()
+
+        // Create glowing shield bubble around pod
+        let shieldRadius: CGFloat = 50
+        let shield = SKShapeNode(circleOfRadius: shieldRadius)
+        shield.fillColor = UIColor.cyan.withAlphaComponent(0.2)
+        shield.strokeColor = .cyan
+        shield.lineWidth = 3
+        shield.glowWidth = 10
+        shield.zPosition = 150
+        player.addChild(shield)
+        shieldEffect = shield
+
+        // Pulse animation
+        let pulseUp = SKAction.scale(to: 1.1, duration: 0.3)
+        let pulseDown = SKAction.scale(to: 1.0, duration: 0.3)
+        let pulse = SKAction.sequence([pulseUp, pulseDown])
+        let repeatPulse = SKAction.repeatForever(pulse)
+        shield.run(repeatPulse)
+
+        // Fade out and remove after duration
+        let wait = SKAction.wait(forDuration: duration - 0.5)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.5)
+        let remove = SKAction.removeFromParent()
+        shield.run(SKAction.sequence([wait, fadeOut, remove]))
+
+        // Clear reference after removal
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            self?.shieldEffect = nil
+        }
+    }
+
+    private func createTeleportEffect(at position: CGPoint) {
+        // White flash expanding from position
+        let flash = SKShapeNode(circleOfRadius: 20)
+        flash.fillColor = .white
+        flash.strokeColor = .cyan
+        flash.lineWidth = 5
+        flash.glowWidth = 15
+        flash.position = position
+        flash.zPosition = 250
+        flash.alpha = 0.8
+        addChild(flash)
+
+        // Expand rapidly and fade
+        let expand = SKAction.scale(to: 10.0, duration: 0.3)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.3)
+        let remove = SKAction.removeFromParent()
+        flash.run(SKAction.sequence([
+            SKAction.group([expand, fadeOut]),
+            remove
+        ]))
+
+        // Add swirling cyan rings
+        for i in 0..<3 {
+            let ring = SKShapeNode(circleOfRadius: 30 + CGFloat(i) * 15)
+            ring.fillColor = .clear
+            ring.strokeColor = .cyan
+            ring.lineWidth = 3
+            ring.glowWidth = 5
+            ring.position = position
+            ring.zPosition = 251
+            ring.alpha = 0.8
+            addChild(ring)
+
+            let delay = Double(i) * 0.1
+            let wait = SKAction.wait(forDuration: delay)
+            let expandRing = SKAction.scale(to: 3.0, duration: 0.5)
+            let fadeRing = SKAction.fadeOut(withDuration: 0.5)
+            let removeRing = SKAction.removeFromParent()
+            ring.run(SKAction.sequence([
+                wait,
+                SKAction.group([expandRing, fadeRing]),
+                removeRing
+            ]))
+        }
+    }
+
+    private func createRepairEffect() {
+        // Green pulse around pod
+        let pulse = SKShapeNode(circleOfRadius: 60)
+        pulse.fillColor = UIColor.green.withAlphaComponent(0.3)
+        pulse.strokeColor = .green
+        pulse.lineWidth = 4
+        pulse.glowWidth = 8
+        pulse.zPosition = 151
+        player.addChild(pulse)
+
+        // Pulse animation
+        let expand = SKAction.scale(to: 1.5, duration: 0.4)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.4)
+        let remove = SKAction.removeFromParent()
+        pulse.run(SKAction.sequence([
+            SKAction.group([expand, fadeOut]),
+            remove
+        ]))
+
+        // Add sparkle circles
+        for i in 0..<8 {
+            let angle = CGFloat(i) * .pi / 4
+            let distance: CGFloat = 40
+            let x = cos(angle) * distance
+            let y = sin(angle) * distance
+
+            let sparkle = SKShapeNode(circleOfRadius: 4)
+            sparkle.fillColor = .green
+            sparkle.strokeColor = .white
+            sparkle.lineWidth = 1
+            sparkle.position = CGPoint(x: x, y: y)
+            sparkle.zPosition = 152
+            player.addChild(sparkle)
+
+            let moveOut = SKAction.move(by: CGVector(dx: x * 0.5, dy: y * 0.5), duration: 0.5)
+            let fade = SKAction.fadeOut(withDuration: 0.5)
+            let removeSparkle = SKAction.removeFromParent()
+            sparkle.run(SKAction.sequence([
+                SKAction.group([moveOut, fade]),
+                removeSparkle
+            ]))
+        }
+    }
+
+    private func createFuelEffect() {
+        // Orange/yellow pulse around pod
+        let pulse = SKShapeNode(circleOfRadius: 60)
+        pulse.fillColor = UIColor.orange.withAlphaComponent(0.3)
+        pulse.strokeColor = .orange
+        pulse.lineWidth = 4
+        pulse.glowWidth = 8
+        pulse.zPosition = 151
+        player.addChild(pulse)
+
+        // Pulse animation
+        let expand = SKAction.scale(to: 1.5, duration: 0.4)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.4)
+        let remove = SKAction.removeFromParent()
+        pulse.run(SKAction.sequence([
+            SKAction.group([expand, fadeOut]),
+            remove
+        ]))
+
+        // Add fuel droplet circles
+        for i in 0..<8 {
+            let angle = CGFloat(i) * .pi / 4
+            let distance: CGFloat = 40
+            let x = cos(angle) * distance
+            let y = sin(angle) * distance
+
+            let droplet = SKShapeNode(circleOfRadius: 5)
+            droplet.fillColor = .yellow
+            droplet.strokeColor = .orange
+            droplet.lineWidth = 1
+            droplet.position = CGPoint(x: x, y: y)
+            droplet.zPosition = 152
+            player.addChild(droplet)
+
+            let moveOut = SKAction.move(by: CGVector(dx: x * 0.5, dy: y * 0.5), duration: 0.5)
+            let fade = SKAction.fadeOut(withDuration: 0.5)
+            let removeDroplet = SKAction.removeFromParent()
+            droplet.run(SKAction.sequence([
+                SKAction.group([moveOut, fade]),
+                removeDroplet
+            ]))
+        }
     }
 }

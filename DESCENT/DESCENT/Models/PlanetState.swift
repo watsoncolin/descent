@@ -116,11 +116,11 @@ struct CommonUpgrades: Codable {
 // MARK: - Consumables
 
 struct Consumables: Codable {
-    var repairKits: Int = 0
-    var fuelCells: Int = 0
-    var bombs: Int = 0
-    var teleporters: Int = 0
-    var shields: Int = 0
+    var repairKits: Int = 3
+    var fuelCells: Int = 3
+    var bombs: Int = 3
+    var teleporters: Int = 3
+    var shields: Int = 3
 }
 
 // MARK: - Planet Statistics

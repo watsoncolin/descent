@@ -66,9 +66,23 @@ class TerrainBlock: SKSpriteNode {
             texture = TextureGenerator.shared.reinforcedRockTexture()
             color = .white
         } else if let material = material {
-            // Use procedural pixel art texture for materials
-            texture = TextureGenerator.shared.texture(for: material.type)
-            color = .white  // Use white to not tint the texture
+            // Material blocks show soil with embedded ore/crystal
+            let soilColor = TerrainBlock.getSoilColor(forDepth: depth)
+            let materialColor = TerrainBlock.colorForMaterial(material.type)
+
+            // Generate embedded material texture based on visual type
+            if material.type.visualType == .crystal {
+                texture = TextureGenerator.shared.embeddedCrystalTexture(
+                    materialColor: materialColor,
+                    soilColor: soilColor
+                )
+            } else {
+                texture = TextureGenerator.shared.embeddedOreTexture(
+                    materialColor: materialColor,
+                    soilColor: soilColor
+                )
+            }
+            color = .white
         } else {
             // Use procedural terrain texture for dirt/stone
             texture = TextureGenerator.shared.terrainTexture(depth: depth)
@@ -192,6 +206,22 @@ class TerrainBlock: SKSpriteNode {
             return true
         }
 
+        // Calculate health percentage
+        let healthPercent = CGFloat(health) / CGFloat(maxHealth)
+
+        // Progressively scale block down as it takes damage (from 100% to 20% size)
+        let minScale: CGFloat = 0.2
+        let scale = minScale + (1.0 - minScale) * healthPercent
+        setScale(scale)
+
+        // Update physics body to match new size
+        let scaledSize = CGSize(width: TerrainBlock.size * scale, height: TerrainBlock.size * scale)
+        physicsBody = SKPhysicsBody(rectangleOf: scaledSize)
+        physicsBody?.isDynamic = false
+        physicsBody?.categoryBitMask = 2  // Terrain
+        physicsBody?.contactTestBitMask = 1  // Player
+        physicsBody?.collisionBitMask = 1  // Player
+
         // Update crack overlay based on new health
         updateCrackOverlay()
 
@@ -277,6 +307,19 @@ class TerrainBlock: SKSpriteNode {
             let remove = SKAction.removeFromParent()
 
             particle.run(SKAction.sequence([group, remove]))
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    /// Get soil color based on depth (matching terrain texture generation)
+    private static func getSoilColor(forDepth depth: Double) -> UIColor {
+        if depth < 100 {
+            return UIColor(red: 0.55, green: 0.45, blue: 0.35, alpha: 1.0) // Light brown dirt
+        } else if depth < 300 {
+            return UIColor(red: 0.45, green: 0.35, blue: 0.25, alpha: 1.0) // Darker dirt
+        } else {
+            return UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0) // Stone
         }
     }
 

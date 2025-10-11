@@ -55,7 +55,7 @@ class PlayerPod: SKSpriteNode {
         guard let emitter = exhaustEmitter else { return }
 
         // Position at top of pod (where engines are)
-        emitter.position = CGPoint(x: 0, y: 18)
+        emitter.position = CGPoint(x: 0, y: 36)
         emitter.zPosition = -1  // Behind the pod
 
         // Create simple circular particle texture
@@ -143,23 +143,23 @@ class PlayerPod: SKSpriteNode {
     }
 
     private func setupVisuals() {
-        // Create a narrow vertical capsule/rocket shape (24px × 36px)
+        // Create a narrow vertical capsule/rocket shape (48px × 72px)
         // In SpriteKit: positive Y is UP, negative Y is DOWN
 
-        // Main body - narrow hexagonal pod shape
+        // Main body - narrow hexagonal pod shape (scaled 2x)
         let bodyPath = CGMutablePath()
-        bodyPath.move(to: CGPoint(x: 0, y: 18))       // Top point
-        bodyPath.addLine(to: CGPoint(x: 8, y: 12))    // Upper right
-        bodyPath.addLine(to: CGPoint(x: 8, y: -12))   // Lower right
-        bodyPath.addLine(to: CGPoint(x: 0, y: -18))   // Bottom point (drill end)
-        bodyPath.addLine(to: CGPoint(x: -8, y: -12))  // Lower left
-        bodyPath.addLine(to: CGPoint(x: -8, y: 12))   // Upper left
+        bodyPath.move(to: CGPoint(x: 0, y: 36))       // Top point
+        bodyPath.addLine(to: CGPoint(x: 16, y: 24))   // Upper right
+        bodyPath.addLine(to: CGPoint(x: 16, y: -24))  // Lower right
+        bodyPath.addLine(to: CGPoint(x: 0, y: -36))   // Bottom point (drill end)
+        bodyPath.addLine(to: CGPoint(x: -16, y: -24)) // Lower left
+        bodyPath.addLine(to: CGPoint(x: -16, y: 24))  // Upper left
         bodyPath.closeSubpath()
 
         bodyNode = SKShapeNode(path: bodyPath)
         bodyNode?.fillColor = UIColor(red: 0.2, green: 0.6, blue: 0.8, alpha: 1.0)  // Cyan-blue
         bodyNode?.strokeColor = UIColor(red: 0.1, green: 0.4, blue: 0.6, alpha: 1.0)  // Darker outline
-        bodyNode?.lineWidth = 2
+        bodyNode?.lineWidth = 4
         bodyNode?.zPosition = 0
         bodyNode?.name = "body"
         if let body = bodyNode {
@@ -167,49 +167,49 @@ class PlayerPod: SKSpriteNode {
         }
 
         // Top marker - small circle to show "top" of pod
-        let topMarker = SKShapeNode(circleOfRadius: 3)
+        let topMarker = SKShapeNode(circleOfRadius: 6)
         topMarker.fillColor = .yellow
         topMarker.strokeColor = .orange
-        topMarker.lineWidth = 1
-        topMarker.position = CGPoint(x: 0, y: 16)  // At the top (positive Y)
+        topMarker.lineWidth = 2
+        topMarker.position = CGPoint(x: 0, y: 32)  // At the top (positive Y)
         topMarker.zPosition = 1
         addChild(topMarker)
 
         // Drill indicator - bright triangle showing drill direction
         // Points DOWN by default (negative Y direction)
         let drillPath = CGMutablePath()
-        drillPath.move(to: CGPoint(x: 0, y: -5))      // Point towards drilling direction (down)
-        drillPath.addLine(to: CGPoint(x: -4, y: 2))   // Left base
-        drillPath.addLine(to: CGPoint(x: 4, y: 2))    // Right base
+        drillPath.move(to: CGPoint(x: 0, y: -10))     // Point towards drilling direction (down)
+        drillPath.addLine(to: CGPoint(x: -8, y: 4))   // Left base
+        drillPath.addLine(to: CGPoint(x: 8, y: 4))    // Right base
         drillPath.closeSubpath()
 
         let drillIndicator = SKShapeNode(path: drillPath)
         drillIndicator.fillColor = .red
         drillIndicator.strokeColor = .white
-        drillIndicator.lineWidth = 1.5
-        drillIndicator.position = CGPoint(x: 0, y: -18)  // Start at bottom of pod (negative Y)
+        drillIndicator.lineWidth = 3
+        drillIndicator.position = CGPoint(x: 0, y: -36)  // Start at bottom of pod (negative Y)
         drillIndicator.zPosition = 2
         drillIndicator.name = "drillIndicator"
         addChild(drillIndicator)
 
         // Glow effect around pod (elliptical for narrow shape)
         let glowPath = CGMutablePath()
-        glowPath.addEllipse(in: CGRect(x: -14, y: -20, width: 28, height: 40))
+        glowPath.addEllipse(in: CGRect(x: -28, y: -40, width: 56, height: 80))
         let glow = SKShapeNode(path: glowPath)
         glow.fillColor = .clear
         glow.strokeColor = UIColor.cyan.withAlphaComponent(0.4)
-        glow.lineWidth = 2
-        glow.glowWidth = 4
+        glow.lineWidth = 4
+        glow.glowWidth = 8
         glow.alpha = 0.6
         glow.zPosition = -1
         addChild(glow)
 
         // Window on the pod (adds character)
-        let window = SKShapeNode(circleOfRadius: 4)
+        let window = SKShapeNode(circleOfRadius: 8)
         window.fillColor = UIColor(red: 0.3, green: 0.8, blue: 1.0, alpha: 0.8)
         window.strokeColor = UIColor(red: 0.1, green: 0.3, blue: 0.5, alpha: 1.0)
-        window.lineWidth = 1.5
-        window.position = CGPoint(x: 0, y: 2)
+        window.lineWidth = 3
+        window.position = CGPoint(x: 0, y: 4)
         window.zPosition = 1
         addChild(window)
     }
@@ -354,33 +354,33 @@ class PlayerPod: SKSpriteNode {
         drillBits.forEach { $0.removeFromParent() }
         drillBits.removeAll()
 
-        // Add drill bits based on level (1-5)
+        // Add drill bits based on level (1-5) - scaled 2x
         switch drillStrengthLevel {
         case 2:
             // Level 2: Small drill bits on sides
-            addDrillBit(at: CGPoint(x: -6, y: -16), size: 2)
-            addDrillBit(at: CGPoint(x: 6, y: -16), size: 2)
+            addDrillBit(at: CGPoint(x: -12, y: -32), size: 4)
+            addDrillBit(at: CGPoint(x: 12, y: -32), size: 4)
 
         case 3:
             // Level 3: Larger drill bits
-            addDrillBit(at: CGPoint(x: -7, y: -15), size: 3)
-            addDrillBit(at: CGPoint(x: 7, y: -15), size: 3)
-            addDrillBit(at: CGPoint(x: 0, y: -17), size: 2)
+            addDrillBit(at: CGPoint(x: -14, y: -30), size: 6)
+            addDrillBit(at: CGPoint(x: 14, y: -30), size: 6)
+            addDrillBit(at: CGPoint(x: 0, y: -34), size: 4)
 
         case 4:
             // Level 4: Reinforced drill with multiple bits
-            addDrillBit(at: CGPoint(x: -8, y: -14), size: 3)
-            addDrillBit(at: CGPoint(x: 8, y: -14), size: 3)
-            addDrillBit(at: CGPoint(x: -4, y: -17), size: 2)
-            addDrillBit(at: CGPoint(x: 4, y: -17), size: 2)
+            addDrillBit(at: CGPoint(x: -16, y: -28), size: 6)
+            addDrillBit(at: CGPoint(x: 16, y: -28), size: 6)
+            addDrillBit(at: CGPoint(x: -8, y: -34), size: 4)
+            addDrillBit(at: CGPoint(x: 8, y: -34), size: 4)
 
         case 5:
             // Level 5: Maximum drill power - glowing bits
-            addDrillBit(at: CGPoint(x: -8, y: -13), size: 4, glow: true)
-            addDrillBit(at: CGPoint(x: 8, y: -13), size: 4, glow: true)
-            addDrillBit(at: CGPoint(x: -5, y: -17), size: 3, glow: true)
-            addDrillBit(at: CGPoint(x: 5, y: -17), size: 3, glow: true)
-            addDrillBit(at: CGPoint(x: 0, y: -18), size: 3, glow: true)
+            addDrillBit(at: CGPoint(x: -16, y: -26), size: 8, glow: true)
+            addDrillBit(at: CGPoint(x: 16, y: -26), size: 8, glow: true)
+            addDrillBit(at: CGPoint(x: -10, y: -34), size: 6, glow: true)
+            addDrillBit(at: CGPoint(x: 10, y: -34), size: 6, glow: true)
+            addDrillBit(at: CGPoint(x: 0, y: -36), size: 6, glow: true)
 
         default:
             break  // Level 1: No additional drill bits
@@ -408,33 +408,33 @@ class PlayerPod: SKSpriteNode {
         armorPlates.forEach { $0.removeFromParent() }
         armorPlates.removeAll()
 
-        // Add armor plates based on level (1-6)
+        // Add armor plates based on level (1-6) - scaled 2x
         if hullArmorLevel >= 2 {
             // Level 2+: Side armor strips
-            addArmorPlate(at: CGPoint(x: -9, y: 0), width: 2, height: 12)
-            addArmorPlate(at: CGPoint(x: 9, y: 0), width: 2, height: 12)
+            addArmorPlate(at: CGPoint(x: -18, y: 0), width: 4, height: 24)
+            addArmorPlate(at: CGPoint(x: 18, y: 0), width: 4, height: 24)
         }
 
         if hullArmorLevel >= 3 {
             // Level 3+: Top armor
-            addArmorPlate(at: CGPoint(x: 0, y: 14), width: 8, height: 2)
+            addArmorPlate(at: CGPoint(x: 0, y: 28), width: 16, height: 4)
         }
 
         if hullArmorLevel >= 4 {
             // Level 4+: Bottom armor
-            addArmorPlate(at: CGPoint(x: 0, y: -10), width: 6, height: 2)
+            addArmorPlate(at: CGPoint(x: 0, y: -20), width: 12, height: 4)
         }
 
         if hullArmorLevel >= 5 {
             // Level 5+: Reinforced corners
-            addArmorPlate(at: CGPoint(x: -7, y: 10), width: 3, height: 3)
-            addArmorPlate(at: CGPoint(x: 7, y: 10), width: 3, height: 3)
+            addArmorPlate(at: CGPoint(x: -14, y: 20), width: 6, height: 6)
+            addArmorPlate(at: CGPoint(x: 14, y: 20), width: 6, height: 6)
         }
 
         if hullArmorLevel >= 6 {
             // Level 6: Heavy plating with metallic sheen
             bodyNode?.strokeColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0)
-            bodyNode?.lineWidth = 3
+            bodyNode?.lineWidth = 6
         }
     }
 
@@ -454,28 +454,28 @@ class PlayerPod: SKSpriteNode {
         engineThrusters.forEach { $0.removeFromParent() }
         engineThrusters.removeAll()
 
-        // Add engine thrusters based on level (1-5)
+        // Add engine thrusters based on level (1-5) - scaled 2x
         if engineSpeedLevel >= 2 {
             // Level 2+: Small side thrusters
-            addThruster(at: CGPoint(x: -7, y: 14), size: 2)
-            addThruster(at: CGPoint(x: 7, y: 14), size: 2)
+            addThruster(at: CGPoint(x: -14, y: 28), size: 4)
+            addThruster(at: CGPoint(x: 14, y: 28), size: 4)
         }
 
         if engineSpeedLevel >= 3 {
             // Level 3+: Larger thrusters
-            addThruster(at: CGPoint(x: -8, y: 15), size: 3, color: UIColor(red: 0.3, green: 0.8, blue: 1.0, alpha: 1.0))
-            addThruster(at: CGPoint(x: 8, y: 15), size: 3, color: UIColor(red: 0.3, green: 0.8, blue: 1.0, alpha: 1.0))
+            addThruster(at: CGPoint(x: -16, y: 30), size: 6, color: UIColor(red: 0.3, green: 0.8, blue: 1.0, alpha: 1.0))
+            addThruster(at: CGPoint(x: 16, y: 30), size: 6, color: UIColor(red: 0.3, green: 0.8, blue: 1.0, alpha: 1.0))
         }
 
         if engineSpeedLevel >= 4 {
             // Level 4+: Central booster
-            addThruster(at: CGPoint(x: 0, y: 16), size: 3, color: UIColor(red: 0.2, green: 0.9, blue: 1.0, alpha: 1.0))
+            addThruster(at: CGPoint(x: 0, y: 32), size: 6, color: UIColor(red: 0.2, green: 0.9, blue: 1.0, alpha: 1.0))
         }
 
         if engineSpeedLevel >= 5 {
             // Level 5: Maximum thrust - glowing thrusters
             engineThrusters.forEach { thruster in
-                thruster.glowWidth = 4
+                thruster.glowWidth = 8
                 thruster.fillColor = UIColor(red: 0.4, green: 1.0, blue: 1.0, alpha: 1.0)
             }
         }
@@ -508,13 +508,13 @@ class PlayerPod: SKSpriteNode {
             if let direction = currentDrillDirection {
                 switch direction {
                 case .down:
-                    targetPosition = CGPoint(x: 0, y: -18)  // Bottom of pod (negative Y)
+                    targetPosition = CGPoint(x: 0, y: -36)  // Bottom of pod (negative Y)
                     targetRotation = 0                       // Points down
                 case .left:
-                    targetPosition = CGPoint(x: -14, y: 0)  // Left side (narrower)
+                    targetPosition = CGPoint(x: -28, y: 0)  // Left side (narrower)
                     targetRotation = -.pi / 2                // Rotate 90° CCW to point left
                 case .right:
-                    targetPosition = CGPoint(x: 14, y: 0)   // Right side (narrower)
+                    targetPosition = CGPoint(x: 28, y: 0)   // Right side (narrower)
                     targetRotation = .pi / 2                 // Rotate 90° CW to point right
                 }
 
@@ -542,7 +542,7 @@ class PlayerPod: SKSpriteNode {
                 // Return to default position (down, negative Y)
                 drillIndicator.position = CGPoint(
                     x: drillIndicator.position.x * 0.9,
-                    y: drillIndicator.position.y + (-18 - drillIndicator.position.y) * 0.3
+                    y: drillIndicator.position.y + (-36 - drillIndicator.position.y) * 0.3
                 )
                 drillIndicator.zRotation = drillIndicator.zRotation * 0.9
 

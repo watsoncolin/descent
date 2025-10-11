@@ -29,6 +29,7 @@ class DamageSystem {
         impulse: CGFloat,
         playerPosition: CGPoint,
         surfaceY: CGFloat,
+        podSize: CGSize,
         gameState: GameState
     ) -> Bool {
         // Check if player has active shield
@@ -43,18 +44,27 @@ class DamageSystem {
 
         guard !nearSurface else { return false }
 
+        // Calculate pod size scale factor relative to reference size (24x36 original pod)
+        // Larger pods generate higher impulse values, so we scale thresholds accordingly
+        let referencePodArea: CGFloat = 24 * 36  // Original pod size
+        let currentPodArea = podSize.width * podSize.height
+        let sizeScaleFactor = currentPodArea / referencePodArea
+
         // Use collision impulse for more accurate impact detection
         let impactForce = impulse * 0.85
 
-        // Damage threshold based on Impact Dampeners level
-        let damageThreshold: CGFloat
+        // Base damage thresholds (tuned for 24x36 pod)
+        let baseDamageThreshold: CGFloat
         switch gameState.impactDampenersLevel {
-        case 0: damageThreshold = 10    // Very fragile
-        case 1: damageThreshold = 25    // Can handle moderate falls
-        case 2: damageThreshold = 50    // Can handle fast falls
-        case 3: damageThreshold = .infinity  // No fall damage ever
-        default: damageThreshold = 10
+        case 0: baseDamageThreshold = 10    // Very fragile
+        case 1: baseDamageThreshold = 25    // Can handle moderate falls
+        case 2: baseDamageThreshold = 50    // Can handle fast falls
+        case 3: baseDamageThreshold = .infinity  // No fall damage ever
+        default: baseDamageThreshold = 10
         }
+
+        // Scale threshold by pod size (bigger pods need higher thresholds)
+        let damageThreshold = baseDamageThreshold * sizeScaleFactor
 
         // Check cooldown to prevent multiple damage from same collision
         let currentTime = Date().timeIntervalSince1970
@@ -69,7 +79,7 @@ class DamageSystem {
         let hullDestroyed = gameState.takeDamage(damage)
         lastImpactTime = currentTime
 
-        print("💥 Impact damage: \(Int(damage)) HP (impulse: \(String(format: "%.1f", impactForce)), threshold: \(Int(damageThreshold)), dampeners: Lv.\(gameState.impactDampenersLevel))")
+        print("💥 Impact damage: \(Int(damage)) HP (impulse: \(String(format: "%.1f", impactForce)), threshold: \(Int(damageThreshold)) [base: \(Int(baseDamageThreshold)) × \(String(format: "%.1fx", sizeScaleFactor))], dampeners: Lv.\(gameState.impactDampenersLevel))")
         print("   Hull: \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
 
         if hullDestroyed {

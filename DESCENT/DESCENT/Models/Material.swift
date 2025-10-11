@@ -14,6 +14,12 @@ struct Material {
     let volume: Int         // Cargo space it takes up
     let hardness: Int       // Drill level required (1-5)
 
+    /// Visual representation type for materials
+    enum VisualType {
+        case ore        // Irregular chunks (metals, coal)
+        case crystal    // Crystalline formations (gems)
+    }
+
     /// Material types available in the game
     enum MaterialType: String, CaseIterable {
         // Tier 1 - Common (Mars: 0-150m)
@@ -39,6 +45,16 @@ struct Material {
 
         // Tier 4 - Core
         case darkMatter = "darkMatter"
+
+        /// Visual type determines how material appears embedded in soil
+        var visualType: VisualType {
+            switch self {
+            case .ruby, .emerald, .diamond:
+                return .crystal
+            default:
+                return .ore
+            }
+        }
 
         var baseValue: Double {
             switch self {
