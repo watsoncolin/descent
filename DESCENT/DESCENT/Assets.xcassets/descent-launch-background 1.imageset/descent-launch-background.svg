@@ -1,0 +1,72 @@
+<svg viewBox="0 0 1170 2532" xmlns="http://www.w3.org/2000/svg">
+  <!-- iPhone 14 Pro Max dimensions -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0e27;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#1a1f3a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f1123;stop-opacity:1" />
+    </linearGradient>
+    
+    <radialGradient id="planetGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#e85d3a;stop-opacity:0.3" />
+      <stop offset="50%" style="stop-color:#c44228;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#a03520;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1170" height="2532" fill="url(#bgGradient)"/>
+  
+  <!-- Star field -->
+  <!-- Top section -->
+  <circle cx="100" cy="150" r="2" fill="#ffffff" opacity="0.8"/>
+  <circle cx="200" cy="120" r="1.5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="350" cy="180" r="2.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="500" cy="100" r="2" fill="#ffffff" opacity="0.5"/>
+  <circle cx="650" cy="160" r="1.5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="800" cy="130" r="2" fill="#ffffff" opacity="0.8"/>
+  <circle cx="950" cy="170" r="2.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="1070" cy="110" r="2" fill="#ffffff" opacity="0.6"/>
+  
+  <!-- Middle section -->
+  <circle cx="80" cy="600" r="2" fill="#ffffff" opacity="0.5"/>
+  <circle cx="250" cy="700" r="2.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="420" cy="650" r="1.5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="600" cy="750" r="2" fill="#ffffff" opacity="0.8"/>
+  <circle cx="780" cy="680" r="2" fill="#ffffff" opacity="0.6"/>
+  <circle cx="950" cy="720" r="2.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="1100" cy="670" r="1.5" fill="#ffffff" opacity="0.5"/>
+  
+  <!-- Bottom section -->
+  <circle cx="120" cy="1900" r="2.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="280" cy="1950" r="2" fill="#ffffff" opacity="0.6"/>
+  <circle cx="450" cy="1880" r="1.5" fill="#ffffff" opacity="0.5"/>
+  <circle cx="620" cy="1920" r="2" fill="#ffffff" opacity="0.8"/>
+  <circle cx="800" cy="1960" r="2.5" fill="#ffffff" opacity="0.7"/>
+  <circle cx="970" cy="1890" r="2" fill="#ffffff" opacity="0.6"/>
+  <circle cx="1090" cy="1940" r="1.5" fill="#ffffff" opacity="0.5"/>
+  
+  <!-- Very bottom stars -->
+  <circle cx="150" cy="2300" r="2" fill="#ffffff" opacity="0.6"/>
+  <circle cx="400" cy="2350" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="650" cy="2280" r="2" fill="#ffffff" opacity="0.5"/>
+  <circle cx="900" cy="2330" r="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="1050" cy="2290" r="1.5" fill="#ffffff" opacity="0.6"/>
+  
+  <!-- Distant planets/moons -->
+  <circle cx="200" cy="400" r="40" fill="#3a4f6a" opacity="0.4"/>
+  <circle cx="970" cy="1200" r="60" fill="#2a3a4f" opacity="0.3"/>
+  
+  <!-- Large planet at bottom (partially visible) -->
+  <ellipse cx="585" cy="2650" rx="800" ry="800" fill="#c44228" opacity="0.6"/>
+  <ellipse cx="585" cy="2650" rx="850" ry="850" fill="url(#planetGlow)"/>
+  
+  <!-- Planet surface details -->
+  <ellipse cx="400" cy="2500" rx="80" ry="70" fill="#a03520" opacity="0.5"/>
+  <ellipse cx="750" cy="2550" rx="100" ry="90" fill="#8a2a18" opacity="0.6"/>
+  <ellipse cx="585" cy="2450" rx="70" ry="60" fill="#922e1c" opacity="0.4"/>
+  
+  <!-- Subtle nebula effect in middle -->
+  <ellipse cx="585" cy="1266" rx="400" ry="300" fill="#1a3d5c" opacity="0.1"/>
+  <ellipse cx="300" cy="1000" rx="250" ry="200" fill="#2a1f3a" opacity="0.08"/>
+</svg>

@@ -13,10 +13,6 @@ class GameScene: SKScene {
     private var consumableSystem: ConsumableSystem!
     private var supplyDropSystem: SupplyDropSystem!
 
-    // Debug showcase (triple tap to activate)
-    private var lastTapTime: TimeInterval = 0
-    private var tapCount: Int = 0
-
     // Camera
     private var cameraNode: SKCameraNode!
 
@@ -175,6 +171,9 @@ class GameScene: SKScene {
         surfaceUI.onResetProgress = { [weak self] in
             self?.resetProgressForTesting()
         }
+        surfaceUI.onShowcasePod = { [weak self] in
+            self?.openPodShowcase()
+        }
         cameraNode.addChild(surfaceUI)
 
         // Create Sell Dialog (attach to camera)
@@ -329,22 +328,6 @@ class GameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let locationInCamera = touch.location(in: cameraNode)
-
-        // Debug: Triple tap to open showcase (only at surface)
-        if !surfaceUI.isHidden && gameState.phase == .surface {
-            let currentTime = Date().timeIntervalSince1970
-            if currentTime - lastTapTime < 0.5 {
-                tapCount += 1
-                if tapCount >= 2 {  // Third tap (0, 1, 2)
-                    openPodShowcase()
-                    tapCount = 0
-                    return
-                }
-            } else {
-                tapCount = 0
-            }
-            lastTapTime = currentTime
-        }
 
         // If game over dialog is visible, handle touches there first
         if !gameOverDialog.isHidden {

@@ -1,0 +1,57 @@
+<svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="podBodyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2a7fbf;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4db8ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2a7fbf;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="thrusterGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffdd57;stop-opacity:0" />
+      <stop offset="30%" style="stop-color:#ff9d3a;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0.4" />
+    </linearGradient>
+    
+    <filter id="podGlow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Thruster flame trail -->
+  <ellipse cx="150" cy="320" rx="50" ry="80" fill="url(#thrusterGlow)" opacity="0.7"/>
+  
+  <!-- Pod body -->
+  <ellipse cx="150" cy="150" rx="80" ry="120" fill="url(#podBodyGradient)" filter="url(#podGlow)"/>
+  
+  <!-- Pod highlight -->
+  <ellipse cx="130" cy="120" rx="30" ry="45" fill="#6dd5ff" opacity="0.5"/>
+  
+  <!-- Window -->
+  <ellipse cx="150" cy="130" rx="35" ry="45" fill="#1a3d5c" opacity="0.9"/>
+  <ellipse cx="140" cy="120" rx="15" ry="20" fill="#4db8ff" opacity="0.6"/>
+  <circle cx="145" cy="115" r="8" fill="#ffffff" opacity="0.8"/>
+  
+  <!-- Pod details/stripes -->
+  <rect x="70" y="190" width="160" height="6" rx="3" fill="#2a7fbf" opacity="0.9"/>
+  <rect x="70" cy="210" width="160" height="5" rx="2.5" fill="#2a7fbf" opacity="0.7"/>
+  <rect x="80" y="230" width="140" height="4" rx="2" fill="#2a7fbf" opacity="0.5"/>
+  
+  <!-- Side thrusters -->
+  <rect x="50" y="170" width="15" height="45" rx="4" fill="#2a7fbf" opacity="0.8"/>
+  <rect x="235" y="170" width="15" height="45" rx="4" fill="#2a7fbf" opacity="0.8"/>
+  
+  <!-- Thruster details -->
+  <rect x="130" y="270" width="40" height="15" rx="3" fill="#1a3d5c" opacity="0.8"/>
+  
+  <!-- Side thruster flames -->
+  <ellipse cx="57" cy="225" rx="8" ry="20" fill="#ff9d3a" opacity="0.6"/>
+  <ellipse cx="243" cy="225" rx="8" ry="20" fill="#ff9d3a" opacity="0.6"/>
+  
+  <!-- Main thruster flame -->
+  <ellipse cx="150" cy="300" rx="35" ry="50" fill="#ffdd57" opacity="0.8"/>
+  <ellipse cx="150" cy="310" rx="25" ry="40" fill="#ffffff" opacity="0.6"/>
+</svg>

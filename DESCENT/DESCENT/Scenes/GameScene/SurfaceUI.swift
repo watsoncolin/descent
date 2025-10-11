@@ -34,6 +34,7 @@ class SurfaceUI: SKNode {
     var onPurchaseUpgrade: ((UpgradeType) -> Void)?
     var onPurchaseConsumable: ((ConsumableType) -> Void)?
     var onResetProgress: (() -> Void)?
+    var onShowcasePod: (() -> Void)?
 
     enum UpgradeType {
         case fuelTank
@@ -193,6 +194,23 @@ class SurfaceUI: SKNode {
         resetLabel.fontColor = .white
         resetLabel.verticalAlignmentMode = .center
         resetButton.addChild(resetLabel)
+
+        // Showcase button - next to reset button
+        let showcaseButton = SKShapeNode(rectOf: CGSize(width: 80, height: 30), cornerRadius: 5)
+        showcaseButton.fillColor = UIColor(red: 0.2, green: 0.5, blue: 0.8, alpha: 0.8)
+        showcaseButton.strokeColor = .white
+        showcaseButton.lineWidth = 1
+        showcaseButton.position = CGPoint(x: -screenWidth / 2 + 145, y: -screenHeight / 2 + 25)
+        showcaseButton.zPosition = 1
+        showcaseButton.name = "showcaseButton"
+        addChild(showcaseButton)
+
+        let showcaseLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        showcaseLabel.text = "POD"
+        showcaseLabel.fontSize = 12
+        showcaseLabel.fontColor = .white
+        showcaseLabel.verticalAlignmentMode = .center
+        showcaseButton.addChild(showcaseLabel)
 
         updateTabColors()
     }
@@ -415,6 +433,11 @@ class SurfaceUI: SKNode {
 
         if nodes.contains(where: { $0.name == "resetButton" }) {
             onResetProgress?()
+            return true
+        }
+
+        if nodes.contains(where: { $0.name == "showcaseButton" }) {
+            onShowcasePod?()
             return true
         }
 
