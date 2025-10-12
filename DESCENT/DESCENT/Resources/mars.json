@@ -13,7 +13,7 @@
       "name": "Surface Sand",
       "depthMin": 0,
       "depthMax": 640,
-      "hardness": 8.0,
+      "hardness": 1.0,
       "surfaceColors": ["#8c7545", "#7c6535", "#6c5525"],
       "excavatedColors": ["#c4a57b", "#b89a70", "#a89060"],
       "contrast": 0.35,

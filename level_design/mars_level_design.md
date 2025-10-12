@@ -3,8 +3,10 @@
 **Planet:** Mars  
 **Difficulty:** Tutorial/Beginner  
 **Theme:** Rust-colored Martian excavation  
-**Total Depth:** 2560m (40 rows × 64px per block)  
-**Core Location:** 2500m depth
+**Total Depth:** 500m (40 rows × 64px per block, scale: 64px = 12.5m)  
+**Core Location:** 490m depth  
+**Planet Order:** 1 of 8  
+**Unlock Requirements:** None (starting planet)
 
 ---
 
@@ -17,11 +19,42 @@ Mars uses **continuous flowing terrain** with embedded material deposits. Each s
 
 All terrain uses smooth gradients with atmospheric glows rather than pixel art.
 
+**Scale:** 64px block = 12.5 meters of terrain depth (5.12px per meter)
+
+---
+
+## 🌍 Geological Structure
+
+Mars features **4 distinct strata layers** that the player descends through. Each layer has unique terrain composition and embedded material deposits.
+
+### Strata Overview
+
+```
+┌────────────────────────────────────────┐
+│  STRATA 1: SURFACE SAND (0-125m)       │  Light tan sediment
+│    Blocks 1-10                          │
+│    Materials: Coal (common)             │
+├────────────────────────────────────────┤
+│  STRATA 2: STONE LAYER (125-250m)      │  Gray sedimentary rock
+│    Blocks 11-20                         │
+│    Materials: Iron, Coal                │
+├────────────────────────────────────────┤
+│  STRATA 3: DEEP ROCK (250-375m)        │  Dark metamorphic rock
+│    Blocks 21-30                         │
+│    Materials: Copper, Iron              │
+├────────────────────────────────────────┤
+│  STRATA 4: MARS CORE (375-500m)        │  Ancient red planetary core
+│    Blocks 31-40                         │
+│    Materials: Gold, Silicon, Copper     │
+│    Core Chamber at 490m                 │
+└────────────────────────────────────────┘
+```
+
 ---
 
 ## 🪨 Strata Definitions
 
-### Strata 1: Surface Sand (0-640m)
+### Strata 1: Surface Sand (0-125m, Blocks 1-10)
 
 **Terrain Type:** Sand  
 **Visual Theme:** Light Martian regolith, beachy sand dunes  
@@ -72,11 +105,11 @@ Contrast:   ~35% darker when mined
 - Learn basic mining mechanics
 - Safe zone with no hazards
 - Collect coal for initial fuel and credits
-- Approximately 10 rows (640px depth)
+- Depth range: 0-125m (10 blocks)
 
 ---
 
-### Strata 2: Stone Layer (640-1280m)
+### Strata 2: Stone Layer (125-250m, Blocks 11-20)
 
 **Terrain Type:** Stone  
 **Visual Theme:** Solid gray sedimentary rock, stratified layers  
@@ -138,11 +171,11 @@ Contrast:   ~40% darker when mined
 - First upgrade tier unlocks here
 - Strategic mining paths needed
 - Minor gas pockets begin appearing
-- Approximately 10 rows (640px depth)
+- Depth range: 125-250m (10 blocks)
 
 ---
 
-### Strata 3: Deep Rock (1280-1920m)
+### Strata 3: Deep Rock (250-375m, Blocks 21-30)
 
 **Terrain Type:** Rock  
 **Visual Theme:** Ancient dense metamorphic rock, dark formations  
@@ -218,11 +251,11 @@ Contrast:   ~35% darker when mined
 - Gas pockets more frequent and dangerous
 - Unstable formations create navigation challenges
 - First cave-ins possible
-- Approximately 10 rows (640px depth)
+- Depth range: 250-375m (10 blocks)
 
 ---
 
-### Strata 4: Mars Core Zone (1920-2560m)
+### Strata 4: Mars Core Zone (375-500m, Blocks 31-40)
 
 **Terrain Type:** Mars Rock  
 **Visual Theme:** Ancient red planetary core, oxidized deep layers  
@@ -279,7 +312,7 @@ Contrast:   ~45% darker (approaching void darkness)
 
 **Special Features:**
 
-- **Dark Matter Crystal (Core)** - Single occurrence at 2500m depth
+- **Dark Matter Crystal (Core)** - Single occurrence at 490m depth (Block 39-40)
   - Location: 10×10 block open chamber (640×640px safe zone)
   - Glowing orange-red pulsing sphere in center
   - Visual: Animated pulsing glow (0.8-1.2 scale, 2 sec cycle)
@@ -326,7 +359,7 @@ Contrast:   ~45% darker (approaching void darkness)
 - Requires multiple upgrade tiers to survive
 - Core extraction is victory condition for Mars
 - High risk, high reward gameplay
-- Approximately 10 rows (640px depth)
+- Depth range: 375-500m (10 blocks)
 - Only accessible with significant upgrades (Hull 100+ HP, Fuel 300+, Drill 3+)
 
 ---
@@ -343,10 +376,10 @@ Mars features three types of **indestructible or special terrain** that create n
 
 **Spawn Rates by Depth:**
 
-- 0-640m: 3% coverage (sparse, easy navigation)
-- 640-1280m: 5% coverage (increasing complexity)
-- 1280-1920m: 10% coverage (requires planning)
-- 1920-2560m: 20% coverage (significant obstacles)
+- 0-125m: 3% coverage (sparse, easy navigation)
+- 125-250m: 5% coverage (increasing complexity)
+- 250-375m: 10% coverage (requires planning)
+- 375-500m: 20% coverage (significant obstacles)
 
 **Gameplay Impact:**
 
@@ -366,10 +399,10 @@ Mars features three types of **indestructible or special terrain** that create n
 
 **Spawn Rates by Depth:**
 
-- 0-640m: 0% (not present)
-- 640-1280m: 2% coverage (introduction)
-- 1280-1920m: 5% coverage (common obstacles)
-- 1920-2560m: 8% coverage (frequent barriers)
+- 0-125m: 0% (not present)
+- 125-250m: 2% coverage (introduction)
+- 250-375m: 5% coverage (common obstacles)
+- 375-500m: 8% coverage (frequent barriers)
 
 **Gameplay Impact:**
 
@@ -389,10 +422,10 @@ Mars features three types of **indestructible or special terrain** that create n
 
 **Spawn Rates by Depth:**
 
-- 0-640m: 0% (not present)
-- 640-1280m: 0% (not present)
-- 1280-1920m: 3% coverage (first appearance)
-- 1920-2560m: 8% coverage (significant presence)
+- 0-125m: 0% (not present)
+- 125-250m: 0% (not present)
+- 250-375m: 3% coverage (first appearance)
+- 375-500m: 8% coverage (significant presence)
 
 **Gameplay Impact:**
 
@@ -416,10 +449,10 @@ Mars features three types of **indestructible or special terrain** that create n
 
 **Total Obstacle Coverage by Depth:**
 
-- Surface Sand (0-640m): 3% (Bedrock only)
-- Stone Layer (640-1280m): 7% (Bedrock + Hard Crystal intro)
-- Deep Rock (1280-1920m): 18% (All three types)
-- Mars Core (1920-2560m): 36% (Heavy obstacles, requires skilled navigation)
+- Surface Sand (0-125m): 3% (Bedrock only)
+- Stone Layer (125-250m): 7% (Bedrock + Hard Crystal intro)
+- Deep Rock (250-375m): 18% (All three types)
+- Mars Core (375-500m): 36% (Heavy obstacles, requires skilled navigation)
 
 ---
 
@@ -427,18 +460,18 @@ Mars features three types of **indestructible or special terrain** that create n
 
 | Material    | Depth Range | Frequency  | Value  | Volume | Visual           |
 | ----------- | ----------- | ---------- | ------ | ------ | ---------------- |
-| Coal        | 0-1280m     | 60→40%     | 10     | 1.0    | Black with glow  |
-| Iron        | 640-1920m   | 25→15%     | 25     | 1.5    | Silver metallic  |
-| Copper      | 1280-2560m  | 20→10%     | 30     | 1.8    | Orange-brown     |
-| Silicon     | 1920-2560m  | 12%        | 50     | 1.3    | Gray crystal     |
-| Gold        | 1920-2560m  | 8%         | 100    | 2.0    | Brilliant yellow |
-| Dark Matter | 2500m       | 1 (unique) | 10,000 | 0.1    | Orange-red pulse |
+| Coal        | 0-250m      | 60→40%     | 10     | 1.0    | Black with glow  |
+| Iron        | 125-375m    | 25→15%     | 25     | 1.5    | Silver metallic  |
+| Copper      | 250-500m    | 20→10%     | 30     | 1.8    | Orange-brown     |
+| Silicon     | 375-500m    | 12%        | 50     | 1.3    | Gray crystal     |
+| Gold        | 375-500m    | 8%         | 100    | 2.0    | Brilliant yellow |
+| Dark Matter | 490m        | 1 (unique) | 10,000 | 0.1    | Orange-red pulse |
 
 ---
 
 ## 🎮 Progression Guidelines
 
-### First Run (0-640m)
+### First Run (0-125m)
 
 - Mine coal in Surface Sand
 - Learn basic controls and fuel management
@@ -446,7 +479,7 @@ Mars features three types of **indestructible or special terrain** that create n
 - Return to surface before fuel runs out
 - Buy first upgrade (Fuel Tank or Cargo)
 
-### Runs 2-5 (640-1280m)
+### Runs 2-5 (125-250m)
 
 - Reach Stone Layer
 - Mine iron ore for better earnings
@@ -454,7 +487,7 @@ Mars features three types of **indestructible or special terrain** that create n
 - Learn to manage gas pockets
 - Earn ~2,000 Bocks per successful run
 
-### Runs 6-10 (1280-1920m)
+### Runs 6-10 (250-375m)
 
 - Enter Deep Rock zone
 - Mine copper for significant value
@@ -462,7 +495,7 @@ Mars features three types of **indestructible or special terrain** that create n
 - Deal with unstable formations
 - Earn ~5,000 Bocks per run
 
-### Runs 10+ (1920-2560m)
+### Runs 10+ (375-500m)
 
 - Attempt Mars Core Zone
 - Mine gold and silicon
@@ -563,13 +596,13 @@ For each material type in current strata:
 
 Materials become more/less common as you descend:
 
-| Material | 0-640m | 640-1280m | 1280-1920m | 1920-2560m |
-| -------- | ------ | --------- | ---------- | ---------- |
-| Coal     | 60%    | 40%       | 0%         | 0%         |
-| Iron     | 0%     | 25%       | 15%        | 0%         |
-| Copper   | 0%     | 0%        | 20%        | 10%        |
-| Silicon  | 0%     | 0%        | 0%         | 12%        |
-| Gold     | 0%     | 0%        | 0%         | 8%         |
+| Material | 0-125m | 125-250m | 250-375m | 375-500m |
+| -------- | ------ | -------- | -------- | -------- |
+| Coal     | 60%    | 40%      | 0%       | 0%       |
+| Iron     | 0%     | 25%      | 15%      | 0%       |
+| Copper   | 0%     | 0%       | 20%      | 10%      |
+| Silicon  | 0%     | 0%       | 0%       | 12%      |
+| Gold     | 0%     | 0%       | 0%       | 8%       |
 
 ---
 
@@ -577,15 +610,15 @@ Materials become more/less common as you descend:
 
 ### Detailed Hazard Table
 
-| Depth Range    | Gas Pockets | Unstable Rock        | Cave-ins         | Lava Pockets     |
-| -------------- | ----------- | -------------------- | ---------------- | ---------------- |
-| **0-640m**     | 0%          | 0%                   | 0%               | 0%               |
-| **640-1280m**  | 5% (5 HP)   | 0%                   | 0%               | 0%               |
-|                | 1-2 blocks  | -                    | -                | -                |
-| **1280-1920m** | 10% (10 HP) | 8% (15 HP)           | 3% (10 HP)       | 0%               |
-|                | 2-3 blocks  | Collapses 3-5 blocks | Falls 2-4 blocks | -                |
-| **1920-2560m** | 15% (15 HP) | 12% (20 HP)          | 8% (15 HP)       | 5% (25 HP + DoT) |
-|                | 3-5 blocks  | Collapses 5-8 blocks | Falls 3-6 blocks | 2-4 blocks       |
+| Depth Range  | Gas Pockets | Unstable Rock        | Cave-ins         | Lava Pockets     |
+| ------------ | ----------- | -------------------- | ---------------- | ---------------- |
+| **0-125m**   | 0%          | 0%                   | 0%               | 0%               |
+| **125-250m** | 5% (5 HP)   | 0%                   | 0%               | 0%               |
+|              | 1-2 blocks  | -                    | -                | -                |
+| **250-375m** | 10% (10 HP) | 8% (15 HP)           | 3% (10 HP)       | 0%               |
+|              | 2-3 blocks  | Collapses 3-5 blocks | Falls 2-4 blocks | -                |
+| **375-500m** | 15% (15 HP) | 12% (20 HP)          | 8% (15 HP)       | 5% (25 HP + DoT) |
+|              | 3-5 blocks  | Collapses 5-8 blocks | Falls 3-6 blocks | 2-4 blocks       |
 
 ### Hazard Mechanics Details
 
@@ -628,12 +661,12 @@ Materials become more/less common as you descend:
 
 ### Cumulative Danger Levels
 
-| Depth      | Combined Hazard % | Avg HP Lost Per Run | Risk Level |
-| ---------- | ----------------- | ------------------- | ---------- |
-| 0-640m     | 0%                | 0 HP                | Safe       |
-| 640-1280m  | 5%                | 5-10 HP             | Low        |
-| 1280-1920m | 21%               | 25-40 HP            | Moderate   |
-| 1920-2560m | 40%               | 60-100 HP           | High       |
+| Depth    | Combined Hazard % | Avg HP Lost Per Run | Risk Level |
+| -------- | ----------------- | ------------------- | ---------- |
+| 0-125m   | 0%                | 0 HP                | Safe       |
+| 125-250m | 5%                | 5-10 HP             | Low        |
+| 250-375m | 21%               | 25-40 HP            | Moderate   |
+| 375-500m | 40%               | 60-100 HP           | High       |
 
 _Note: Skilled players who observe warnings can reduce hazard damage by 50-70%_
 
@@ -641,7 +674,7 @@ _Note: Skilled players who observe warnings can reduce hazard damage by 50-70%_
 
 ## ⏱️ Run Time Estimates
 
-### Time to Drill Full Depth (2560m = 40 rows)
+### Time to Drill Full Depth (500m = 40 blocks)
 
 Assumptions:
 
@@ -668,6 +701,146 @@ Assumptions:
 - **First runs (Drill Lv1)**: 7-9 minutes (encourages upgrades)
 - **Mid-game (Drill Lv3)**: 4-6 minutes (comfortable)
 - **Optimized (Drill Lv5)**: 3-4 minutes (efficient grinding)
+
+---
+
+## 💎 Economy Balance & Progression
+
+### Target Earnings Per Run
+
+**Early Game (Runs 1-3):**
+
+- Depth reached: 0-150m (Surface Sand + partial Stone Layer)
+- Materials collected: Mostly Coal, some Iron
+- Gross earnings: 300-600 Bocks
+- Fuel/repair costs: -50 to -100 Bocks
+- **Net earnings: 250-500 Bocks per run**
+- Run time: 5-7 minutes
+
+**Mid Game (Runs 4-8):**
+
+- Depth reached: 150-300m (Stone Layer + partial Deep Rock)
+- Materials collected: Iron, Copper, some Coal
+- Gross earnings: 1,200-2,500 Bocks
+- Fuel/repair costs: -200 to -400 Bocks
+- **Net earnings: 1,000-2,100 Bocks per run**
+- Run time: 4-6 minutes
+
+**Late Game (Runs 9-15):**
+
+- Depth reached: 300-450m (Deep Rock + partial Core)
+- Materials collected: Copper, Silicon, some Gold
+- Gross earnings: 4,000-8,000 Bocks
+- Fuel/repair costs: -500 to -1,000 Bocks
+- **Net earnings: 3,500-7,000 Bocks per run**
+- Run time: 3-5 minutes
+
+**Core Runs (Runs 15+):**
+
+- Depth reached: Full 500m (all strata including Core)
+- Materials collected: Gold, Silicon, Copper + Dark Matter Crystal
+- Gross earnings: 15,000-25,000 Bocks (including 10,000 from core)
+- Fuel/repair costs: -1,500 to -3,000 Bocks
+- **Net earnings: 12,000-20,000 Bocks per run**
+- Run time: 3-4 minutes (optimized)
+
+### Upgrade Cost Scaling
+
+Costs are balanced so players progress naturally through runs:
+
+**Tier 1 Upgrades** (Unlocked at start, purchased runs 1-3):
+
+- Fuel Tank Lv2: 500 Bocks (1-2 runs)
+- Cargo Capacity Lv2: 600 Bocks (1-2 runs)
+- Drill Strength Lv2: 800 Bocks (2-3 runs)
+- Hull Armor Lv2: 700 Bocks (2-3 runs)
+
+**Tier 2 Upgrades** (Purchased runs 4-8):
+
+- Fuel Tank Lv3: 1,500 Bocks (2 runs)
+- Cargo Capacity Lv3: 1,800 Bocks (2 runs)
+- Drill Strength Lv3: 2,500 Bocks (2-3 runs)
+- Hull Armor Lv3: 2,200 Bocks (2 runs)
+
+**Tier 3 Upgrades** (Purchased runs 9-15):
+
+- Fuel Tank Lv4: 4,000 Bocks (2 runs)
+- Cargo Capacity Lv4: 5,000 Bocks (2 runs)
+- Drill Strength Lv4: 7,000 Bocks (2 runs)
+- Hull Armor Lv4: 6,000 Bocks (2 runs)
+
+**Tier 4 Upgrades** (Purchased runs 15+, pre-core):
+
+- Fuel Tank Lv5 (Max): 10,000 Bocks (2 runs)
+- Cargo Capacity Lv5 (Max): 12,000 Bocks (2 runs)
+- Drill Strength Lv5 (Max): 15,000 Bocks (2 runs)
+- Hull Armor Lv5 (Max): 14,000 Bocks (2 runs)
+
+**Consumables:**
+
+- Repair Kit (50 HP): 200 Bocks
+- Fuel Cell (50 fuel): 100 Bocks
+- Bomb (3×3 destroy): 800 Bocks
+- Teleporter (instant surface): 500 Bocks
+
+**Permanent Unlocks:**
+
+- Mineral Scanner: 2,000 Bocks
+- Auto-Refuel: 1,500 Bocks
+- Ejection Pod (survive death once): 3,000 Bocks
+
+### Minimum Upgrade Requirements by Depth
+
+**To Reach 250m (Deep Rock):**
+
+- Fuel Tank: Level 3 minimum (200 fuel)
+- Drill: Level 2 minimum (or very patient)
+- Hull: Level 2 minimum (75 HP)
+- Cargo: Level 2+ recommended (15+ slots)
+
+**To Reach 375m (Mars Core Zone):**
+
+- Fuel Tank: Level 4 minimum (300 fuel)
+- Drill: Level 3 minimum (hardness 2.5)
+- Hull: Level 3 minimum (100 HP)
+- Cargo: Level 3+ recommended (20+ slots)
+
+**To Extract Core (500m):**
+
+- Fuel Tank: Level 4-5 (300-500 fuel)
+- Drill: Level 4 minimum (hardness 3.5)
+- Hull: Level 4 minimum (125+ HP)
+- Cargo: Level 3+ (20+ slots for materials + core)
+- Recommended: All level 4-5 for comfortable run
+
+### Prestige System
+
+**Soul Crystals Earned:**
+
+- Formula: `totalLifetimeEarnings / 1000 = Soul Crystals`
+- Example: 50,000 Bocks earned = 50 Soul Crystals
+- First Mars core run typically earns: 40-60 Soul Crystals
+
+**Soul Crystal Bonus:**
+
+- Each crystal: +10% to all mineral values (multiplicative)
+- 50 crystals = 5× mineral values (500% of base)
+- Applies permanently across all planets
+- Never resets, only grows
+
+**What Resets on Prestige:**
+
+- All Bocks (currency) → 0
+- All upgrades → Level 1
+- Planet progress → Restart from surface
+- Consumables → None
+
+**What Persists:**
+
+- Soul Crystals (permanent earning multiplier)
+- Unlocked planets (can replay any)
+- Golden Gems (premium currency, not earned on Mars)
+- Permanent unlocks (scanner, auto-refuel, etc.)
 
 ---
 
@@ -704,6 +877,7 @@ Layer hierarchy (back to front):
 ```swift
 For each row (0 to 40):
   1. Determine strata type based on depth (y-position)
+     [0-10=Sand, 11-20=Stone, 21-30=Rock, 31-40=MarsCore]
   2. Calculate strata-specific colors (surface + excavated)
   3. Generate Perlin noise for organic variation (scale: 0.05)
   4. Apply diagonal flow pattern (15-40° angle)
@@ -835,7 +1009,7 @@ func checkHazardsTrigger(block: TerrainBlock) {
     }
 
     // Random cave-in
-    if block.depth > 1280 && random() < 0.03 {
+    if block.depth > 250 && random() < 0.03 {
         spawnFallingDebris(above: player.position, count: 3-6)
     }
 }
@@ -892,151 +1066,11 @@ physicsBody.contactTestBitMask = 0x1 << 0 // Player only
 
 ---
 
-## 💎 Economy Balance & Progression
-
-### Target Earnings Per Run
-
-**Early Game (Runs 1-3):**
-
-- Depth reached: 0-800m (Surface Sand + partial Stone Layer)
-- Materials collected: Mostly Coal, some Iron
-- Gross earnings: 300-600 Bocks
-- Fuel/repair costs: -50 to -100 Bocks
-- **Net earnings: 250-500 Bocks per run**
-- Run time: 5-7 minutes
-
-**Mid Game (Runs 4-8):**
-
-- Depth reached: 800-1600m (Stone Layer + partial Deep Rock)
-- Materials collected: Iron, Copper, some Coal
-- Gross earnings: 1,200-2,500 Bocks
-- Fuel/repair costs: -200 to -400 Bocks
-- **Net earnings: 1,000-2,100 Bocks per run**
-- Run time: 4-6 minutes
-
-**Late Game (Runs 9-15):**
-
-- Depth reached: 1600-2400m (Deep Rock + partial Core)
-- Materials collected: Copper, Silicon, some Gold
-- Gross earnings: 4,000-8,000 Bocks
-- Fuel/repair costs: -500 to -1,000 Bocks
-- **Net earnings: 3,500-7,000 Bocks per run**
-- Run time: 3-5 minutes
-
-**Core Runs (Runs 15+):**
-
-- Depth reached: Full 2560m (all strata including Core)
-- Materials collected: Gold, Silicon, Copper + Dark Matter Crystal
-- Gross earnings: 15,000-25,000 Bocks (including 10,000 from core)
-- Fuel/repair costs: -1,500 to -3,000 Bocks
-- **Net earnings: 12,000-20,000 Bocks per run**
-- Run time: 3-4 minutes (optimized)
-
-### Upgrade Cost Scaling
-
-Costs are balanced so players progress naturally through runs:
-
-**Tier 1 Upgrades** (Unlocked at start, purchased runs 1-3):
-
-- Fuel Tank Lv2: 500 Bocks (1-2 runs)
-- Cargo Capacity Lv2: 600 Bocks (1-2 runs)
-- Drill Strength Lv2: 800 Bocks (2-3 runs)
-- Hull Armor Lv2: 700 Bocks (2-3 runs)
-
-**Tier 2 Upgrades** (Purchased runs 4-8):
-
-- Fuel Tank Lv3: 1,500 Bocks (2 runs)
-- Cargo Capacity Lv3: 1,800 Bocks (2 runs)
-- Drill Strength Lv3: 2,500 Bocks (2-3 runs)
-- Hull Armor Lv3: 2,200 Bocks (2 runs)
-
-**Tier 3 Upgrades** (Purchased runs 9-15):
-
-- Fuel Tank Lv4: 4,000 Bocks (2 runs)
-- Cargo Capacity Lv4: 5,000 Bocks (2 runs)
-- Drill Strength Lv4: 7,000 Bocks (2 runs)
-- Hull Armor Lv4: 6,000 Bocks (2 runs)
-
-**Tier 4 Upgrades** (Purchased runs 15+, pre-core):
-
-- Fuel Tank Lv5 (Max): 10,000 Bocks (2 runs)
-- Cargo Capacity Lv5 (Max): 12,000 Bocks (2 runs)
-- Drill Strength Lv5 (Max): 15,000 Bocks (2 runs)
-- Hull Armor Lv5 (Max): 14,000 Bocks (2 runs)
-
-**Consumables:**
-
-- Repair Kit (50 HP): 200 Bocks
-- Fuel Cell (50 fuel): 100 Bocks
-- Bomb (3×3 destroy): 800 Bocks
-- Teleporter (instant surface): 500 Bocks
-
-**Permanent Unlocks:**
-
-- Mineral Scanner: 2,000 Bocks
-- Auto-Refuel: 1,500 Bocks
-- Ejection Pod (survive death once): 3,000 Bocks
-
-### Minimum Upgrade Requirements by Depth
-
-**To Reach 1280m (Deep Rock):**
-
-- Fuel Tank: Level 3 minimum (200 fuel)
-- Drill: Level 2 minimum (or very patient)
-- Hull: Level 2 minimum (75 HP)
-- Cargo: Level 2+ recommended (15+ slots)
-
-**To Reach 1920m (Mars Core Zone):**
-
-- Fuel Tank: Level 4 minimum (300 fuel)
-- Drill: Level 3 minimum (hardness 2.5)
-- Hull: Level 3 minimum (100 HP)
-- Cargo: Level 3+ recommended (20+ slots)
-
-**To Extract Core (2560m):**
-
-- Fuel Tank: Level 4-5 (300-500 fuel)
-- Drill: Level 4 minimum (hardness 3.5)
-- Hull: Level 4 minimum (125+ HP)
-- Cargo: Level 3+ (20+ slots for materials + core)
-- Recommended: All level 4-5 for comfortable run
-
-### Prestige System
-
-**Soul Crystals Earned:**
-
-- Formula: `totalLifetimeEarnings / 1000 = Soul Crystals`
-- Example: 50,000 Bocks earned = 50 Soul Crystals
-- First Mars core run typically earns: 40-60 Soul Crystals
-
-**Soul Crystal Bonus:**
-
-- Each crystal: +10% to all mineral values (multiplicative)
-- 50 crystals = 5× mineral values (500% of base)
-- Applies permanently across all planets
-- Never resets, only grows
-
-**What Resets on Prestige:**
-
-- All Bocks (currency) → 0
-- All upgrades → Level 1
-- Planet progress → Restart from surface
-- Consumables → None
-
-**What Persists:**
-
-- Soul Crystals (permanent earning multiplier)
-- Unlocked planets (can replay any)
-- Golden Gems (premium currency, not earned on Mars)
-- Permanent unlocks (scanner, auto-refuel, etc.)
-
----
-
 ## ✅ Comprehensive Implementation Checklist
 
 ### Core Terrain System
 
-- [ ] Implement 4-strata depth system (0-640m, 640-1280m, 1280-1920m, 1920-2560m)
+- [ ] Implement 4-strata depth system (0-125m, 125-250m, 250-375m, 375-500m)
 - [ ] Create dual-layer terrain (surface + excavated) for each strata
 - [ ] Generate smooth gradient colors using defined color schemes
 - [ ] Apply Perlin noise variation (scale 0.05, 10-20% opacity)
@@ -1106,7 +1140,7 @@ Costs are balanced so players progress naturally through runs:
 
 ### Dark Matter Core
 
-- [ ] Create 10×10 block safe chamber at 2500m depth
+- [ ] Create 10×10 block safe chamber at 490m depth
 - [ ] Implement glowing pulsing sphere (0.8-1.2 scale, 2s cycle)
 - [ ] Add orange-red gradient with strong glow
 - [ ] Make chamber hazard-free (safe zone)
@@ -1150,7 +1184,7 @@ Costs are balanced so players progress naturally through runs:
 
 ### UI/HUD Elements
 
-- [ ] Create depth meter (shows current depth / 2560m)
+- [ ] Create depth meter (shows current depth / 500m)
 - [ ] Create fuel gauge (visual + numeric)
 - [ ] Create HP gauge (visual + numeric)
 - [ ] Create cargo meter (volume used / max volume)
@@ -1174,7 +1208,7 @@ Costs are balanced so players progress naturally through runs:
 
 ### Testing & Validation
 
-- [ ] Test full depth run (0-2560m)
+- [ ] Test full depth run (0-500m)
 - [ ] Validate drill times for all hardness levels
 - [ ] Verify material spawn rates match specification
 - [ ] Confirm hazard frequency and damage values
@@ -1189,4 +1223,5 @@ Costs are balanced so players progress naturally through runs:
 
 **Document Status:** Complete specification ready for implementation  
 **Last Updated:** October 12, 2025  
-**Version:** 2.0 (Updated with technical details and dual-layer terrain system)
+**Version:** 2.1 (Corrected scale: 500m depth, 64px = 12.5m)  
+**Scale:** 1 block (64px) = 12.5 meters, 40 blocks = 500 meters total

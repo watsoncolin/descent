@@ -35,7 +35,7 @@ class TerrainBlock: SKSpriteNode {
     private var crackOverlay3: SKSpriteNode?  // Heavy cracks (generated once)
     private var currentCrackLevel: Int = 0    // Track which level we've reached
 
-    // Block size (in pixels) - Grid size for new continuous terrain system
+    // Block size (in pixels) - Grid size for continuous terrain system (64px = 12.5m)
     static let size: CGFloat = 64
 
     // MARK: - Initialization

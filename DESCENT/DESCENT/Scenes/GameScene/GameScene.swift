@@ -43,7 +43,6 @@ class GameScene: SKScene {
     private var drillDuration: TimeInterval = 0.0
     private var drillStartPosition: CGPoint = .zero
     private var drillTargetPosition: CGPoint = .zero
-    private var currentDrillDirection: DrillDirection?
 
     // Movement lock (for dialog interactions)
     private var isMovementLocked: Bool = false
@@ -470,8 +469,9 @@ class GameScene: SKScene {
 
         // Update depth tracking
         let surfaceY = frame.maxY - 100
-        // Calculate depth in meters (1 tile = 1 meter, tile size = 24px)
-        let currentDepth = max(0, (surfaceY - player.position.y) / TerrainBlock.size)
+        // Calculate depth in meters (64px = 12.5m scale: each block = 12.5m)
+        let depthInBlocks = (surfaceY - player.position.y) / TerrainBlock.size
+        let currentDepth = max(0, depthInBlocks * 12.5)  // Convert blocks to meters
         gameState.currentDepth = currentDepth
 
         // Update terrain chunks (load/unload based on player position)
@@ -937,7 +937,7 @@ extension GameScene {
         }
 
         // Calculate the drill tip position (at the edge of the pod)
-        let podHalfHeight: CGFloat = 36  // Half of 72px height
+        let podHalfHeight: CGFloat = 32  // Half of 64px height
         var drillTipPosition = player.position
 
         switch drillDirection {
@@ -968,21 +968,15 @@ extension GameScene {
 
         // Store drilling state
         currentDrillingBlock = (x: gridPos.x, y: gridPos.y)
-        currentDrillDirection = drillDirection
         drillStartPosition = player.position
 
-        // Calculate target position - pod descends INTO the block position (centered on block) for downward drilling only
+        // Calculate target position - pod descends INTO the block position (centered on block)
         let surfaceY = frame.maxY - 100
         let blockWorldX = frame.minX + (CGFloat(gridPos.x) + 0.5) * TerrainBlock.size  // Center of block X
         let blockWorldY = surfaceY - (CGFloat(gridPos.y) + 0.5) * TerrainBlock.size    // Center of block Y
 
-        // For horizontal drilling, keep pod at current position; for vertical, move to block center
-        if drillDirection == .down {
-            drillTargetPosition = CGPoint(x: blockWorldX, y: blockWorldY)
-        } else {
-            // Horizontal drilling - lock position (target = start)
-            drillTargetPosition = drillStartPosition
-        }
+        // Always move to block center when drilling
+        drillTargetPosition = CGPoint(x: blockWorldX, y: blockWorldY)
 
         drillProgress = 0.0
 
@@ -1045,7 +1039,6 @@ extension GameScene {
         if fuelOut {
             // Out of fuel - abort drilling
             currentDrillingBlock = nil
-            currentDrillDirection = nil
             drillProgress = 0.0
             handleGameOver(reason: "Out of Fuel")
             return
@@ -1070,7 +1063,6 @@ extension GameScene {
 
         // Clear drilling state
         currentDrillingBlock = nil
-        currentDrillDirection = nil
         drillProgress = 0.0
     }
 }

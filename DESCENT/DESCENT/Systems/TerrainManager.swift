@@ -58,15 +58,12 @@ class TerrainManager {
         self.width = Int(ceil(screenWidth / blockSize)) + 2  // +2 for buffer on edges
 
         // Initialize collision grid
-        // TESTING: Limit to first 20 meters for testing terrain rendering
-        let testDepthLimit: Double = 20.0
-        let gridHeight = Int(ceil(min(config.totalDepth, testDepthLimit)))
+        let gridHeight = Int(ceil(config.totalDepth))
         self.collisionGrid = CollisionGrid(gridSize: (width: width, height: gridHeight))
 
         print("🌍 TerrainManager initialized for \(config.name)")
         print("   - Seed: \(terrainSeed)")
         print("   - Total depth: \(config.totalDepth)m")
-        print("   ⚠️  TESTING MODE: Limited to \(testDepthLimit)m")
         print("   - Strata layers: \(config.strata.count)")
         print("   - Grid size: \(width)×\(gridHeight)")
         print("   - Soul Crystal bonus: \(soulCrystalBonus)x")
@@ -109,20 +106,10 @@ class TerrainManager {
         let startY = chunkNumber * chunkHeight
         let endY = startY + chunkHeight
 
-        // TESTING: Skip chunks beyond 20m
-        let testDepthLimit: Double = 20.0
-        guard Double(startY) < testDepthLimit else {
-            print("⚠️  Skipping chunk \(chunkNumber) (beyond \(testDepthLimit)m test limit)")
-            return
-        }
-
         // Determine which strata overlap this chunk
         for (stratumIndex, stratum) in planetConfig.strata.enumerated() {
             let stratumStart = Int(stratum.depthMin)
             let stratumEnd = Int(stratum.depthMax)
-
-            // TESTING: Skip strata that start beyond 20m
-            guard Double(stratumStart) < testDepthLimit else { continue }
 
             // Check if stratum overlaps with this chunk
             guard stratumEnd > startY && stratumStart < endY else { continue }
@@ -185,29 +172,7 @@ class TerrainManager {
     private func loadStratumLayer(stratumIndex: Int, surfaceY: CGFloat) {
         guard let scene = scene else { return }
 
-        var stratum = planetConfig.strata[stratumIndex]
-
-        // TESTING: Cap stratum depth at 20m
-        let testDepthLimit: Double = 20.0
-        if stratum.depthMax > testDepthLimit {
-            print("⚠️  Capping stratum \(stratum.name) from \(stratum.depthMax)m to \(testDepthLimit)m")
-            stratum = StrataLayer(
-                name: stratum.name,
-                depthMin: stratum.depthMin,
-                depthMax: testDepthLimit,
-                hardness: stratum.hardness,
-                colorHex: stratum.colorHex,
-                surfaceColors: stratum.surfaceColors,
-                excavatedColors: stratum.excavatedColors,
-                contrast: stratum.contrast,
-                drillSpeedModifier: stratum.drillSpeedModifier,
-                minimumDrillLevel: stratum.minimumDrillLevel,
-                resources: stratum.resources,
-                hazards: stratum.hazards,
-                obstacles: stratum.obstacles,
-                specialFeatures: stratum.specialFeatures
-            )
-        }
+        let stratum = planetConfig.strata[stratumIndex]
 
         // Map stratum name to TerrainType
         let terrainType: TerrainType
@@ -233,9 +198,9 @@ class TerrainManager {
         let levelWidth = CGFloat(width) * TerrainBlock.size
 
         // Metal texture limit: 8192 pixels max
-        // Safe chunk size: 64 meters = 4096 pixels (leaves plenty of buffer for mask rasterization)
-        // Using 64m instead of 120m because SKCropNode may double the texture size internally
-        let maxChunkMeters: Double = 64.0
+        // With 64px = 12.5m scale: 400 meters = 32 blocks = 2048 pixels (25% of limit, very safe)
+        // Conservative size to ensure SKCropNode mask operations never exceed limits
+        let maxChunkMeters: Double = 400.0
         let stratumDepth = stratum.depthMax - stratum.depthMin
 
         if stratumDepth <= maxChunkMeters {
@@ -256,12 +221,16 @@ class TerrainManager {
             print("   - Depth range: \(stratum.depthMin)...\(stratum.depthMax)m")
             print("   - Size: \(layer.layerSize)")
         } else {
-            // Too large - split into chunks
+            // Too large - split into chunks with non-overlapping boundaries
             var currentDepth = stratum.depthMin
             var chunkIndex = 0
 
             while currentDepth < stratum.depthMax {
                 let chunkEnd = min(currentDepth + maxChunkMeters, stratum.depthMax)
+
+                // For depthRange lookup, add tiny epsilon to avoid boundary overlaps
+                // (except for the first chunk which starts exactly at depthMin)
+                let rangeStart = (chunkIndex == 0) ? currentDepth : currentDepth + 0.001
                 let chunkRange = currentDepth...chunkEnd
 
                 let layer = TerrainLayer(
@@ -273,7 +242,8 @@ class TerrainManager {
                 )
                 layer.positionInWorld(surfaceY: surfaceY, sceneMinX: scene.frame.minX)
                 scene.addChild(layer)
-                allTerrainLayers.append((layer: layer, depthRange: currentDepth...chunkEnd))
+                // Use non-overlapping range for lookup
+                allTerrainLayers.append((layer: layer, depthRange: rangeStart...chunkEnd))
 
                 // Store first chunk as the main layer for this stratum
                 if chunkIndex == 0 {
@@ -281,7 +251,7 @@ class TerrainManager {
                 }
 
                 print("🏔️ Created stratum layer \(stratumIndex).\(chunkIndex): \(stratum.name) [chunk]")
-                print("   - Depth range: \(currentDepth)...\(chunkEnd)m")
+                print("   - Depth range: \(currentDepth)...\(chunkEnd)m (lookup: \(rangeStart)...\(chunkEnd))")
                 print("   - Size: \(layer.layerSize)")
 
                 currentDepth = chunkEnd
@@ -817,8 +787,9 @@ class TerrainManager {
         let depth = Double(y)
 
         // Find which terrain layer (or chunk) contains this depth
+        // Use the same depthRange lookup as updateConsumptionMask for consistency
         for entry in allTerrainLayers {
-            if entry.layer.stratumRange.contains(depth) {
+            if entry.depthRange.contains(depth) {
                 // Found the right layer - cut the surface
                 entry.layer.cutSurfaceAt(gridX: x, gridY: y, blockSize: TerrainBlock.size)
                 return

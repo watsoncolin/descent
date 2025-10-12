@@ -42,7 +42,7 @@ class PlayerPod: SKSpriteNode {
 
     init() {
         // Create the pod as a custom shape (narrower: 24px × 36px)
-        super.init(texture: nil, color: .clear, size: CGSize(width: 48, height: 72))
+        super.init(texture: nil, color: .clear, size: CGSize(width: 48, height: 64))
 
         setupPhysics()
         setupVisuals()
@@ -59,7 +59,7 @@ class PlayerPod: SKSpriteNode {
         guard let emitter = exhaustEmitter else { return }
 
         // Position at top of pod (where engines are)
-        emitter.position = CGPoint(x: 0, y: 36)
+        emitter.position = CGPoint(x: 0, y: 32)
         emitter.zPosition = -1  // Behind the pod
 
         // Create simple circular particle texture
@@ -131,8 +131,8 @@ class PlayerPod: SKSpriteNode {
     // MARK: - Setup
 
     private func setupPhysics() {
-        // Create capsule-shaped physics body (width: 48px, height: 72px)
-        physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 44, height: 68))  // Slightly smaller for better collisions
+        // Create capsule-shaped physics body (width: 48px, height: 64px)
+        physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 44, height: 60))  // Slightly smaller for better collisions
         physicsBody?.isDynamic = true
         physicsBody?.affectedByGravity = true
         physicsBody?.allowsRotation = false  // Keep pod upright always
@@ -147,17 +147,17 @@ class PlayerPod: SKSpriteNode {
     }
 
     private func setupVisuals() {
-        // Create a narrow vertical capsule/rocket shape (48px × 72px)
+        // Create a narrow vertical capsule/rocket shape (48px × 64px)
         // In SpriteKit: positive Y is UP, negative Y is DOWN
 
         // Main body - narrow hexagonal pod shape (scaled 2x)
         let bodyPath = CGMutablePath()
-        bodyPath.move(to: CGPoint(x: 0, y: 36))       // Top point
-        bodyPath.addLine(to: CGPoint(x: 16, y: 24))   // Upper right
-        bodyPath.addLine(to: CGPoint(x: 16, y: -24))  // Lower right
-        bodyPath.addLine(to: CGPoint(x: 0, y: -36))   // Bottom point (drill end)
-        bodyPath.addLine(to: CGPoint(x: -16, y: -24)) // Lower left
-        bodyPath.addLine(to: CGPoint(x: -16, y: 24))  // Upper left
+        bodyPath.move(to: CGPoint(x: 0, y: 32))       // Top point
+        bodyPath.addLine(to: CGPoint(x: 16, y: 22))   // Upper right
+        bodyPath.addLine(to: CGPoint(x: 16, y: -22))  // Lower right
+        bodyPath.addLine(to: CGPoint(x: 0, y: -32))   // Bottom point (drill end)
+        bodyPath.addLine(to: CGPoint(x: -16, y: -22)) // Lower left
+        bodyPath.addLine(to: CGPoint(x: -16, y: 22))  // Upper left
         bodyPath.closeSubpath()
 
         bodyNode = SKShapeNode(path: bodyPath)
@@ -175,7 +175,7 @@ class PlayerPod: SKSpriteNode {
         topMarker.fillColor = .yellow
         topMarker.strokeColor = .orange
         topMarker.lineWidth = 2
-        topMarker.position = CGPoint(x: 0, y: 32)  // At the top (positive Y)
+        topMarker.position = CGPoint(x: 0, y: 28)  // At the top (positive Y)
         topMarker.zPosition = 1
         addChild(topMarker)
 
@@ -191,14 +191,14 @@ class PlayerPod: SKSpriteNode {
         drillIndicator.fillColor = .red
         drillIndicator.strokeColor = .white
         drillIndicator.lineWidth = 3
-        drillIndicator.position = CGPoint(x: 0, y: -36)  // Start at bottom of pod (negative Y)
+        drillIndicator.position = CGPoint(x: 0, y: -32)  // Start at bottom of pod (negative Y)
         drillIndicator.zPosition = 2
         drillIndicator.name = "drillIndicator"
         addChild(drillIndicator)
 
         // Glow effect around pod (elliptical for narrow shape)
         let glowPath = CGMutablePath()
-        glowPath.addEllipse(in: CGRect(x: -28, y: -40, width: 56, height: 80))
+        glowPath.addEllipse(in: CGRect(x: -28, y: -36, width: 56, height: 72))
         let glow = SKShapeNode(path: glowPath)
         glow.fillColor = .clear
         glow.strokeColor = UIColor.cyan.withAlphaComponent(0.4)
@@ -665,7 +665,7 @@ class PlayerPod: SKSpriteNode {
             if let direction = currentDrillDirection {
                 switch direction {
                 case .down:
-                    targetPosition = CGPoint(x: 0, y: -36)  // Bottom of pod (negative Y)
+                    targetPosition = CGPoint(x: 0, y: -32)  // Bottom of pod (negative Y)
                     targetRotation = 0                       // Points down
                 case .left:
                     targetPosition = CGPoint(x: -28, y: 0)  // Left side (narrower)
@@ -699,7 +699,7 @@ class PlayerPod: SKSpriteNode {
                 // Return to default position (down, negative Y)
                 drillIndicator.position = CGPoint(
                     x: drillIndicator.position.x * 0.9,
-                    y: drillIndicator.position.y + (-36 - drillIndicator.position.y) * 0.3
+                    y: drillIndicator.position.y + (-32 - drillIndicator.position.y) * 0.3
                 )
                 drillIndicator.zRotation = drillIndicator.zRotation * 0.9
 
