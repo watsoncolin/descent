@@ -1182,3 +1182,138 @@ extension UIColor {
         )
     }
 }
+
+// MARK: - Continuous Terrain Texture Generation
+
+extension TextureGenerator {
+
+    /// Create vertical gradient texture for continuous terrain layers
+    func createVerticalGradientTexture(size: CGSize, colors: [UIColor]) -> SKTexture {
+        // Metal texture size limit: 8192 pixels max
+        let maxDimension: CGFloat = 8192.0
+
+        if size.width > maxDimension || size.height > maxDimension {
+            print("⚠️ ERROR: Attempted to create texture larger than Metal limit!")
+            print("   Requested: \(size.width)x\(size.height)")
+            print("   Maximum: \(maxDimension)x\(maxDimension)")
+
+            // Clamp to maximum size
+            let clampedSize = CGSize(
+                width: min(size.width, maxDimension),
+                height: min(size.height, maxDimension)
+            )
+            print("   Clamping to: \(clampedSize.width)x\(clampedSize.height)")
+
+            return createVerticalGradientTexture(size: clampedSize, colors: colors)
+        }
+
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = renderer.image { context in
+            // Create evenly spaced locations for gradient stops
+            let locations: [CGFloat] = (0..<colors.count).map { CGFloat($0) / CGFloat(colors.count - 1) }
+
+            guard let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: colors.map { $0.cgColor } as CFArray,
+                locations: locations
+            ) else { return }
+
+            context.cgContext.drawLinearGradient(
+                gradient,
+                start: .zero,
+                end: CGPoint(x: 0, y: size.height),
+                options: []
+            )
+        }
+        return SKTexture(image: image)
+    }
+
+    /// Create radial gradient texture (for material deposits and glows)
+    func createRadialGradientTexture(radius: CGFloat, colors: [UIColor]) -> SKTexture {
+        // Metal texture size limit: 8192 pixels max
+        let maxDimension: CGFloat = 8192.0
+        let size = CGSize(width: radius * 2, height: radius * 2)
+
+        if size.width > maxDimension || size.height > maxDimension {
+            print("⚠️ ERROR: Attempted to create radial texture larger than Metal limit!")
+            print("   Requested radius: \(radius) (size: \(size.width)x\(size.height))")
+            print("   Maximum: \(maxDimension)x\(maxDimension)")
+
+            // Clamp to maximum size
+            let clampedRadius = maxDimension / 2
+            print("   Clamping radius to: \(clampedRadius)")
+
+            return createRadialGradientTexture(radius: clampedRadius, colors: colors)
+        }
+
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = renderer.image { context in
+            // Create evenly spaced locations for gradient stops
+            let locations: [CGFloat] = (0..<colors.count).map { CGFloat($0) / CGFloat(colors.count - 1) }
+
+            guard let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: colors.map { $0.cgColor } as CFArray,
+                locations: locations
+            ) else { return }
+
+            context.cgContext.drawRadialGradient(
+                gradient,
+                startCenter: CGPoint(x: radius, y: radius),
+                startRadius: 0,
+                endCenter: CGPoint(x: radius, y: radius),
+                endRadius: radius,
+                options: []
+            )
+        }
+        return SKTexture(image: image)
+    }
+
+    /// Create diagonal gradient texture for flow patterns
+    func createDiagonalGradientTexture(size: CGSize, colors: [UIColor], angle: CGFloat) -> SKTexture {
+        // Metal texture size limit: 8192 pixels max
+        let maxDimension: CGFloat = 8192.0
+
+        if size.width > maxDimension || size.height > maxDimension {
+            print("⚠️ ERROR: Attempted to create diagonal texture larger than Metal limit!")
+            print("   Requested: \(size.width)x\(size.height)")
+            print("   Maximum: \(maxDimension)x\(maxDimension)")
+
+            // Clamp to maximum size
+            let clampedSize = CGSize(
+                width: min(size.width, maxDimension),
+                height: min(size.height, maxDimension)
+            )
+            print("   Clamping to: \(clampedSize.width)x\(clampedSize.height)")
+
+            return createDiagonalGradientTexture(size: clampedSize, colors: colors, angle: angle)
+        }
+
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = renderer.image { context in
+            // Create evenly spaced locations for gradient stops
+            let locations: [CGFloat] = (0..<colors.count).map { CGFloat($0) / CGFloat(colors.count - 1) }
+
+            guard let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: colors.map { $0.cgColor } as CFArray,
+                locations: locations
+            ) else { return }
+
+            // Convert angle to radians
+            let angleRad = angle * .pi / 180.0
+
+            // Calculate gradient endpoints based on angle
+            let endX = cos(angleRad) * size.width
+            let endY = sin(angleRad) * size.height
+
+            context.cgContext.drawLinearGradient(
+                gradient,
+                start: .zero,
+                end: CGPoint(x: endX, y: endY),
+                options: []
+            )
+        }
+        return SKTexture(image: image)
+    }
+}

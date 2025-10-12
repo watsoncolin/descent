@@ -235,12 +235,6 @@ class PlayerPod: SKSpriteNode {
             let dirX = dx / distance
             let dirY = dy / distance
 
-            // Apply acceleration in the direction of the target
-            let thrustX = dirX * acceleration * CGFloat(deltaTime)
-            let thrustY = dirY * acceleration * CGFloat(deltaTime)
-
-            physicsBody.applyImpulse(CGVector(dx: thrustX, dy: thrustY))
-
             // Determine drill direction based on movement (but don't rotate pod)
             let angle = atan2(dy, dx)
             let degrees = angle * 180 / .pi
@@ -259,6 +253,13 @@ class PlayerPod: SKSpriteNode {
             }
 
             isDrilling = currentDrillDirection != nil
+
+            // Apply acceleration in the direction of the target
+            // Block physics bodies shrink as they're drilled, allowing natural descent
+            let thrustX = dirX * acceleration * CGFloat(deltaTime)
+            let thrustY = dirY * acceleration * CGFloat(deltaTime)
+
+            physicsBody.applyImpulse(CGVector(dx: thrustX, dy: thrustY))
         } else {
             isDrilling = false
             currentDrillDirection = nil

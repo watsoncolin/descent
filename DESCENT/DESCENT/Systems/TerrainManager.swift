@@ -12,15 +12,22 @@ class TerrainManager {
     // MARK: - Properties
     private weak var scene: SKScene?
     private let planet: Planet
-    private let width: Int  // Blocks wide (calculated based on screen width)
-    private let chunkHeight: Int = 50  // Blocks per chunk
+    private let width: Int  // Grid cells wide (calculated based on screen width)
+    private let chunkHeight: Int = 50  // Grid cells per chunk
     private let planetConfig: PlanetConfig
     private var terrainSeed: Int  // Unique seed for this terrain generation
     private let soulCrystalBonus: Double  // Soul Crystal earnings multiplier
 
-    // Storage
-    private var blocks: [String: TerrainBlock] = [:]  // Key: "x,y"
+    // Continuous terrain system
+    private var terrainLayers: [Int: TerrainLayer] = [:]  // Key: stratum index (first chunk only)
+    private var allTerrainLayers: [(layer: TerrainLayer, depthRange: ClosedRange<Double>)] = []  // All layers with their depth ranges
+    private var materialDeposits: [String: MaterialDeposit] = [:]  // Key: "x,y"
+    private var physicsBlocks: [String: SKNode] = [:]  // Key: "x,y" - Invisible physics bodies
+    private var collisionGrid: CollisionGrid!
+    private var loadedStratumIndices: Set<Int> = []  // Which strata are loaded
     private var loadedChunks: Set<Int> = []  // Chunk numbers that are loaded
+
+    // Vein and obstacle generation data
     private var veinMap: [String: Material] = [:]  // Key: "x,y", stores material at each vein position
     private var obstacleMap: [String: TerrainBlock.BlockType] = [:]  // Key: "x,y", stores obstacle type at each position
     private var drilledPositions: Set<String> = []  // Key: "x,y", positions that have been drilled (永久 removed)
@@ -50,10 +57,18 @@ class TerrainManager {
         let blockSize = TerrainBlock.size
         self.width = Int(ceil(screenWidth / blockSize)) + 2  // +2 for buffer on edges
 
+        // Initialize collision grid
+        // TESTING: Limit to first 20 meters for testing terrain rendering
+        let testDepthLimit: Double = 20.0
+        let gridHeight = Int(ceil(min(config.totalDepth, testDepthLimit)))
+        self.collisionGrid = CollisionGrid(gridSize: (width: width, height: gridHeight))
+
         print("🌍 TerrainManager initialized for \(config.name)")
         print("   - Seed: \(terrainSeed)")
         print("   - Total depth: \(config.totalDepth)m")
+        print("   ⚠️  TESTING MODE: Limited to \(testDepthLimit)m")
         print("   - Strata layers: \(config.strata.count)")
+        print("   - Grid size: \(width)×\(gridHeight)")
         print("   - Soul Crystal bonus: \(soulCrystalBonus)x")
     }
 
@@ -94,18 +109,234 @@ class TerrainManager {
         let startY = chunkNumber * chunkHeight
         let endY = startY + chunkHeight
 
-        // Step 1: Generate obstacles for this chunk (before veins)
-        generateObstaclesForChunk(chunkNumber: chunkNumber, startY: startY, endY: endY)
+        // TESTING: Skip chunks beyond 20m
+        let testDepthLimit: Double = 20.0
+        guard Double(startY) < testDepthLimit else {
+            print("⚠️  Skipping chunk \(chunkNumber) (beyond \(testDepthLimit)m test limit)")
+            return
+        }
 
-        // Step 2: Generate veins for this chunk
-        generateVeinsForChunk(chunkNumber: chunkNumber, startY: startY, endY: endY)
+        // Determine which strata overlap this chunk
+        for (stratumIndex, stratum) in planetConfig.strata.enumerated() {
+            let stratumStart = Int(stratum.depthMin)
+            let stratumEnd = Int(stratum.depthMax)
 
-        // Step 3: Create blocks (checking obstacleMap and veinMap)
-        for y in startY..<endY {
-            for x in 0..<width {
-                generateBlock(x: x, y: y, surfaceY: surfaceY)
+            // TESTING: Skip strata that start beyond 20m
+            guard Double(stratumStart) < testDepthLimit else { continue }
+
+            // Check if stratum overlaps with this chunk
+            guard stratumEnd > startY && stratumStart < endY else { continue }
+
+            // Load stratum layer if not already loaded
+            if !loadedStratumIndices.contains(stratumIndex) {
+                loadStratumLayer(stratumIndex: stratumIndex, surfaceY: surfaceY)
+                loadedStratumIndices.insert(stratumIndex)
             }
         }
+
+        // Generate obstacles and materials for this chunk
+        generateObstaclesForChunk(chunkNumber: chunkNumber, startY: startY, endY: endY)
+        generateVeinsForChunk(chunkNumber: chunkNumber, startY: startY, endY: endY)
+
+        // Populate collision grid, create material deposits, and physics bodies
+        for y in startY..<endY {
+            for x in 0..<width {
+                // Skip positions that have been drilled
+                let key = "\(x),\(y)"
+                if drilledPositions.contains(key) {
+                    collisionGrid.setCell(x: x, y: y, to: .empty)
+                    continue
+                }
+
+                // Skip core chamber
+                if isInCoreChamber(x: x, y: y) {
+                    collisionGrid.setCell(x: x, y: y, to: .empty)
+
+                    // Spawn Dark Matter crystal once
+                    let depth = Double(y)
+                    if !coreCrystalSpawned && depth >= planetConfig.coreDepth {
+                        spawnCoreCrystal(surfaceY: surfaceY)
+                    }
+                    continue
+                }
+
+                // Check for obstacle
+                if let obstacleType = obstacleMap[key] {
+                    collisionGrid.setCell(x: x, y: y, to: .obstacle(obstacleType))
+                    createPhysicsBody(x: x, y: y, surfaceY: surfaceY)
+                }
+                // Check for material
+                else if let material = veinMap[key] {
+                    collisionGrid.setCell(x: x, y: y, to: .material(material))
+                    createMaterialDeposit(x: x, y: y, material: material, surfaceY: surfaceY)
+                    createPhysicsBody(x: x, y: y, surfaceY: surfaceY)
+                }
+                // Normal terrain
+                else {
+                    collisionGrid.setCell(x: x, y: y, to: .terrain)
+                    createPhysicsBody(x: x, y: y, surfaceY: surfaceY)
+                }
+            }
+        }
+    }
+
+    /// Load a continuous terrain layer for an entire stratum
+    /// Splits large strata into chunks to avoid Metal's 8192 pixel texture limit
+    private func loadStratumLayer(stratumIndex: Int, surfaceY: CGFloat) {
+        guard let scene = scene else { return }
+
+        var stratum = planetConfig.strata[stratumIndex]
+
+        // TESTING: Cap stratum depth at 20m
+        let testDepthLimit: Double = 20.0
+        if stratum.depthMax > testDepthLimit {
+            print("⚠️  Capping stratum \(stratum.name) from \(stratum.depthMax)m to \(testDepthLimit)m")
+            stratum = StrataLayer(
+                name: stratum.name,
+                depthMin: stratum.depthMin,
+                depthMax: testDepthLimit,
+                hardness: stratum.hardness,
+                colorHex: stratum.colorHex,
+                surfaceColors: stratum.surfaceColors,
+                excavatedColors: stratum.excavatedColors,
+                contrast: stratum.contrast,
+                drillSpeedModifier: stratum.drillSpeedModifier,
+                minimumDrillLevel: stratum.minimumDrillLevel,
+                resources: stratum.resources,
+                hazards: stratum.hazards,
+                obstacles: stratum.obstacles,
+                specialFeatures: stratum.specialFeatures
+            )
+        }
+
+        // Map stratum name to TerrainType
+        let terrainType: TerrainType
+        let lowerName = stratum.name.lowercased()
+        if lowerName.contains("surface") || lowerName.contains("sand") || lowerName.contains("regolith") {
+            terrainType = .sand
+        } else if lowerName.contains("stone") || lowerName.contains("sediment") || lowerName.contains("iron-rich") {
+            terrainType = .marsRock
+        } else if lowerName.contains("deep") || lowerName.contains("dense") || lowerName.contains("mantle") {
+            terrainType = .stone
+        } else if lowerName.contains("basalt") || lowerName.contains("volcanic") || lowerName.contains("lava") {
+            terrainType = .marsRock
+        } else if lowerName.contains("fractured") || lowerName.contains("crystalline") {
+            terrainType = .rock
+        } else if lowerName.contains("core") && lowerName.contains("zone") {
+            terrainType = .stone  // Core zone gets darkest coloring
+        } else if lowerName.contains("core") && lowerName.contains("chamber") {
+            terrainType = .marsRock  // Core chamber gets Mars rock coloring
+        } else {
+            terrainType = .rock  // Default fallback
+        }
+
+        let levelWidth = CGFloat(width) * TerrainBlock.size
+
+        // Metal texture limit: 8192 pixels max
+        // Safe chunk size: 64 meters = 4096 pixels (leaves plenty of buffer for mask rasterization)
+        // Using 64m instead of 120m because SKCropNode may double the texture size internally
+        let maxChunkMeters: Double = 64.0
+        let stratumDepth = stratum.depthMax - stratum.depthMin
+
+        if stratumDepth <= maxChunkMeters {
+            // Small enough - create single layer
+            let layer = TerrainLayer(
+                stratumRange: stratum.depthMin...stratum.depthMax,
+                terrainType: terrainType,
+                levelWidth: levelWidth,
+                surfaceColors: stratum.surfaceGradient,
+                excavatedColors: stratum.excavatedGradient
+            )
+            layer.positionInWorld(surfaceY: surfaceY, sceneMinX: scene.frame.minX)
+            scene.addChild(layer)
+            terrainLayers[stratumIndex] = layer
+            allTerrainLayers.append((layer: layer, depthRange: stratum.depthMin...stratum.depthMax))
+
+            print("🏔️ Created stratum layer \(stratumIndex): \(stratum.name)")
+            print("   - Depth range: \(stratum.depthMin)...\(stratum.depthMax)m")
+            print("   - Size: \(layer.layerSize)")
+        } else {
+            // Too large - split into chunks
+            var currentDepth = stratum.depthMin
+            var chunkIndex = 0
+
+            while currentDepth < stratum.depthMax {
+                let chunkEnd = min(currentDepth + maxChunkMeters, stratum.depthMax)
+                let chunkRange = currentDepth...chunkEnd
+
+                let layer = TerrainLayer(
+                    stratumRange: chunkRange,
+                    terrainType: terrainType,
+                    levelWidth: levelWidth,
+                    surfaceColors: stratum.surfaceGradient,
+                    excavatedColors: stratum.excavatedGradient
+                )
+                layer.positionInWorld(surfaceY: surfaceY, sceneMinX: scene.frame.minX)
+                scene.addChild(layer)
+                allTerrainLayers.append((layer: layer, depthRange: currentDepth...chunkEnd))
+
+                // Store first chunk as the main layer for this stratum
+                if chunkIndex == 0 {
+                    terrainLayers[stratumIndex] = layer
+                }
+
+                print("🏔️ Created stratum layer \(stratumIndex).\(chunkIndex): \(stratum.name) [chunk]")
+                print("   - Depth range: \(currentDepth)...\(chunkEnd)m")
+                print("   - Size: \(layer.layerSize)")
+
+                currentDepth = chunkEnd
+                chunkIndex += 1
+            }
+
+            print("   ✅ Split into \(chunkIndex) chunks")
+        }
+    }
+
+    /// Create a material deposit node at grid position
+    private func createMaterialDeposit(x: Int, y: Int, material: Material, surfaceY: CGFloat) {
+        guard let scene = scene else { return }
+
+        let key = "\(x),\(y)"
+        guard materialDeposits[key] == nil else { return }  // Already exists
+
+        // Calculate world position (center of grid cell)
+        let worldX = scene.frame.minX + (CGFloat(x) + 0.5) * TerrainBlock.size
+        let worldY = surfaceY - (CGFloat(y) + 0.5) * TerrainBlock.size
+
+        let deposit = MaterialDeposit(material: material, gridPosition: (x, y))
+        deposit.position = CGPoint(x: worldX, y: worldY)
+        deposit.zPosition = 10  // Above terrain layers
+
+        scene.addChild(deposit)
+        materialDeposits[key] = deposit
+    }
+
+    /// Create invisible physics body at grid position for collision
+    private func createPhysicsBody(x: Int, y: Int, surfaceY: CGFloat) {
+        guard let scene = scene else { return }
+
+        let key = "\(x),\(y)"
+        guard physicsBlocks[key] == nil else { return }  // Already exists
+
+        // Calculate world position (center of grid cell)
+        let worldX = scene.frame.minX + (CGFloat(x) + 0.5) * TerrainBlock.size
+        let worldY = surfaceY - (CGFloat(y) + 0.5) * TerrainBlock.size
+
+        // Create invisible node with physics body
+        let physicsNode = SKNode()
+        physicsNode.position = CGPoint(x: worldX, y: worldY)
+        physicsNode.name = key  // Store coordinates for lookup
+
+        // Setup physics body (same as old TerrainBlock)
+        let blockSize = CGSize(width: TerrainBlock.size, height: TerrainBlock.size)
+        physicsNode.physicsBody = SKPhysicsBody(rectangleOf: blockSize)
+        physicsNode.physicsBody?.isDynamic = false  // Static terrain
+        physicsNode.physicsBody?.categoryBitMask = 2  // Terrain category
+        physicsNode.physicsBody?.contactTestBitMask = 1  // Player
+        physicsNode.physicsBody?.collisionBitMask = 1  // Player
+
+        scene.addChild(physicsNode)
+        physicsBlocks[key] = physicsNode
     }
 
     private func unloadChunk(_ chunkNumber: Int) {
@@ -115,11 +346,23 @@ class TerrainManager {
         for y in startY..<endY {
             for x in 0..<width {
                 let key = "\(x),\(y)"
-                if let block = blocks[key] {
-                    block.removeFromParent()
-                    blocks.removeValue(forKey: key)
+
+                // Remove material deposit if exists
+                if let deposit = materialDeposits[key] {
+                    deposit.removeFromParent()
+                    materialDeposits.removeValue(forKey: key)
                 }
-                // Also remove from vein map and obstacle map
+
+                // Remove physics body if exists
+                if let physicsBlock = physicsBlocks[key] {
+                    physicsBlock.removeFromParent()
+                    physicsBlocks.removeValue(forKey: key)
+                }
+
+                // Clear collision grid cell
+                collisionGrid.setCell(x: x, y: y, to: .empty)
+
+                // Remove from vein map and obstacle map
                 veinMap.removeValue(forKey: key)
                 obstacleMap.removeValue(forKey: key)
             }
@@ -259,43 +502,114 @@ class TerrainManager {
     // MARK: - Vein Generation
 
     private func generateVeinsForChunk(chunkNumber: Int, startY: Int, endY: Int) {
-        // Process each Y level in this chunk
-        for y in startY..<endY {
-            let depth = Double(y)
+        // Generate materials using clustering system
+        // Divide the chunk into 16×16 block regions for cluster generation
+        let clusterRegionSize = 16
 
-            // Get the strata layer for this depth
-            guard let layer = planetConfig.strata.first(where: { $0.contains(depth: depth) }) else {
-                continue
-            }
+        // Calculate which cluster regions overlap this chunk
+        let startRegionY = startY / clusterRegionSize
+        let endRegionY = (endY - 1) / clusterRegionSize + 1
+        let numRegionsX = (width - 1) / clusterRegionSize + 1
 
-            // Apply depth bonus (+20% at max depth)
-            let depthBonus = (depth / planetConfig.totalDepth) * 0.2
+        // Process each cluster region
+        for regionY in startRegionY..<endRegionY {
+            for regionX in 0..<numRegionsX {
+                let regionCenterX = regionX * clusterRegionSize + clusterRegionSize / 2
+                let regionCenterY = regionY * clusterRegionSize + clusterRegionSize / 2
+                let depth = Double(regionCenterY)
 
-            // Generate veins for each resource type in this layer
-            for (resourceIndex, resource) in layer.resources.enumerated() {
-                let adjustedSeedRate = resource.seedRate * (1.0 + depthBonus)
-                let totalTilesInRow = width
-                let numSeeds = Int(floor(Double(totalTilesInRow) * adjustedSeedRate))
+                // Get the strata layer for this depth
+                guard let layer = planetConfig.strata.first(where: { $0.contains(depth: depth) }) else {
+                    continue
+                }
 
-                // Place vein seeds for this row
-                for seedIndex in 0..<numSeeds {
-                    // Use deterministic seed based on position and resource type
-                    let positionSeed = generateSeed(x: y, y: resourceIndex, offset: seedIndex)
-                    let seedX = seededRandom(min: 0, max: width - 1, seed: positionSeed)
-                    let seedKey = "\(seedX),\(y)"
+                // Generate clusters for each resource type in this layer
+                for (resourceIndex, resource) in layer.resources.enumerated() {
+                    // All resources must have clustering parameters defined
+                    guard let clusterRadiusMin = resource.clusterRadiusMin,
+                          let clusterRadiusMax = resource.clusterRadiusMax,
+                          let clusterSizeMin = resource.clusterSizeMin,
+                          let clusterSizeMax = resource.clusterSizeMax else {
+                        print("⚠️ Resource \(resource.type) missing clustering parameters")
+                        continue
+                    }
 
-                    // Skip if position already has a vein
-                    guard veinMap[seedKey] == nil else { continue }
-
-                    // Create material for this vein
-                    guard let material = createMaterial(from: resource) else { continue }
-
-                    // Grow vein from seed - use seeded random for vein size
-                    let sizeSeed = generateSeed(x: seedX, y: y, offset: 1000 + seedIndex)
-                    let veinSize = seededRandom(min: resource.veinSizeMin, max: resource.veinSizeMax, seed: sizeSeed)
-                    growVein(startX: seedX, startY: y, material: material, remainingSize: veinSize, baseSeed: positionSeed)
+                    generateClustersInRegion(
+                        regionX: regionX,
+                        regionY: regionY,
+                        regionSize: clusterRegionSize,
+                        resource: resource,
+                        resourceIndex: resourceIndex,
+                        clusterRadiusMin: clusterRadiusMin,
+                        clusterRadiusMax: clusterRadiusMax,
+                        clusterSizeMin: clusterSizeMin,
+                        clusterSizeMax: clusterSizeMax
+                    )
                 }
             }
+        }
+    }
+
+    /// Generate material clusters in a region using the clustering system
+    private func generateClustersInRegion(
+        regionX: Int,
+        regionY: Int,
+        regionSize: Int,
+        resource: ResourceConfig,
+        resourceIndex: Int,
+        clusterRadiusMin: Int,
+        clusterRadiusMax: Int,
+        clusterSizeMin: Int,
+        clusterSizeMax: Int
+    ) {
+        // Determine if this region should have a cluster
+        let regionSeed = generateSeed(x: regionX, y: regionY, offset: resourceIndex * 10000)
+        let spawnChance = Double((regionSeed & 0xFFFF)) / Double(0xFFFF)
+
+        // Use seedRate as cluster spawn probability
+        guard spawnChance < resource.seedRate else { return }
+
+        // Choose cluster center within the region
+        let centerSeed = generateSeed(x: regionX, y: regionY, offset: resourceIndex * 10000 + 1)
+        let clusterCenterX = regionX * regionSize + seededRandom(min: 0, max: regionSize - 1, seed: centerSeed)
+        let clusterCenterY = regionY * regionSize + seededRandom(min: 0, max: regionSize - 1, seed: centerSeed + 1)
+
+        // Keep within bounds
+        guard clusterCenterX >= 0 && clusterCenterX < width && clusterCenterY >= 0 else { return }
+
+        // Choose cluster radius
+        let radiusSeed = generateSeed(x: clusterCenterX, y: clusterCenterY, offset: resourceIndex * 10000 + 2)
+        let clusterRadius = seededRandom(min: clusterRadiusMin, max: clusterRadiusMax, seed: radiusSeed)
+
+        // Choose number of veins in cluster
+        let sizeSeed = generateSeed(x: clusterCenterX, y: clusterCenterY, offset: resourceIndex * 10000 + 3)
+        let numVeins = seededRandom(min: clusterSizeMin, max: clusterSizeMax, seed: sizeSeed)
+
+        // Create material for this cluster
+        guard let material = createMaterial(from: resource) else { return }
+
+        // Place veins within cluster radius
+        for veinIndex in 0..<numVeins {
+            // Choose position within cluster radius using polar coordinates
+            let angleSeed = generateSeed(x: clusterCenterX, y: clusterCenterY, offset: resourceIndex * 10000 + 100 + veinIndex * 2)
+            let distanceSeed = generateSeed(x: clusterCenterX, y: clusterCenterY, offset: resourceIndex * 10000 + 101 + veinIndex * 2)
+
+            let angle = Double(angleSeed & 0xFFFF) / Double(0xFFFF) * 2.0 * .pi
+            let distance = sqrt(Double(distanceSeed & 0xFFFF) / Double(0xFFFF)) * Double(clusterRadius)
+
+            let veinX = clusterCenterX + Int(cos(angle) * distance)
+            let veinY = clusterCenterY + Int(sin(angle) * distance)
+
+            // Keep within bounds
+            guard veinX >= 0 && veinX < width && veinY >= 0 else { continue }
+
+            let veinKey = "\(veinX),\(veinY)"
+            guard veinMap[veinKey] == nil else { continue }
+
+            // Grow vein from this position
+            let veinSizeSeed = generateSeed(x: veinX, y: veinY, offset: resourceIndex * 10000 + 1000 + veinIndex)
+            let veinSize = seededRandom(min: resource.veinSizeMin, max: resource.veinSizeMax, seed: veinSizeSeed)
+            growVein(startX: veinX, startY: veinY, material: material, remainingSize: veinSize, baseSeed: veinSizeSeed)
         }
     }
 
@@ -369,51 +683,6 @@ class TerrainManager {
         return min + Int(random * Double(max - min + 1))
     }
 
-    // MARK: - Block Generation
-
-    private func generateBlock(x: Int, y: Int, surfaceY: CGFloat) {
-        guard let scene = scene else { return }
-
-        let key = "\(x),\(y)"
-        guard blocks[key] == nil else { return }  // Already exists
-
-        // Skip positions that have been drilled - keep the shaft open!
-        guard !drilledPositions.contains(key) else { return }
-
-        // Calculate depth in meters (1 tile = 1 meter)
-        let depth = Double(y)  // Each tile is 1 meter deep
-
-        // Skip blocks inside core chamber (10×10 open area at 490-500m)
-        if isInCoreChamber(x: x, y: y) {
-            // Spawn Dark Matter crystal once when core chamber is first loaded
-            if !coreCrystalSpawned && depth >= planetConfig.coreDepth {
-                spawnCoreCrystal(surfaceY: surfaceY)
-            }
-            return
-        }
-
-        // Calculate position
-        let blockX = scene.frame.minX + CGFloat(x) * TerrainBlock.size + TerrainBlock.size / 2
-        let blockY = surfaceY - CGFloat(y) * TerrainBlock.size - TerrainBlock.size / 2
-
-        // Check if this block has an obstacle type (takes priority over materials)
-        let blockType = obstacleMap[key] ?? .normal
-
-        // Check if this block has a material from vein generation (only for normal blocks)
-        let material = blockType == .normal ? veinMap[key] : nil
-
-        // Get the strata layer for this depth to determine hardness
-        let strataHardness = planetConfig.strata.first(where: { $0.contains(depth: depth) })?.hardness ?? 1.0
-
-        // Create block
-        let block = TerrainBlock(material: material, depth: depth, strataHardness: strataHardness, blockType: blockType)
-        block.position = CGPoint(x: blockX, y: blockY)
-        block.zPosition = 1
-        block.name = key  // Store coordinates as name for easy lookup
-
-        scene.addChild(block)
-        blocks[key] = block
-    }
 
     // MARK: - Core Chamber
 
@@ -438,28 +707,18 @@ class TerrainManager {
 
     /// Spawn the Dark Matter crystal at the center of the core chamber
     private func spawnCoreCrystal(surfaceY: CGFloat) {
-        guard let scene = scene else { return }
         guard !coreCrystalSpawned else { return }
 
         // Calculate center position of core chamber
         let centerX = width / 2
         let centerY = Int(planetConfig.coreDepth) + 5  // Middle of 10-tile vertical chamber
 
-        // World position
-        let blockX = scene.frame.minX + CGFloat(centerX) * TerrainBlock.size + TerrainBlock.size / 2
-        let blockY = surfaceY - CGFloat(centerY) * TerrainBlock.size - TerrainBlock.size / 2
-
-        // Create Dark Matter crystal block
+        // Create Dark Matter material
         let darkMatter = Material(type: .darkMatter, planetMultiplier: planetConfig.valueMultiplier, soulCrystalBonus: soulCrystalBonus)
-        let strataHardness = planetConfig.strata.first(where: { $0.contains(depth: Double(centerY)) })?.hardness ?? 5.0
 
-        let crystalBlock = TerrainBlock(material: darkMatter, depth: Double(centerY), strataHardness: strataHardness, blockType: .normal)
-        crystalBlock.position = CGPoint(x: blockX, y: blockY)
-        crystalBlock.zPosition = 1
-        crystalBlock.name = "\(centerX),\(centerY)"
-
-        scene.addChild(crystalBlock)
-        blocks["\(centerX),\(centerY)"] = crystalBlock
+        // Add to grid and create deposit
+        collisionGrid.setCell(x: centerX, y: centerY, to: .material(darkMatter))
+        createMaterialDeposit(x: centerX, y: centerY, material: darkMatter, surfaceY: surfaceY)
 
         coreCrystalSpawned = true
 
@@ -479,45 +738,128 @@ class TerrainManager {
         return Material(type: materialType, planetMultiplier: planetConfig.valueMultiplier, soulCrystalBonus: soulCrystalBonus)
     }
 
-    // MARK: - Block Access
+    // MARK: - Grid Access
 
-    /// Get block at grid coordinates
-    func getBlock(x: Int, y: Int) -> TerrainBlock? {
-        let key = "\(x),\(y)"
-        return blocks[key]
+    /// Get cell type at grid coordinates
+    func getCell(x: Int, y: Int) -> CollisionGrid.GridCell? {
+        return collisionGrid.cellAt(x: x, y: y)
     }
 
-    /// Remove a block (when drilled)
+    /// Get stratum hardness at a specific depth
+    func getHardnessAtDepth(_ depth: Double) -> Double? {
+        return planetConfig.strata.first(where: { $0.contains(depth: depth) })?.hardness
+    }
+
+    /// Update circular consumption visual for a block being drilled
+    func updateConsumptionMask(x: Int, y: Int, progress: CGFloat) {
+        let depth = Double(y)
+
+        // Find which terrain layer contains this depth
+        for entry in allTerrainLayers {
+            if entry.depthRange.contains(depth) {
+                entry.layer.updateConsumptionMask(
+                    gridX: x,
+                    gridY: y,
+                    progress: progress,
+                    blockSize: TerrainBlock.size
+                )
+                return
+            }
+        }
+    }
+
+    /// Remove a block completely (called when drilling animation completes)
     func removeBlock(x: Int, y: Int) -> Material? {
         let key = "\(x),\(y)"
-        guard let block = blocks[key] else { return nil }
 
-        let material = block.material
-        block.removeFromParent()
-        blocks.removeValue(forKey: key)
+        // Check if block exists
+        guard let cell = collisionGrid.cellAt(x: x, y: y) else { return nil }
 
-        // Mark this position as drilled so it stays open when chunk reloads
+        // Skip empty cells
+        if case .empty = cell {
+            return nil
+        }
+
+        var material: Material?
+
+        // Extract material if present
+        if case .material(let mat) = cell {
+            material = mat
+
+            // Remove material deposit visual
+            if let deposit = materialDeposits[key] {
+                deposit.removeWithAnimation { }
+                materialDeposits.removeValue(forKey: key)
+            }
+        }
+
+        // Mark as fully empty
+        collisionGrid.setCell(x: x, y: y, to: .empty)
+
+        // Remove physics body
+        if let physicsBlock = physicsBlocks[key] {
+            physicsBlock.removeFromParent()
+            physicsBlocks.removeValue(forKey: key)
+        }
+
+        // Cut surface layer to reveal excavated terrain
+        cutSurfaceLayer(x: x, y: y)
+
+        // Mark as drilled
         drilledPositions.insert(key)
 
+        print("💥 Block (\(x),\(y)) removed!")
         return material
+    }
+
+    /// Cut the surface layer at the given grid position to reveal excavated terrain
+    private func cutSurfaceLayer(x: Int, y: Int) {
+        let depth = Double(y)
+
+        // Find which terrain layer (or chunk) contains this depth
+        for entry in allTerrainLayers {
+            if entry.layer.stratumRange.contains(depth) {
+                // Found the right layer - cut the surface
+                entry.layer.cutSurfaceAt(gridX: x, gridY: y, blockSize: TerrainBlock.size)
+                return
+            }
+        }
     }
 
     /// Remove all terrain (for game over / reset)
     func removeAllTerrain() {
-        // Remove all block nodes from scene
-        for block in blocks.values {
-            block.removeFromParent()
+        // Remove all terrain layers (includes chunks)
+        for entry in allTerrainLayers {
+            entry.layer.removeFromParent()
         }
+        terrainLayers.removeAll()
+        allTerrainLayers.removeAll()
 
-        // Clear storage
-        blocks.removeAll()
+        // Remove material deposits
+        for deposit in materialDeposits.values {
+            deposit.removeFromParent()
+        }
+        materialDeposits.removeAll()
+
+        // Remove physics bodies
+        for physicsBlock in physicsBlocks.values {
+            physicsBlock.removeFromParent()
+        }
+        physicsBlocks.removeAll()
+
+        // Reinitialize collision grid
+        let gridHeight = Int(planetConfig.totalDepth)
+        collisionGrid = CollisionGrid(gridSize: (width: width, height: gridHeight))
+
+        // Clear all data
+        loadedStratumIndices.removeAll()
         loadedChunks.removeAll()
         veinMap.removeAll()
         obstacleMap.removeAll()
         drilledPositions.removeAll()
         coreCrystalSpawned = false
 
-        print("🗑️ Cleared all terrain - blocks: 0, chunks: 0, veins: 0, obstacles: 0, drilled: 0")
+        print("🗑️ Cleared all terrain")
     }
 
     /// Convert world position to grid coordinates

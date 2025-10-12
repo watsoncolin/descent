@@ -1,752 +1,414 @@
 {
-    "name": "Mars",
-    "totalDepth": 500,
-    "coreDepth": 490,
-    "valueMultiplier": 1.0,
-    "tileSize": 24,
-    "strata": [
+  "name": "Mars",
+  "totalDepth": 2560,
+  "coreDepth": 2500,
+  "valueMultiplier": 1.0,
+  "tileSize": 64,
+  "difficulty": "Tutorial",
+  "theme": "Red desert planet with iron-rich soil, ancient geology, and increasing danger with depth",
+  "planetOrder": 1,
+  "unlockRequirements": "None - Tutorial planet, always available",
+  "strata": [
+    {
+      "name": "Surface Sand",
+      "depthMin": 0,
+      "depthMax": 640,
+      "hardness": 8.0,
+      "surfaceColors": ["#8c7545", "#7c6535", "#6c5525"],
+      "excavatedColors": ["#c4a57b", "#b89a70", "#a89060"],
+      "contrast": 0.35,
+      "drillSpeedModifier": 1.0,
+      "minimumDrillLevel": 1,
+      "resources": [
         {
-            "name": "Surface Regolith",
-            "depthMin": 0,
-            "depthMax": 30,
-            "hardness": 1.0,
-            "colorHex": "#C1440E",
-            "drillSpeedModifier": 1.0,
-            "minimumDrillLevel": null,
-            "resources": [
-                {
-                    "type": "carbon",
-                    "seedRate": 0.10,
-                    "value": 10,
-                    "size": 5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#2C2C2C"
-                },
-                {
-                    "type": "iron",
-                    "seedRate": 0.06,
-                    "value": 25,
-                    "size": 3,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#B87333"
-                }
-            ],
-            "hazards": [],
-            "obstacles": [],
-            "specialFeatures": [
-                "No hazards",
-                "Clear visibility",
-                "Tutorial zone",
-                "No obstacles - straight vertical drilling"
-            ]
-        },
-        {
-            "name": "Iron-Rich Sediment",
-            "depthMin": 30,
-            "depthMax": 80,
-            "hardness": 1.3,
-            "colorHex": "#A0380C",
-            "drillSpeedModifier": 0.77,
-            "minimumDrillLevel": null,
-            "resources": [
-                {
-                    "type": "iron",
-                    "seedRate": 0.125,
-                    "value": 25,
-                    "size": 3,
-                    "veinSizeMin": 3,
-                    "veinSizeMax": 5,
-                    "colorHex": "#B87333"
-                },
-                {
-                    "type": "copper",
-                    "seedRate": 0.075,
-                    "value": 30,
-                    "size": 3,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#B87333"
-                },
-                {
-                    "type": "silicon",
-                    "seedRate": 0.05,
-                    "value": 50,
-                    "size": 2,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#8B8B8B"
-                }
-            ],
-            "hazards": [
-                {
-                    "type": "gasPocket",
-                    "spawnRate": 0.05,
-                    "damage": 5,
-                    "size": 2,
-                    "description": "Small gas pocket"
-                }
-            ],
-            "obstacles": [
-                {
-                    "type": "bedrock",
-                    "coverage": 0.03,
-                    "formationSizes": [
-                        {"width": 2, "height": 2},
-                        {"width": 3, "height": 3}
-                    ]
-                }
-            ],
-            "specialFeatures": [
-                "First gas pockets appear",
-                "Bedrock obstacles (3% coverage)",
-                "Small 3x3 formations teach navigation"
-            ]
-        },
-        {
-            "name": "Basalt Shield",
-            "depthMin": 80,
-            "depthMax": 150,
-            "hardness": 2.0,
-            "colorHex": "#6B2C0A",
-            "drillSpeedModifier": 0.5,
-            "minimumDrillLevel": 2,
-            "resources": [
-                {
-                    "type": "iron",
-                    "seedRate": 0.15,
-                    "value": 25,
-                    "size": 3,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#B87333"
-                },
-                {
-                    "type": "copper",
-                    "seedRate": 0.175,
-                    "value": 30,
-                    "size": 3,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#B87333"
-                },
-                {
-                    "type": "silver",
-                    "seedRate": 0.075,
-                    "value": 75,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#C0C0C0"
-                },
-                {
-                    "type": "aluminum",
-                    "seedRate": 0.05,
-                    "value": 60,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#A8A8A8"
-                }
-            ],
-            "hazards": [
-                {
-                    "type": "unstableRock",
-                    "spawnRate": 0.10,
-                    "damage": 10,
-                    "size": null,
-                    "description": "Adjacent tiles can collapse"
-                },
-                {
-                    "type": "gasPocket",
-                    "spawnRate": 0.08,
-                    "damage": 5,
-                    "size": 2,
-                    "description": "Gas pocket"
-                }
-            ],
-            "obstacles": [
-                {
-                    "type": "bedrock",
-                    "coverage": 0.08,
-                    "formationSizes": [
-                        {"width": 3, "height": 3},
-                        {"width": 4, "height": 4},
-                        {"width": 5, "height": 5}
-                    ]
-                },
-                {
-                    "type": "hardCrystal",
-                    "coverage": 0.02,
-                    "formationSizes": [
-                        {"width": 2, "height": 2},
-                        {"width": 3, "height": 3}
-                    ]
-                }
-            ],
-            "specialFeatures": [
-                "Volcanic rock layer",
-                "Unstable rock formations",
-                "Bedrock 8%, Hard Crystal 2%",
-                "5x5 to 8x8 formations force navigation"
-            ]
-        },
-        {
-            "name": "Fractured Crust",
-            "depthMin": 150,
-            "depthMax": 220,
-            "hardness": 2.2,
-            "colorHex": "#5A1F08",
-            "drillSpeedModifier": 0.45,
-            "minimumDrillLevel": null,
-            "resources": [
-                {
-                    "type": "silver",
-                    "seedRate": 0.15,
-                    "value": 75,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#C0C0C0"
-                },
-                {
-                    "type": "gold",
-                    "seedRate": 0.075,
-                    "value": 150,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#FFD700"
-                },
-                {
-                    "type": "copper",
-                    "seedRate": 0.125,
-                    "value": 30,
-                    "size": 3,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#B87333"
-                },
-                {
-                    "type": "aluminum",
-                    "seedRate": 0.05,
-                    "value": 60,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#A8A8A8"
-                }
-            ],
-            "hazards": [
-                {
-                    "type": "caveIn",
-                    "spawnRate": 0.15,
-                    "damage": 10,
-                    "size": null,
-                    "description": "Rocks fall from above"
-                },
-                {
-                    "type": "gasPocket",
-                    "spawnRate": 0.12,
-                    "damage": 10,
-                    "size": 4,
-                    "description": "Large gas pocket"
-                }
-            ],
-            "obstacles": [
-                {
-                    "type": "bedrock",
-                    "coverage": 0.10,
-                    "formationSizes": [
-                        {"width": 4, "height": 4},
-                        {"width": 5, "height": 5},
-                        {"width": 6, "height": 6}
-                    ]
-                },
-                {
-                    "type": "hardCrystal",
-                    "coverage": 0.03,
-                    "formationSizes": [
-                        {"width": 2, "height": 2},
-                        {"width": 3, "height": 3}
-                    ]
-                }
-            ],
-            "specialFeatures": [
-                "Cracked unstable geology",
-                "Visual cracks appear",
-                "First gold appearance",
-                "Bedrock 10%, Hard Crystal 3%",
-                "8x10 formations, bombs useful"
-            ]
-        },
-        {
-            "name": "Ancient Lava Tubes",
-            "depthMin": 220,
-            "depthMax": 300,
-            "hardness": 2.5,
-            "colorHex": "#3D1506",
-            "drillSpeedModifier": 0.4,
-            "minimumDrillLevel": 3,
-            "resources": [
-                {
-                    "type": "gold",
-                    "seedRate": 0.125,
-                    "value": 150,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#FFD700"
-                },
-                {
-                    "type": "silver",
-                    "seedRate": 0.10,
-                    "value": 75,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#C0C0C0"
-                },
-                {
-                    "type": "platinum",
-                    "seedRate": 0.04,
-                    "value": 250,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#E5E4E2"
-                },
-                {
-                    "type": "neodymium",
-                    "seedRate": 0.025,
-                    "value": 300,
-                    "size": 1.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#9966CC"
-                }
-            ],
-            "hazards": [
-                {
-                    "type": "gasPocket",
-                    "spawnRate": 0.10,
-                    "damage": 15,
-                    "size": 4,
-                    "description": "Gas pocket"
-                }
-            ],
-            "obstacles": [
-                {
-                    "type": "bedrock",
-                    "coverage": 0.12,
-                    "formationSizes": [
-                        {"width": 5, "height": 5},
-                        {"width": 6, "height": 6},
-                        {"width": 7, "height": 7}
-                    ]
-                },
-                {
-                    "type": "hardCrystal",
-                    "coverage": 0.04,
-                    "formationSizes": [
-                        {"width": 2, "height": 2},
-                        {"width": 3, "height": 3}
-                    ]
-                }
-            ],
-            "specialFeatures": [
-                "Old volcanic channels",
-                "Empty cave pockets (5x5)",
-                "First platinum appearance",
-                "Lava remnants (decorative)",
-                "Bedrock 12%, Hard Crystal 4%",
-                "10x15 formations, complex navigation"
-            ]
-        },
-        {
-            "name": "Dense Mantle Rock",
-            "depthMin": 300,
-            "depthMax": 380,
-            "hardness": 3.0,
-            "colorHex": "#2A0F04",
-            "drillSpeedModifier": 0.33,
-            "minimumDrillLevel": 3,
-            "resources": [
-                {
-                    "type": "gold",
-                    "seedRate": 0.175,
-                    "value": 150,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#FFD700"
-                },
-                {
-                    "type": "platinum",
-                    "seedRate": 0.10,
-                    "value": 250,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#E5E4E2"
-                },
-                {
-                    "type": "titanium",
-                    "seedRate": 0.06,
-                    "value": 200,
-                    "size": 1.5,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#878681"
-                },
-                {
-                    "type": "ruby",
-                    "seedRate": 0.025,
-                    "value": 500,
-                    "size": 0.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#E0115F"
-                },
-                {
-                    "type": "neodymium",
-                    "seedRate": 0.04,
-                    "value": 300,
-                    "size": 1.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#9966CC"
-                }
-            ],
-            "hazards": [
-                {
-                    "type": "caveIn",
-                    "spawnRate": 0.08,
-                    "damage": 20,
-                    "size": null,
-                    "description": "Heavy cave-in"
-                }
-            ],
-            "obstacles": [
-                {
-                    "type": "bedrock",
-                    "coverage": 0.15,
-                    "formationSizes": [
-                        {"width": 6, "height": 6},
-                        {"width": 7, "height": 7},
-                        {"width": 8, "height": 8}
-                    ]
-                },
-                {
-                    "type": "hardCrystal",
-                    "coverage": 0.05,
-                    "formationSizes": [
-                        {"width": 3, "height": 3},
-                        {"width": 4, "height": 4}
-                    ]
-                },
-                {
-                    "type": "reinforcedRock",
-                    "coverage": 0.03,
-                    "formationSizes": [
-                        {"width": 2, "height": 2},
-                        {"width": 3, "height": 3}
-                    ]
-                }
-            ],
-            "specialFeatures": [
-                "Extremely hard compressed rock",
-                "High pressure zone",
-                "First ruby appearance",
-                "Movement slightly slower",
-                "Bedrock 15%, Hard Crystal 5%, Reinforced Rock 3%",
-                "15x20 formations, bombs highly valuable"
-            ]
-        },
-        {
-            "name": "Crystalline Zone",
-            "depthMin": 380,
-            "depthMax": 450,
-            "hardness": 3.2,
-            "colorHex": "#1F0A03",
-            "drillSpeedModifier": 0.31,
-            "minimumDrillLevel": null,
-            "resources": [
-                {
-                    "type": "platinum",
-                    "seedRate": 0.15,
-                    "value": 250,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#E5E4E2"
-                },
-                {
-                    "type": "ruby",
-                    "seedRate": 0.06,
-                    "value": 500,
-                    "size": 0.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#E0115F"
-                },
-                {
-                    "type": "emerald",
-                    "seedRate": 0.04,
-                    "value": 600,
-                    "size": 0.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#50C878"
-                },
-                {
-                    "type": "diamond",
-                    "seedRate": 0.025,
-                    "value": 800,
-                    "size": 0.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#B9F2FF"
-                },
-                {
-                    "type": "titanium",
-                    "seedRate": 0.075,
-                    "value": 200,
-                    "size": 1.5,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#878681"
-                },
-                {
-                    "type": "gold",
-                    "seedRate": 0.10,
-                    "value": 150,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 4,
-                    "colorHex": "#FFD700"
-                }
-            ],
-            "hazards": [],
-            "obstacles": [
-                {
-                    "type": "bedrock",
-                    "coverage": 0.18,
-                    "formationSizes": [
-                        {"width": 7, "height": 7},
-                        {"width": 8, "height": 8},
-                        {"width": 9, "height": 9}
-                    ]
-                },
-                {
-                    "type": "hardCrystal",
-                    "coverage": 0.08,
-                    "formationSizes": [
-                        {"width": 3, "height": 3},
-                        {"width": 4, "height": 4},
-                        {"width": 5, "height": 5}
-                    ]
-                },
-                {
-                    "type": "reinforcedRock",
-                    "coverage": 0.05,
-                    "formationSizes": [
-                        {"width": 3, "height": 3},
-                        {"width": 4, "height": 4}
-                    ]
-                }
-            ],
-            "specialFeatures": [
-                "Gem-bearing formation",
-                "Glittering walls",
-                "Crystal reflections and sparkles",
-                "Brittle formations (chain reactions)",
-                "Minimal hazards as reward",
-                "Bedrock 18%, Hard Crystal 8%, Reinforced Rock 5%",
-                "Highest obstacle density, gems behind obstacles"
-            ]
-        },
-        {
-            "name": "Pre-Core Mantle",
-            "depthMin": 450,
-            "depthMax": 490,
-            "hardness": 3.5,
-            "colorHex": "#150502",
-            "drillSpeedModifier": 0.29,
-            "minimumDrillLevel": 4,
-            "resources": [
-                {
-                    "type": "platinum",
-                    "seedRate": 0.20,
-                    "value": 250,
-                    "size": 2,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#E5E4E2"
-                },
-                {
-                    "type": "diamond",
-                    "seedRate": 0.05,
-                    "value": 800,
-                    "size": 0.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#B9F2FF"
-                },
-                {
-                    "type": "emerald",
-                    "seedRate": 0.05,
-                    "value": 600,
-                    "size": 0.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#50C878"
-                },
-                {
-                    "type": "ruby",
-                    "seedRate": 0.075,
-                    "value": 500,
-                    "size": 0.5,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#E0115F"
-                },
-                {
-                    "type": "rhodium",
-                    "seedRate": 0.015,
-                    "value": 900,
-                    "size": 1,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 2,
-                    "colorHex": "#FFFAFA"
-                },
-                {
-                    "type": "titanium",
-                    "seedRate": 0.06,
-                    "value": 200,
-                    "size": 1.5,
-                    "veinSizeMin": 2,
-                    "veinSizeMax": 3,
-                    "colorHex": "#878681"
-                }
-            ],
-            "hazards": [],
-            "obstacles": [
-                {
-                    "type": "bedrock",
-                    "coverage": 0.20,
-                    "formationSizes": [
-                        {"width": 8, "height": 8},
-                        {"width": 9, "height": 9},
-                        {"width": 10, "height": 10}
-                    ]
-                },
-                {
-                    "type": "hardCrystal",
-                    "coverage": 0.06,
-                    "formationSizes": [
-                        {"width": 3, "height": 3},
-                        {"width": 4, "height": 4},
-                        {"width": 5, "height": 5}
-                    ]
-                },
-                {
-                    "type": "reinforcedRock",
-                    "coverage": 0.08,
-                    "formationSizes": [
-                        {"width": 3, "height": 3},
-                        {"width": 4, "height": 4}
-                    ]
-                }
-            ],
-            "specialFeatures": [
-                "Hottest zone on Mars",
-                "Final challenge before core",
-                "Heat signatures (visual red glow)",
-                "Magnetic interference (HUD flickers)",
-                "Dense pockets take 2x longer",
-                "Bedrock 20%, Hard Crystal 6%, Reinforced Rock 8%",
-                "Most complex navigation in game"
-            ]
-        },
-        {
-            "name": "Core Chamber",
-            "depthMin": 490,
-            "depthMax": 500,
-            "hardness": 0,
-            "colorHex": "#FF4500",
-            "drillSpeedModifier": 1.0,
-            "minimumDrillLevel": null,
-            "resources": [
-                {
-                    "type": "darkMatter",
-                    "seedRate": 1.0,
-                    "value": 10000,
-                    "size": 0.1,
-                    "veinSizeMin": 1,
-                    "veinSizeMax": 1,
-                    "colorHex": "#1A1A2E"
-                }
-            ],
-            "hazards": [],
-            "obstacles": [],
-            "specialFeatures": [
-                "The goal",
-                "Open 10x10 chamber",
-                "Glowing orange-red core",
-                "Safe zone - no hazards",
-                "Dark Matter Crystal triggers prestige",
-                "Hard Crystal walls guard entry"
-            ]
+          "type": "coal",
+          "seedRate": 0.6,
+          "value": 10,
+          "size": 1.0,
+          "veinSizeMin": 3,
+          "veinSizeMax": 8,
+          "colorHex": "#333333",
+          "clusterRadiusMin": 2,
+          "clusterRadiusMax": 3,
+          "clusterSizeMin": 8,
+          "clusterSizeMax": 12
         }
-    ],
-    "progressionGates": [
+      ],
+      "hazards": [
         {
-            "depth": 80,
-            "requirement": "Basalt layer strongly encourages Drill Level 2",
-            "recommendedDrillLevel": 2
-        },
-        {
-            "depth": 220,
-            "requirement": "Lava tubes strongly encourage Drill Level 3",
-            "recommendedDrillLevel": 3
-        },
-        {
-            "depth": 300,
-            "requirement": "Dense mantle REQUIRES Drill Level 3 or progress is painfully slow",
-            "recommendedDrillLevel": 3
-        },
-        {
-            "depth": 450,
-            "requirement": "Pre-core zone benefits heavily from Drill Level 4+",
-            "recommendedDrillLevel": 4
+          "type": "gasPocket",
+          "spawnRate": 0.08,
+          "damage": 5,
+          "size": 3,
+          "description": "Pressurized gas pocket",
+          "specialEffects": null
         }
-    ],
-    "economyBalance": {
-        "expectedEarnings": [
-            {
-                "depth": 100,
-                "earnings": 500
-            },
-            {
-                "depth": 200,
-                "earnings": 1500
-            },
-            {
-                "depth": 300,
-                "earnings": 3000
-            },
-            {
-                "depth": 400,
-                "earnings": 6000
-            },
-            {
-                "depth": 500,
-                "earnings": 22000
-            }
-        ],
-        "prestigeSoulCrystals": 50,
-        "runsToMaxOut": 15
+      ],
+      "obstacles": [
+        {
+          "type": "bedrock",
+          "coverage": 0.03,
+          "formationSizes": [
+            { "width": 2, "height": 2 },
+            { "width": 3, "height": 2 }
+          ],
+          "minimumDrillLevel": null,
+          "bombOnly": false,
+          "description": "Indestructible bedrock formation"
+        }
+      ],
+      "specialFeatures": ["dust_storms", "surface_rocks"]
+    },
+    {
+      "name": "Stone Layer",
+      "depthMin": 640,
+      "depthMax": 1280,
+      "hardness": 1.5,
+      "surfaceColors": ["#4a5a6a", "#3a4a5a"],
+      "excavatedColors": ["#6a7a8a", "#5a6a7a"],
+      "contrast": 0.4,
+      "drillSpeedModifier": 0.75,
+      "minimumDrillLevel": 2,
+      "resources": [
+        {
+          "type": "coal",
+          "seedRate": 0.35,
+          "value": 10,
+          "size": 1.0,
+          "veinSizeMin": 3,
+          "veinSizeMax": 8,
+          "colorHex": "#333333",
+          "clusterRadiusMin": 2,
+          "clusterRadiusMax": 3,
+          "clusterSizeMin": 8,
+          "clusterSizeMax": 12
+        },
+        {
+          "type": "iron",
+          "seedRate": 0.22,
+          "value": 25,
+          "size": 1.5,
+          "veinSizeMin": 2,
+          "veinSizeMax": 6,
+          "colorHex": "#808080",
+          "clusterRadiusMin": 2,
+          "clusterRadiusMax": 4,
+          "clusterSizeMin": 5,
+          "clusterSizeMax": 10
+        }
+      ],
+      "hazards": [
+        {
+          "type": "gasPocket",
+          "spawnRate": 0.1,
+          "damage": 8,
+          "size": 3,
+          "description": "Pressurized gas pocket",
+          "specialEffects": null
+        },
+        {
+          "type": "unstableRock",
+          "spawnRate": 0.05,
+          "damage": 10,
+          "size": null,
+          "description": "Unstable rock that may collapse",
+          "specialEffects": "Chain reaction collapse"
+        }
+      ],
+      "obstacles": [
+        {
+          "type": "bedrock",
+          "coverage": 0.08,
+          "formationSizes": [
+            { "width": 2, "height": 2 },
+            { "width": 3, "height": 3 },
+            { "width": 4, "height": 2 }
+          ],
+          "minimumDrillLevel": null,
+          "bombOnly": false,
+          "description": "Indestructible bedrock formation"
+        },
+        {
+          "type": "hardCrystal",
+          "coverage": 0.03,
+          "formationSizes": [
+            { "width": 2, "height": 2 },
+            { "width": 3, "height": 2 }
+          ],
+          "minimumDrillLevel": null,
+          "bombOnly": true,
+          "description": "Crystalline formation requiring explosives"
+        }
+      ],
+      "specialFeatures": ["rock_striations", "mineral_veins"]
+    },
+    {
+      "name": "Deep Rock",
+      "depthMin": 1280,
+      "depthMax": 1920,
+      "hardness": 2.5,
+      "surfaceColors": ["#5a6070", "#4a5060"],
+      "excavatedColors": ["#7a8090", "#6a7080"],
+      "contrast": 0.35,
+      "drillSpeedModifier": 0.5,
+      "minimumDrillLevel": 3,
+      "resources": [
+        {
+          "type": "iron",
+          "seedRate": 0.17,
+          "value": 25,
+          "size": 1.5,
+          "veinSizeMin": 2,
+          "veinSizeMax": 6,
+          "colorHex": "#808080",
+          "clusterRadiusMin": 2,
+          "clusterRadiusMax": 4,
+          "clusterSizeMin": 5,
+          "clusterSizeMax": 10
+        },
+        {
+          "type": "copper",
+          "seedRate": 0.17,
+          "value": 30,
+          "size": 1.8,
+          "veinSizeMin": 2,
+          "veinSizeMax": 5,
+          "colorHex": "#B87333",
+          "clusterRadiusMin": 2,
+          "clusterRadiusMax": 3,
+          "clusterSizeMin": 4,
+          "clusterSizeMax": 8
+        }
+      ],
+      "hazards": [
+        {
+          "type": "gasPocket",
+          "spawnRate": 0.12,
+          "damage": 10,
+          "size": 4,
+          "description": "High-pressure gas pocket",
+          "specialEffects": null
+        },
+        {
+          "type": "unstableRock",
+          "spawnRate": 0.08,
+          "damage": 15,
+          "size": null,
+          "description": "Highly unstable rock formation",
+          "specialEffects": "Chain reaction collapse"
+        },
+        {
+          "type": "caveIn",
+          "spawnRate": 0.05,
+          "damage": 20,
+          "size": null,
+          "description": "Cave-in risk zone",
+          "specialEffects": "Falling debris"
+        }
+      ],
+      "obstacles": [
+        {
+          "type": "bedrock",
+          "coverage": 0.12,
+          "formationSizes": [
+            { "width": 3, "height": 3 },
+            { "width": 4, "height": 3 },
+            { "width": 5, "height": 2 }
+          ],
+          "minimumDrillLevel": null,
+          "bombOnly": false,
+          "description": "Indestructible bedrock formation"
+        },
+        {
+          "type": "hardCrystal",
+          "coverage": 0.05,
+          "formationSizes": [
+            { "width": 2, "height": 3 },
+            { "width": 3, "height": 3 }
+          ],
+          "minimumDrillLevel": null,
+          "bombOnly": true,
+          "description": "Dense crystalline formation"
+        },
+        {
+          "type": "reinforcedRock",
+          "coverage": 0.03,
+          "formationSizes": [
+            { "width": 2, "height": 2 },
+            { "width": 3, "height": 2 }
+          ],
+          "minimumDrillLevel": 4,
+          "bombOnly": false,
+          "description": "Reinforced rock requiring advanced drill"
+        }
+      ],
+      "specialFeatures": ["dense_rock_layers", "pressure_zones"]
+    },
+    {
+      "name": "Mars Core Zone",
+      "depthMin": 1920,
+      "depthMax": 2560,
+      "hardness": 3.5,
+      "surfaceColors": ["#8a3a20", "#6a2a10"],
+      "excavatedColors": ["#b85a40", "#a04a30"],
+      "contrast": 0.45,
+      "drillSpeedModifier": 0.3,
+      "minimumDrillLevel": 4,
+      "resources": [
+        {
+          "type": "copper",
+          "seedRate": 0.12,
+          "value": 30,
+          "size": 1.8,
+          "veinSizeMin": 2,
+          "veinSizeMax": 5,
+          "colorHex": "#B87333",
+          "clusterRadiusMin": 2,
+          "clusterRadiusMax": 3,
+          "clusterSizeMin": 4,
+          "clusterSizeMax": 8
+        },
+        {
+          "type": "silicon",
+          "seedRate": 0.12,
+          "value": 50,
+          "size": 1.3,
+          "veinSizeMin": 2,
+          "veinSizeMax": 4,
+          "colorHex": "#708090",
+          "clusterRadiusMin": 1,
+          "clusterRadiusMax": 3,
+          "clusterSizeMin": 3,
+          "clusterSizeMax": 6
+        },
+        {
+          "type": "gold",
+          "seedRate": 0.08,
+          "value": 100,
+          "size": 2.0,
+          "veinSizeMin": 1,
+          "veinSizeMax": 3,
+          "colorHex": "#FFD700",
+          "clusterRadiusMin": 1,
+          "clusterRadiusMax": 2,
+          "clusterSizeMin": 2,
+          "clusterSizeMax": 4
+        },
+        {
+          "type": "darkMatter",
+          "seedRate": 0.0001,
+          "value": 10000,
+          "size": 0.1,
+          "veinSizeMin": 1,
+          "veinSizeMax": 1,
+          "colorHex": "#0A0A1A",
+          "clusterRadiusMin": 1,
+          "clusterRadiusMax": 1,
+          "clusterSizeMin": 1,
+          "clusterSizeMax": 1
+        }
+      ],
+      "hazards": [
+        {
+          "type": "gasPocket",
+          "spawnRate": 0.15,
+          "damage": 15,
+          "size": 5,
+          "description": "Extreme pressure gas pocket",
+          "specialEffects": null
+        },
+        {
+          "type": "unstableRock",
+          "spawnRate": 0.12,
+          "damage": 20,
+          "size": null,
+          "description": "Critically unstable rock",
+          "specialEffects": "Massive chain reaction"
+        },
+        {
+          "type": "caveIn",
+          "spawnRate": 0.08,
+          "damage": 25,
+          "size": null,
+          "description": "High cave-in risk",
+          "specialEffects": "Heavy falling debris"
+        },
+        {
+          "type": "lavaPocket",
+          "spawnRate": 0.05,
+          "damage": 25,
+          "size": 4,
+          "description": "Underground lava pocket",
+          "specialEffects": "20% DoT over 3 seconds"
+        }
+      ],
+      "obstacles": [
+        {
+          "type": "bedrock",
+          "coverage": 0.2,
+          "formationSizes": [
+            { "width": 4, "height": 4 },
+            { "width": 5, "height": 3 },
+            { "width": 6, "height": 2 }
+          ],
+          "minimumDrillLevel": null,
+          "bombOnly": false,
+          "description": "Massive bedrock formation"
+        },
+        {
+          "type": "hardCrystal",
+          "coverage": 0.08,
+          "formationSizes": [
+            { "width": 3, "height": 3 },
+            { "width": 4, "height": 3 }
+          ],
+          "minimumDrillLevel": null,
+          "bombOnly": true,
+          "description": "Ancient crystalline structure"
+        },
+        {
+          "type": "reinforcedRock",
+          "coverage": 0.08,
+          "formationSizes": [
+            { "width": 3, "height": 3 },
+            { "width": 4, "height": 2 }
+          ],
+          "minimumDrillLevel": 5,
+          "bombOnly": false,
+          "description": "Ultra-dense reinforced rock"
+        }
+      ],
+      "specialFeatures": ["lava_channels", "core_energy", "alien_artifacts"]
     }
+  ],
+  "progressionGates": [
+    {
+      "depth": 640,
+      "requirement": "Drill Level 2+ recommended for Stone Layer",
+      "recommendedDrillLevel": 2
+    },
+    {
+      "depth": 1280,
+      "requirement": "Drill Level 3+ required for Deep Rock",
+      "recommendedDrillLevel": 3
+    },
+    {
+      "depth": 1920,
+      "requirement": "Drill Level 4+ required for Core Zone",
+      "recommendedDrillLevel": 4
+    }
+  ],
+  "economyBalance": {
+    "expectedEarnings": [
+      { "depth": 100, "earnings": 500 },
+      { "depth": 200, "earnings": 1200 },
+      { "depth": 500, "earnings": 3500 },
+      { "depth": 1000, "earnings": 8000 },
+      { "depth": 1500, "earnings": 15000 },
+      { "depth": 2000, "earnings": 25000 },
+      { "depth": 2500, "earnings": 40000 }
+    ],
+    "prestigeSoulCrystals": 15,
+    "runsToMaxOut": 20
+  }
 }

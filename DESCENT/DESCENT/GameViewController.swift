@@ -15,8 +15,12 @@ class GameViewController: UIViewController {
         // Present the scene
         view.presentScene(scene)
 
+        // CRITICAL: Disable any caching/optimization that might create large textures
+        view.ignoresSiblingOrder = true  // Prevents internal render optimization
+        view.allowsTransparency = false  // Prevents alpha blending buffer
+        view.shouldCullNonVisibleNodes = true  // Only render visible nodes
+
         // Debug settings (disable for production)
-        view.ignoresSiblingOrder = true
         view.showsFPS = true
         view.showsNodeCount = true
         view.showsPhysics = false // Enable when debugging physics

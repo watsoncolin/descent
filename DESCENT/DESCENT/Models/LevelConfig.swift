@@ -16,6 +16,13 @@ struct PlanetConfig: Codable {
     let coreDepth: Double
     let valueMultiplier: Double
     let tileSize: Double
+
+    // Planet metadata (optional for backward compatibility)
+    let difficulty: String?             // Tutorial/Beginner/Easy/Medium/Hard/Expert/Master
+    let theme: String?                  // Brief description of visual/geological theme
+    let planetOrder: Int?               // Position in 8-planet sequence (1-8)
+    let unlockRequirements: String?     // Prerequisites to access (e.g., "Extract Mars core")
+
     let strata: [StrataLayer]
     let progressionGates: [ProgressionGate]
     let economyBalance: EconomyBalance
@@ -28,7 +35,10 @@ struct StrataLayer: Codable {
     let depthMin: Double
     let depthMax: Double
     let hardness: Double
-    let colorHex: String
+    let colorHex: String?                // Legacy: single base color (optional for backward compatibility)
+    let surfaceColors: [String]?         // Surface layer gradient colors (lighter, visible before mining)
+    let excavatedColors: [String]?       // Excavated layer gradient colors (darker, revealed after mining)
+    let contrast: Double?                // Contrast percentage between surface and excavated (~35-45%)
     let drillSpeedModifier: Double
     let minimumDrillLevel: Int?
     let resources: [ResourceConfig]
@@ -36,14 +46,55 @@ struct StrataLayer: Codable {
     let obstacles: [ObstacleConfig]
     let specialFeatures: [String]
 
-    // Computed property for UIColor (not part of JSON)
+    // Computed property for base color (legacy support)
     var color: UIColor {
-        return UIColor(hex: colorHex) ?? .red
+        // If colorHex is provided, use it
+        if let hex = colorHex {
+            return UIColor(hex: hex) ?? .red
+        }
+        // Otherwise use middle color from surface gradient
+        if let surface = surfaceColors, let middleHex = surface[safe: surface.count / 2] {
+            return UIColor(hex: middleHex) ?? .red
+        }
+        return .red
+    }
+
+    // Computed property for surface gradient colors
+    var surfaceGradient: [UIColor] {
+        if let colors = surfaceColors {
+            return colors.compactMap { UIColor(hex: $0) }
+        }
+        // Fallback: generate from colorHex (legacy)
+        if let hex = colorHex, let baseColor = UIColor(hex: hex) {
+            let lighter = baseColor.adjustBrightness(by: 1.2)
+            return [lighter, baseColor]
+        }
+        return [.gray, .darkGray]
+    }
+
+    // Computed property for excavated gradient colors
+    var excavatedGradient: [UIColor] {
+        if let colors = excavatedColors {
+            return colors.compactMap { UIColor(hex: $0) }
+        }
+        // Fallback: generate from colorHex (legacy)
+        if let hex = colorHex, let baseColor = UIColor(hex: hex) {
+            let darker = baseColor.adjustBrightness(by: 0.7)
+            return [baseColor, darker]
+        }
+        return [.darkGray, .black]
     }
 
     // Check if a depth is within this layer
     func contains(depth: Double) -> Bool {
         return depth >= depthMin && depth < depthMax
+    }
+}
+
+// MARK: - Array Safe Subscript Extension
+extension Array {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
     }
 }
 
@@ -57,6 +108,10 @@ struct ResourceConfig: Codable {
     let veinSizeMin: Int           // Minimum tiles in vein
     let veinSizeMax: Int           // Maximum tiles in vein
     let colorHex: String?          // Optional color override
+    let clusterRadiusMin: Int?     // Minimum cluster radius in blocks
+    let clusterRadiusMax: Int?     // Maximum cluster radius in blocks
+    let clusterSizeMin: Int?       // Minimum number of veins per cluster
+    let clusterSizeMax: Int?       // Maximum number of veins per cluster
 
     var color: UIColor {
         return UIColor(hex: colorHex ?? "#FFFFFF") ?? .white
@@ -71,6 +126,7 @@ struct HazardConfig: Codable {
     let damage: Double             // HP damage when triggered
     let size: Int?                 // Tiles affected (for gas pockets)
     let description: String?
+    let specialEffects: String?    // Additional effects (e.g., "20% DoT over 3s")
 }
 
 // MARK: - Obstacle Configuration
@@ -79,6 +135,9 @@ struct ObstacleConfig: Codable {
     let type: String               // "bedrock", "hardCrystal", "reinforcedRock"
     let coverage: Double           // 0.0 to 1.0 (percentage of layer coverage)
     let formationSizes: [FormationSize]  // Possible formation dimensions
+    let minimumDrillLevel: Int?    // Drill level required (nil = indestructible)
+    let bombOnly: Bool?            // If true, only bombs can destroy
+    let description: String?       // Description of obstacle
 }
 
 struct FormationSize: Codable {

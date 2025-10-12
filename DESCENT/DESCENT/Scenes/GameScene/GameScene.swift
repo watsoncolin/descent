@@ -37,9 +37,13 @@ class GameScene: SKScene {
     private var shopBuilding: SKSpriteNode!
     private var shopDoorPosition: CGPoint = .zero  // Door position for snapping
 
-    // Drilling
-    private var drillCooldown: TimeInterval = 0
-    private var currentDrillSpeed: TimeInterval = 0.3  // Dynamic drill speed based on strata hardness
+    // Drilling - Consuming Animation System
+    private var currentDrillingBlock: (x: Int, y: Int)?
+    private var drillProgress: CGFloat = 0.0
+    private var drillDuration: TimeInterval = 0.0
+    private var drillStartPosition: CGPoint = .zero
+    private var drillTargetPosition: CGPoint = .zero
+    private var currentDrillDirection: DrillDirection?
 
     // Movement lock (for dialog interactions)
     private var isMovementLocked: Bool = false
@@ -414,8 +418,8 @@ class GameScene: SKScene {
         // Limit delta time to prevent large jumps
         let clampedDeltaTime = min(deltaTime, 1.0 / 30.0)
 
-        // Update player movement (only if not locked by dialog AND actively mining)
-        if !isMovementLocked && inputManager.isTouching && gameState.phase == .mining, let touchLocation = inputManager.currentTouchLocation {
+        // Update player movement (only if not locked by dialog AND actively mining AND not drilling)
+        if !isMovementLocked && inputManager.isTouching && gameState.phase == .mining && currentDrillingBlock == nil, let touchLocation = inputManager.currentTouchLocation {
             let gravity = gameState.currentPlanet.gravity * 9.8
             player.moveTowards(target: touchLocation, deltaTime: clampedDeltaTime, currentGravity: CGFloat(gravity))
 
@@ -440,7 +444,7 @@ class GameScene: SKScene {
                 // Out of fuel - triggers 50% cargo penalty
                 handleGameOver(reason: "Out of Fuel")
             }
-        } else if !isMovementLocked && gameState.phase == .mining {
+        } else if !isMovementLocked && gameState.phase == .mining && currentDrillingBlock == nil {
             // Apply edge physics when not thrusting (lower friction allows sliding)
             player.applyEdgePhysics()
             // Stop exhaust when not thrusting
@@ -453,18 +457,14 @@ class GameScene: SKScene {
         // Update active effects (shield, etc.)
         gameState.updateActiveEffects(deltaTime: clampedDeltaTime)
 
-        // Update drill cooldown (only during mining phase)
+        // Update drilling animation (only during mining phase)
         if gameState.phase == .mining {
-            if drillCooldown > 0 {
-                drillCooldown -= clampedDeltaTime
-            }
-
-            // Try drilling (with cooldown)
-            if drillCooldown <= 0 {
-                tryDrilling()
-                if player.getDrillDirection() != nil {
-                    drillCooldown = currentDrillSpeed
-                }
+            if currentDrillingBlock != nil {
+                // Continue current drilling animation
+                updateDrilling(deltaTime: clampedDeltaTime)
+            } else if player.getDrillDirection() != nil {
+                // Start new drilling animation
+                startDrilling()
             }
         }
 
@@ -927,125 +927,151 @@ class GameScene: SKScene {
     }
 }
 
-// MARK: - Drilling System
+// MARK: - Consuming Drill Animation System
 
 extension GameScene {
-    /// Check if we should drill in the current frame
-    func tryDrilling() {
+    /// Start drilling animation on a single block
+    func startDrilling() {
         guard let drillDirection = player.getDrillDirection() else {
             return  // Not drilling or trying to drill up
         }
 
         // Calculate the drill tip position (at the edge of the pod)
-        // Pod dimensions: 48px wide × 72px tall (same width as a single tile)
-        let podHalfWidth: CGFloat = 24   // Half of 48px width
         let podHalfHeight: CGFloat = 36  // Half of 72px height
         var drillTipPosition = player.position
 
         switch drillDirection {
         case .down:
-            // For downward drilling, position tip at pod's bottom edge + small offset
-            // This ensures we drill the block directly below, not the one further down
             drillTipPosition.y -= (podHalfHeight + 8)  // Just 8px below pod bottom
         case .left:
-            // For horizontal drilling, position just beyond pod edge
-            drillTipPosition.x -= (podHalfWidth + 8)  // Just 8px left of pod edge
+            drillTipPosition.x -= 32  // Left of pod edge
         case .right:
-            drillTipPosition.x += (podHalfWidth + 8)  // Just 8px right of pod edge
+            drillTipPosition.x += 32  // Right of pod edge
         }
 
-        // For horizontal drilling, drill the 2 tiles that the pod is currently occupying
-        // Pod is 72px tall (1.5 tiles), so it spans at most 2 tile rows
-        var blockPositions: [(x: Int, y: Int)] = []
+        // Get the block at drill tip position
+        guard let gridPos = terrainManager.worldToGrid(drillTipPosition) else { return }
 
-        if drillDirection == .left || drillDirection == .right {
-            // Find tiles that the pod's body occupies (not the absolute edges)
-            // Use positions slightly inside the pod to avoid rounding to adjacent tiles
-            var topPos = drillTipPosition
-            topPos.y = player.position.y + (podHalfHeight - 8)  // Just below top edge
+        // Check if block exists and is not empty
+        guard let cell = terrainManager.getCell(x: gridPos.x, y: gridPos.y) else { return }
+        if case .empty = cell {
+            return  // Can't drill empty space
+        }
 
-            var bottomPos = drillTipPosition
-            bottomPos.y = player.position.y - (podHalfHeight - 8)  // Just above bottom edge
+        // Get block hardness
+        let depth = Double(gridPos.y)
+        let strataHardness = terrainManager.getHardnessAtDepth(depth) ?? 1.0
 
-            guard let topGridPos = terrainManager.worldToGrid(topPos),
-                  let bottomGridPos = terrainManager.worldToGrid(bottomPos) else {
-                return
-            }
+        // Calculate drill duration: 0.3 * hardness / drillLevel
+        let baseDrillTime = 0.3
+        drillDuration = baseDrillTime * strataHardness / Double(gameState.drillStrengthLevel)
 
-            // Drill the tiles that the pod currently occupies
-            // This prevents drilling above or below the shaft
-            blockPositions.append((x: topGridPos.x, y: topGridPos.y))
+        // Store drilling state
+        currentDrillingBlock = (x: gridPos.x, y: gridPos.y)
+        currentDrillDirection = drillDirection
+        drillStartPosition = player.position
 
-            // Only drill second tile if it's different from the first
-            if bottomGridPos.y != topGridPos.y {
-                blockPositions.append((x: bottomGridPos.x, y: bottomGridPos.y))
-            }
+        // Calculate target position - pod descends INTO the block position (centered on block) for downward drilling only
+        let surfaceY = frame.maxY - 100
+        let blockWorldX = frame.minX + (CGFloat(gridPos.x) + 0.5) * TerrainBlock.size  // Center of block X
+        let blockWorldY = surfaceY - (CGFloat(gridPos.y) + 0.5) * TerrainBlock.size    // Center of block Y
+
+        // For horizontal drilling, keep pod at current position; for vertical, move to block center
+        if drillDirection == .down {
+            drillTargetPosition = CGPoint(x: blockWorldX, y: blockWorldY)
         } else {
-            // Vertical drilling - use drill tip position
-            guard let gridPos = terrainManager.worldToGrid(drillTipPosition) else {
-                return
-            }
-            blockPositions.append((x: gridPos.x, y: gridPos.y))
+            // Horizontal drilling - lock position (target = start)
+            drillTargetPosition = drillStartPosition
         }
 
-        // Calculate drill speed based on hardest block's strata hardness (mars_level_design.md:386-405)
-        // When drilling multiple blocks, use the hardest one to determine speed, then multiply by tile count
-        // Formula: actualDrillTime = baseDrillTime × strataHardness / drillLevel × numberOfTiles
-        var maxStrataHardness = 1.0
-        var actualBlockCount = 0
-        for blockPos in blockPositions {
-            if let block = terrainManager.getBlock(x: blockPos.x, y: blockPos.y) {
-                maxStrataHardness = max(maxStrataHardness, block.strataHardness)
-                actualBlockCount += 1
+        drillProgress = 0.0
+
+        // Make physics body kinematic during drilling to prevent collision interference
+        player.physicsBody?.isDynamic = false
+
+        print("🔨 Started drilling \(drillDirection) block (\(gridPos.x),\(gridPos.y)) - duration: \(String(format: "%.2f", drillDuration))s")
+    }
+
+    /// Update drilling progress each frame
+    func updateDrilling(deltaTime: TimeInterval) {
+        guard let block = currentDrillingBlock else { return }
+
+        // Update progress (0.0 to 1.0)
+        drillProgress += CGFloat(deltaTime / drillDuration)
+        drillProgress = min(1.0, drillProgress)
+
+        // Update pod position (move to block center with fluid interpolation)
+        let newX = drillStartPosition.x + (drillTargetPosition.x - drillStartPosition.x) * drillProgress
+        let newY = drillStartPosition.y + (drillTargetPosition.y - drillStartPosition.y) * drillProgress
+        player.position = CGPoint(x: newX, y: newY)
+
+        // Update consumption visual (circular mask expanding from center)
+        terrainManager.updateConsumptionMask(x: block.x, y: block.y, progress: drillProgress)
+
+        // Apply slight wobble to pod for drilling effect
+        let wobble = sin(drillProgress * 20) * 0.05 * drillProgress
+        player.zRotation = wobble
+
+        // Consume fuel gradually during drilling
+        let depth = Double(block.y)
+        let strataHardness = terrainManager.getHardnessAtDepth(depth) ?? 1.0
+        let fuelPerSecond = strataHardness / Double(gameState.drillStrengthLevel)
+        let fuelCost = fuelPerSecond * deltaTime
+
+        if !gameState.consumeFuel(fuelCost) {
+            // Out of fuel while drilling - abort drilling and trigger game over
+            completeDrilling(block: block, fuelOut: true)
+            return
+        }
+
+        // Check if drilling complete
+        if drillProgress >= 1.0 {
+            completeDrilling(block: block, fuelOut: false)
+        }
+    }
+
+    /// Complete the drilling action
+    func completeDrilling(block: (x: Int, y: Int), fuelOut: Bool) {
+        // Snap pod to exact block center position
+        player.position = drillTargetPosition
+
+        // Reset pod rotation and velocity to prevent drift
+        player.zRotation = 0
+        player.physicsBody?.velocity = .zero
+
+        // Re-enable physics body dynamics
+        player.physicsBody?.isDynamic = true
+
+        if fuelOut {
+            // Out of fuel - abort drilling
+            currentDrillingBlock = nil
+            currentDrillDirection = nil
+            drillProgress = 0.0
+            handleGameOver(reason: "Out of Fuel")
+            return
+        }
+
+        // Remove block completely (this triggers the final destruction animation in TerrainLayer)
+        if let material = terrainManager.removeBlock(x: block.x, y: block.y) {
+            // Collect material if present
+            if material.type == Material.MaterialType.darkMatter {
+                gameState.currentRun?.coreExtracted = true
+                print("💎 CORE EXTRACTED! You can now prestige at the surface!")
+            }
+
+            if gameState.addToCargo(material) {
+                print("⛏️ Mined \(material.type.rawValue) worth $\(Int(material.value))")
+            } else {
+                print("📦 Cargo full! Can't collect \(material.type.rawValue)")
             }
         }
 
-        let baseDrillTime = 0.3  // seconds per tile (mars_level_design.md:392)
-        let drillLevel = Double(gameState.drillStrengthLevel)
-        // Drilling multiple tiles takes proportionally longer (e.g., 2 tiles = ~2x time)
-        let tileMultiplier = max(1.0, Double(actualBlockCount) * 0.75)  // 0.75x per extra tile (slight efficiency bonus)
-        // Horizontal drilling penalty: drilling sideways is harder, takes 2x as long
-        let horizontalPenalty = (drillDirection == .left || drillDirection == .right) ? 2.0 : 1.0
-        currentDrillSpeed = baseDrillTime * maxStrataHardness / drillLevel * tileMultiplier * horizontalPenalty
+        print("💥 Block (\(block.x),\(block.y)) consumed! Progress: 100%")
 
-        // Try to drill all target blocks
-        // NOTE: When drilling horizontally, this drills 2 tiles simultaneously
-        // - Each tile consumes fuel individually based on its hardness (total fuel = sum of both tiles)
-        // - All tiles take damage at once, but drill time is adjusted for multiple tiles above
-        let drillPower = gameState.drillStrengthLevel
-        for blockPos in blockPositions {
-            if let targetBlock = terrainManager.getBlock(x: blockPos.x, y: blockPos.y) {
-                if targetBlock.takeDamage(drillPower, drillLevel: drillPower, from: drillDirection) {
-                    // Block destroyed! Consume fuel for THIS tile (FUEL_SYSTEM.md:45-68)
-                    // Formula: fuelPerTile = baseDrillCost × strataHardness / drillLevel
-                    let baseDrillCost = 1.0
-                    let strataHardness = targetBlock.strataHardness
-                    let drillLevel = Double(gameState.drillStrengthLevel)
-                    let fuelCost = baseDrillCost * strataHardness / drillLevel
-
-                    if !gameState.consumeFuel(fuelCost) {
-                        // Out of fuel while drilling - triggers 50% cargo penalty
-                        handleGameOver(reason: "Out of Fuel")
-                        return
-                    }
-
-                    // Collect material if present
-                    if let material = terrainManager.removeBlock(x: blockPos.x, y: blockPos.y) {
-                        // Check if Dark Matter (planet core) was collected
-                        if material.type == .darkMatter {
-                            gameState.currentRun?.coreExtracted = true
-                            print("💎 CORE EXTRACTED! You can now prestige at the surface!")
-                        }
-
-                        if gameState.addToCargo(material) {
-                            print("⛏️ Mined \(material.type.rawValue) worth $\(Int(material.value)) (fuel: -\(String(format: "%.1f", fuelCost)))")
-                        } else {
-                            print("📦 Cargo full! Can't collect \(material.type.rawValue)")
-                        }
-                    }
-                }
-            }
-        }
+        // Clear drilling state
+        currentDrillingBlock = nil
+        currentDrillDirection = nil
+        drillProgress = 0.0
     }
 }
 

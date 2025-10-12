@@ -64,7 +64,7 @@ struct Material {
             case .silicon: return 50
             case .aluminum: return 60
             case .silver: return 75
-            case .gold: return 150
+            case .gold: return 100
             case .platinum: return 250
             case .titanium: return 200
             case .neodymium: return 300
