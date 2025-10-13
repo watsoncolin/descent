@@ -1,0 +1,55 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Outer glow for visibility -->
+    <radialGradient id="coalGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#3a3a3a;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0" />
+    </radialGradient>
+    
+    <!-- Dark coal gradient -->
+    <radialGradient id="darkCoal" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" style="stop-color:#2a2a2a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Lighter highlights -->
+    <radialGradient id="lightCoal" cx="30%" cy="30%" r="50%">
+      <stop offset="0%" style="stop-color:#4a4a4a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Glow background -->
+  <ellipse cx="24" cy="24" rx="24" ry="24" fill="url(#coalGlow)" />
+  
+  <!-- Main lumpy coal cluster - very irregular chunky shape -->
+  <!-- Bottom-right large chunk -->
+  <ellipse cx="28" cy="28" rx="13" ry="14" fill="url(#darkCoal)" />
+  
+  <!-- Top-left chunk overlapping -->
+  <ellipse cx="18" cy="18" rx="11" ry="12" fill="url(#lightCoal)" />
+  
+  <!-- Middle chunk -->
+  <ellipse cx="24" cy="24" rx="10" ry="11" fill="url(#darkCoal)" />
+  
+  <!-- Small top chunk -->
+  <ellipse cx="22" cy="13" rx="7" ry="7" fill="#1a1a1a" />
+  
+  <!-- Small bottom chunk -->
+  <ellipse cx="32" cy="34" rx="8" ry="7" fill="#0f0f0f" />
+  
+  <!-- Small left chunk -->
+  <ellipse cx="12" cy="26" rx="6" ry="7" fill="#1f1f1f" />
+  
+  <!-- Small right chunk -->
+  <ellipse cx="36" cy="22" rx="6" ry="6" fill="#151515" />
+  
+  <!-- Bright highlight spots (makes it "shiny coal") -->
+  <ellipse cx="20" cy="16" rx="4" ry="4" fill="#5a5a5a" opacity="0.9" />
+  <ellipse cx="26" cy="26" rx="3" ry="3" fill="#4a4a4a" opacity="0.7" />
+  
+  <!-- Dark crevices between chunks -->
+  <ellipse cx="22" cy="22" rx="2" ry="2" fill="#000000" opacity="0.8" />
+  <ellipse cx="28" cy="20" rx="2" ry="2" fill="#000000" opacity="0.8" />
+  <ellipse cx="18" cy="28" rx="2" ry="2" fill="#000000" opacity="0.8" />
+</svg>

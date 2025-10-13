@@ -20,13 +20,10 @@ class TerrainLayer: SKNode {
     let layerSize: CGSize
 
     // Dual-layer system
-    private var surfaceContainer: SKNode!    // Not used in consuming drill system (was: lighter layer)
     private var excavatedContainer: SKNode!  // Darker layer (background terrain - always visible)
-    private var cutoutMask: SKCropNode!      // Mask to reveal excavated layer (legacy)
-    private var maskShape: SKShapeNode!      // Shape for creating cutouts (legacy)
     private var drilledBlocks: Set<String> = []  // Track which blocks have been drilled
     private var blockPhaseOffsets: [String: CGFloat] = [:] // Random phase offset per block for varied consumption patterns
-    private var blockGlowVariations: [String: (frequency: CGFloat, amplitude: CGFloat, secondaryPhase: CGFloat)] = [:] // Glow-specific variations
+    private var blockGlowVariations: [String: (frequency: CGFloat, amplitude: CGFloat, secondaryPhase: CGFloat, rotationDirection: CGFloat)] = [:] // Glow-specific variations including rotation
 
     // Custom colors from level config (override TerrainType colors if provided)
     private var customSurfaceColors: [UIColor]?
@@ -95,14 +92,8 @@ class TerrainLayer: SKNode {
         addChild(excavatedContainer)
         print("   ✅ Excavated layer (darker) created as background at zPosition 4")
 
-        // 2. Surface layer is NOT added to background - it only appears on individual blocks during drilling
+        // Surface layer is NOT added to background - it only appears on individual blocks during drilling
         // The surface blocks are created on-demand in updateConsumptionMask() at zPosition 7
-        surfaceContainer = nil  // Not used in consuming drill system
-
-        // 3. Prepare mask shape for cutting (not used in new system, but kept for compatibility)
-        maskShape = SKShapeNode()
-        maskShape.fillColor = .clear
-        maskShape.strokeColor = .clear
         print("   ✅ Dual-layer excavation system ready (background = excavated)")
     }
 
@@ -172,8 +163,8 @@ class TerrainLayer: SKNode {
 
             let line = SKShapeNode(path: path)
             line.strokeColor = terrainType.flowColor
-            line.lineWidth = 1  // 1px line width
-            line.alpha = 0.08
+            line.lineWidth = 2  // 2px line width (was 1px)
+            line.alpha = 0.25  // More visible (was 0.08)
             line.blendMode = .alpha
 
             flowNode.addChild(line)
@@ -189,34 +180,70 @@ class TerrainLayer: SKNode {
     /// Cut the surface layer at the given grid position to reveal excavated terrain beneath
     /// Called when block is instantly destroyed (bombs, etc.) - plays final destruction animation
     func cutSurfaceAt(gridX: Int, gridY: Int, blockSize: CGFloat) {
+        print("🎯 cutSurfaceAt called: gridX=\(gridX), gridY=\(gridY)")
+        print("🎯 Stratum range: \(stratumRange)")
+
         let localGridY = Double(gridY) - stratumRange.lowerBound
-        guard localGridY >= 0 && localGridY < (stratumRange.upperBound - stratumRange.lowerBound) else { return }
+        print("🎯 Local grid Y: \(localGridY)")
+
+        guard localGridY >= 0 && localGridY < (stratumRange.upperBound - stratumRange.lowerBound) else {
+            print("🎯 ❌ Local grid Y out of range!")
+            return
+        }
 
         let localBlockX = gridX
         let localBlockY = Int(localGridY)
         let key = "\(localBlockX),\(localBlockY)"
+        print("🎯 Block key: \(key)")
 
-        guard !drilledBlocks.contains(key) else { return }
-        drilledBlocks.insert(key)
+        guard !drilledBlocks.contains(key) else {
+            print("🎯 ❌ Block already in drilledBlocks set - skipping")
+            return
+        }
 
         let posX = CGFloat(localBlockX) * blockSize
         let posY = layerSize.height - CGFloat(localBlockY + 1) * blockSize
         let centerPos = CGPoint(x: posX + blockSize/2, y: posY + blockSize/2)
+        print("🎯 Position: (\(posX), \(posY)), center: \(centerPos)")
 
         // No need to place excavated block - background is already excavated layer (darker)
 
         // Check if there's a crop node (drilling in progress)
         if let cropNode = childNode(withName: "consumeCropNode_\(key)") as? SKCropNode {
-            // Remove consumption crop node with final destruction animation
-            finishExcavation(cropNode: cropNode, centerPos: centerPos, blockSize: blockSize)
-        } else if let cropNode = childNode(withName: "cropNode_\(key)") as? SKCropNode {
-            // Remove old arch-based crop node (legacy support)
-            finishExcavation(cropNode: cropNode, centerPos: centerPos, blockSize: blockSize)
+            // Drilling in progress - mark as drilled and finish excavation
+            print("🎯 ✅ Found existing crop node - finishing excavation")
+            drilledBlocks.insert(key)
+            finishExcavation(cropNode: cropNode, centerPos: centerPos, blockSize: blockSize, instant: false)
+        } else {
+            // No crop node exists (bomb/instant destruction) - directly place excavated block
+            print("🎯 No crop node exists - placing excavated block sprite directly")
+            drilledBlocks.insert(key)
+
+            // Create excavated block sprite (darker color) to show crater
+            let excavatedColors = customExcavatedColors ?? terrainType.excavatedGradientColors
+            let excavatedColor = excavatedColors[excavatedColors.count / 2]
+            let excavatedBlock = SKSpriteNode(color: excavatedColor, size: CGSize(width: blockSize, height: blockSize))
+            excavatedBlock.anchorPoint = CGPoint(x: 0, y: 0)
+            excavatedBlock.position = CGPoint(x: posX, y: posY)
+            excavatedBlock.zPosition = 5  // Above excavated background (4), below surface (7)
+            excavatedBlock.name = "excavatedBlock_\(key)"
+            addChild(excavatedBlock)
+
+            // Spawn destruction burst
+            for _ in 0..<Int.random(in: 10...15) {
+                spawnDestructionParticle(at: centerPos)
+            }
+
+            print("🎯 ✅ Excavated block sprite placed at (\(posX), \(posY))")
         }
     }
 
     /// Finish excavation with destruction burst when block health reaches 0
-    private func finishExcavation(cropNode: SKCropNode, centerPos: CGPoint, blockSize: CGFloat) {
+    private func finishExcavation(cropNode: SKCropNode, centerPos: CGPoint, blockSize: CGFloat, instant: Bool) {
+        let cropKey = cropNode.name ?? "unknown"
+        print("🏁 finishExcavation called for crop node: \(cropKey), instant: \(instant)")
+        print("🏁 Crop node alpha: \(cropNode.alpha), parent: \(cropNode.parent != nil)")
+
         // Remove consumption glow and particles if they exist
         if let parentKey = cropNode.name {
             let glowName = "consumptionGlow_\(parentKey)"
@@ -229,13 +256,29 @@ class TerrainLayer: SKNode {
             spawnDestructionParticle(at: centerPos)
         }
 
-        // Add edge glow
-        addExcavationEdgeGlow(at: centerPos, blockSize: blockSize)
+        // Add edge glow (only for normal drilling, not instant bomb removal)
+        if !instant {
+            addExcavationEdgeGlow(at: centerPos, blockSize: blockSize)
+        }
 
-        // Quick fade and remove
-        let fadeAction = SKAction.fadeOut(withDuration: 0.15)
+        print("🏁 Starting fade animation for \(cropKey)")
+
+        // Use very quick fade for instant removal (bombs), normal fade for drilling
+        let fadeDuration = instant ? 0.01 : 0.15
+        let fadeAction = SKAction.fadeOut(withDuration: fadeDuration)
         let remove = SKAction.removeFromParent()
-        cropNode.run(SKAction.sequence([fadeAction, remove]))
+        cropNode.run(SKAction.sequence([fadeAction, remove])) { [weak self] in
+            print("🏁 ✅ Crop node \(cropKey) removed from parent (fade complete)")
+
+            // Check if it was actually removed
+            if let strongSelf = self {
+                if let stillExists = strongSelf.childNode(withName: cropKey) {
+                    print("🏁 ⚠️ WARNING: Crop node \(cropKey) still exists after removal! Alpha: \(stillExists.alpha)")
+                } else {
+                    print("🏁 ✅ Confirmed: Crop node \(cropKey) no longer in scene tree")
+                }
+            }
+        }
     }
 
     /// Update consumption mask - circular "bite" expanding from center outward
@@ -252,23 +295,31 @@ class TerrainLayer: SKNode {
         let posY = layerSize.height - CGFloat(localBlockY + 1) * blockSize
         let centerPos = CGPoint(x: posX + blockSize/2, y: posY + blockSize/2)  // Center of block
 
+        print("🔧 updateConsumptionMask called: key=\(key), progress=\(progress), inDrilledBlocks=\(drilledBlocks.contains(key))")
+
         // Check if crop node already exists
         if let cropNode = childNode(withName: "consumeCropNode_\(key)") as? SKCropNode {
             // Update the consumption mask to expand
+            print("🔄 updateConsumptionMask: Updating existing crop node at \(key) to progress \(progress)")
             updateCircularConsumptionMask(cropNode: cropNode, progress: progress, blockSize: blockSize, centerPos: centerPos)
         } else if !drilledBlocks.contains(key) {
             // First time drilling this block - create the consumption system
+            print("🆕 Creating NEW surface block at \(key) with progress \(progress)")
             drilledBlocks.insert(key)
 
             // Generate random phase offset for this block (makes each block's pattern unique)
             blockPhaseOffsets[key] = CGFloat.random(in: 0...(CGFloat.pi * 2))
 
-            // Generate random glow variations (frequency, amplitude, secondary phase)
+            // Generate random glow variations (frequency, amplitude, secondary phase, rotation)
+            let directions: [CGFloat] = [-1.0, 1.0]
+            let randomRotation: CGFloat = directions.randomElement() ?? 1.0  // Random direction
             blockGlowVariations[key] = (
                 frequency: CGFloat.random(in: 2.5...3.5),  // Varies wave frequency (2.5-3.5x, default was 3x)
                 amplitude: CGFloat.random(in: 0.12...0.18), // Varies jitter amplitude (12-18%, default was 15%)
-                secondaryPhase: CGFloat.random(in: 0...(CGFloat.pi * 2)) // Additional phase shift for glow
+                secondaryPhase: CGFloat.random(in: 0...(CGFloat.pi * 2)), // Additional phase shift for glow
+                rotationDirection: randomRotation  // -1 or +1 for different rotation directions
             )
+            print("🔄 Block \(key) glow rotation direction: \(randomRotation)")
 
             // No need to place excavated block - background is already excavated layer (darker)
 
@@ -285,14 +336,16 @@ class TerrainLayer: SKNode {
             cropNode.position = .zero
             cropNode.zPosition = 7
 
-            // Create initial consumption mask (starts very small at center)
-            let maskNode = createCircularConsumptionMask(progress: 0.0, blockSize: blockSize, centerPos: centerPos, blockKey: key)
+            // Create initial consumption mask (use provided progress, not hardcoded 0.0)
+            let maskNode = createCircularConsumptionMask(progress: progress, blockSize: blockSize, centerPos: centerPos, blockKey: key)
             maskNode.name = "consumptionMask"
             cropNode.maskNode = maskNode
 
             // Add surface block to crop node
             cropNode.addChild(surfaceBlock)
             addChild(cropNode)
+        } else {
+            print("⏭️ Skipping block \(key) - already in drilledBlocks set (block was already excavated)")
         }
     }
 
@@ -363,7 +416,7 @@ class TerrainLayer: SKNode {
         cropNode.maskNode = newMask
 
         // Add orange/yellow consumption glow at the edge (only while drilling, not when complete)
-        if progress > 0.05 && progress < 0.98 {
+        if progress > 0.05 && progress < 0.75 {
             addConsumptionEdgeGlow(progress: progress, blockSize: blockSize, centerPos: centerPos, parentKey: cropNode.name ?? "", blockKey: blockKey)
 
             // Start or update particle emission
@@ -373,8 +426,8 @@ class TerrainLayer: SKNode {
             } else {
                 startParticleEmission(at: centerPos, parentKey: cropNode.name ?? "")
             }
-        } else if progress >= 0.98 {
-            // Remove glow and particles when block is fully consumed
+        } else if progress >= 0.75 {
+            // Remove glow and particles when block is mostly consumed
             let glowName = "consumptionGlow_\(cropNode.name ?? "")"
             let particleName = "consumptionParticles_\(cropNode.name ?? "")"
             childNode(withName: glowName)?.removeFromParent()
@@ -382,167 +435,6 @@ class TerrainLayer: SKNode {
         }
     }
 
-    /// Update drilling progress visuals (called each frame while drilling)
-    /// DEPRECATED: Use updateConsumptionMask for the new circular consumption system
-    func updateDrillingProgress(gridX: Int, gridY: Int, currentHealth: Int, maxHealth: Int, blockSize: CGFloat) {
-        let localGridY = Double(gridY) - stratumRange.lowerBound
-        guard localGridY >= 0 && localGridY < (stratumRange.upperBound - stratumRange.lowerBound) else { return }
-
-        let localBlockX = gridX
-        let localBlockY = Int(localGridY)
-        let key = "\(localBlockX),\(localBlockY)"
-
-        // Calculate position
-        let posX = CGFloat(localBlockX) * blockSize
-        let posY = layerSize.height - CGFloat(localBlockY + 1) * blockSize
-        let topCenterPos = CGPoint(x: posX + blockSize/2, y: posY + blockSize)  // Top-center of block
-
-        // Calculate excavation progress (0.0 = full health, 1.0 = destroyed)
-        let excavationProgress = 1.0 - (CGFloat(currentHealth) / CGFloat(maxHealth))
-
-        // Check if crop node already exists
-        if let cropNode = childNode(withName: "cropNode_\(key)") as? SKCropNode {
-            // Update the excavation mask to expand
-            updateExcavationMask(cropNode: cropNode, progress: excavationProgress, blockSize: blockSize, drillFromTop: topCenterPos)
-
-            // Spawn drill particles occasionally at the excavation edge
-            if Int.random(in: 0...2) == 0 {
-                let particleY = topCenterPos.y - (excavationProgress * blockSize)
-                let particleX = topCenterPos.x + CGFloat.random(in: -blockSize/4...blockSize/4)
-                spawnDrillParticle(at: CGPoint(x: particleX, y: particleY))
-            }
-        } else if !drilledBlocks.contains(key) {
-            // First time drilling this block - create the excavation system
-            drilledBlocks.insert(key)
-
-            // Place excavated (darker) block first
-            let excavatedColors = customExcavatedColors ?? terrainType.excavatedGradientColors
-            let excavatedColor = excavatedColors[excavatedColors.count / 2]
-            let excavatedBlock = SKSpriteNode(color: excavatedColor, size: CGSize(width: blockSize, height: blockSize))
-            excavatedBlock.anchorPoint = CGPoint(x: 0, y: 0)
-            excavatedBlock.position = CGPoint(x: posX, y: posY)
-            excavatedBlock.zPosition = 6
-            addChild(excavatedBlock)
-
-            // Create surface block
-            let surfaceColors = customSurfaceColors ?? terrainType.surfaceGradientColors
-            let surfaceColor = surfaceColors[surfaceColors.count / 2]
-            let surfaceBlock = SKSpriteNode(color: surfaceColor, size: CGSize(width: blockSize, height: blockSize))
-            surfaceBlock.anchorPoint = CGPoint(x: 0, y: 0)
-            surfaceBlock.position = CGPoint(x: posX, y: posY)
-
-            // Create crop node with mask for progressive excavation
-            let cropNode = SKCropNode()
-            cropNode.name = "cropNode_\(key)"
-            cropNode.position = .zero
-            cropNode.zPosition = 7
-
-            // Create initial excavation mask (starts very small at top-center)
-            let maskNode = createExcavationMask(progress: 0.0, blockSize: blockSize, drillFromTop: topCenterPos)
-            maskNode.name = "excavationMask"
-            cropNode.maskNode = maskNode
-
-            // Add surface block to crop node
-            cropNode.addChild(surfaceBlock)
-            addChild(cropNode)
-        }
-    }
-
-    /// Create an excavation mask that expands in an arch from the drilling point
-    private func createExcavationMask(progress: CGFloat, blockSize: CGFloat, drillFromTop: CGPoint) -> SKNode {
-        let maskContainer = SKNode()
-
-        // Start with a small circle at the drill point, expand into a cone/arch
-        // Progress 0.0 = tiny hole, 1.0 = full block removed
-        let archHeight = progress * blockSize
-        let archWidth = progress * blockSize * 1.2  // Wider at bottom for natural digging
-
-        // Create arch shape using bezier path
-        let path = CGMutablePath()
-
-        if progress < 0.05 {
-            // Very start - just a small circle
-            let smallRadius = blockSize * 0.1
-            path.addArc(center: drillFromTop, radius: smallRadius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
-        } else {
-            // Create expanding arch shape
-            let topRadius = max(blockSize * 0.15, archWidth * 0.3)
-            let bottomRadius = archWidth * 0.5
-
-            // Top of arch (drill entry point)
-            path.move(to: CGPoint(x: drillFromTop.x - topRadius, y: drillFromTop.y))
-
-            // Left side curves down and out
-            path.addQuadCurve(
-                to: CGPoint(x: drillFromTop.x - bottomRadius, y: drillFromTop.y - archHeight),
-                control: CGPoint(x: drillFromTop.x - bottomRadius * 0.7, y: drillFromTop.y - archHeight * 0.5)
-            )
-
-            // Bottom arc
-            path.addArc(
-                tangent1End: CGPoint(x: drillFromTop.x, y: drillFromTop.y - archHeight - bottomRadius * 0.2),
-                tangent2End: CGPoint(x: drillFromTop.x + bottomRadius, y: drillFromTop.y - archHeight),
-                radius: bottomRadius * 0.3
-            )
-
-            // Right side curves up
-            path.addQuadCurve(
-                to: CGPoint(x: drillFromTop.x + topRadius, y: drillFromTop.y),
-                control: CGPoint(x: drillFromTop.x + bottomRadius * 0.7, y: drillFromTop.y - archHeight * 0.5)
-            )
-
-            // Close the arch at the top with a small arc
-            path.addArc(
-                tangent1End: CGPoint(x: drillFromTop.x, y: drillFromTop.y + topRadius * 0.3),
-                tangent2End: CGPoint(x: drillFromTop.x - topRadius, y: drillFromTop.y),
-                radius: topRadius
-            )
-        }
-
-        let maskShape = SKShapeNode(path: path)
-        maskShape.fillColor = .white
-        maskShape.strokeColor = .clear
-        maskContainer.addChild(maskShape)
-
-        return maskContainer
-    }
-
-    /// Update the excavation mask as drilling progresses
-    private func updateExcavationMask(cropNode: SKCropNode, progress: CGFloat, blockSize: CGFloat, drillFromTop: CGPoint) {
-        // Remove old mask and create new one
-        if let oldMask = cropNode.maskNode {
-            oldMask.removeFromParent()
-        }
-
-        let newMask = createExcavationMask(progress: progress, blockSize: blockSize, drillFromTop: drillFromTop)
-        cropNode.maskNode = newMask
-    }
-
-    /// Spawn a single drill particle with optional delay
-    private func spawnDrillParticle(at position: CGPoint, delay: Double = 0) {
-        let particle = SKShapeNode(circleOfRadius: CGFloat.random(in: 1.5...3))  // 1.5-3px particles
-        let surfaceColors = customSurfaceColors ?? terrainType.surfaceGradientColors
-        particle.fillColor = surfaceColors.randomElement() ?? .gray
-        particle.strokeColor = .clear
-        particle.position = position
-        particle.zPosition = 20
-        addChild(particle)
-
-        // Random velocity (in pixels)
-        let angle = CGFloat.random(in: 0...(2 * .pi))
-        let speed = CGFloat.random(in: 20...50)  // 20-50px/sec
-        let velocityX = cos(angle) * speed
-        let velocityY = sin(angle) * speed
-
-        let wait = delay > 0 ? SKAction.wait(forDuration: delay) : SKAction.wait(forDuration: 0)
-        let moveAction = SKAction.moveBy(x: velocityX, y: velocityY, duration: 0.4)
-        let fadeAction = SKAction.fadeOut(withDuration: 0.4)
-        let scaleAction = SKAction.scale(to: 0.2, duration: 0.4)
-        let group = SKAction.group([moveAction, fadeAction, scaleAction])
-        let remove = SKAction.removeFromParent()
-
-        particle.run(SKAction.sequence([wait, group, remove]))
-    }
 
     /// Spawn a destruction particle (larger, more dramatic burst)
     private func spawnDestructionParticle(at position: CGPoint) {
@@ -576,25 +468,39 @@ class TerrainLayer: SKNode {
 
     /// Add orange/yellow glowing edge along consumption boundary (during drilling)
     private func addConsumptionEdgeGlow(progress: CGFloat, blockSize: CGFloat, centerPos: CGPoint, parentKey: String, blockKey: String) {
-        // Remove old consumption glow if it exists
         let glowName = "consumptionGlow_\(parentKey)"
-        childNode(withName: glowName)?.removeFromParent()
 
         // Get the base phase offset used for the mask
         let phaseOffset = blockPhaseOffsets[blockKey] ?? 0
 
-        // Get glow-specific variations
-        let glowVariation = blockGlowVariations[blockKey] ?? (frequency: 3.0, amplitude: 0.15, secondaryPhase: 0)
+        // Get glow-specific variations (with default values if not found)
+        let glowVariation = blockGlowVariations[blockKey] ?? (frequency: 3.0, amplitude: 0.15, secondaryPhase: 0, rotationDirection: 1.0)
 
-        // Create varied jagged circular path for the glow
-        let maxRadius = blockSize * 0.65
+        // Calculate rotation phase based on time (for animated rotation effect)
+        let rotationPhase: CGFloat
+        if let existingGlow = childNode(withName: glowName) as? SKShapeNode {
+            // Get elapsed time since glow was created (stored in userData)
+            if let startTime = existingGlow.userData?["startTime"] as? TimeInterval {
+                let elapsed = CACurrentMediaTime() - startTime
+                // Negate to correct rotation direction (iOS coordinate system)
+                rotationPhase = -CGFloat(elapsed) * glowVariation.rotationDirection * 0.5  // 0.5 rad/sec = ~28 degrees/sec
+            } else {
+                rotationPhase = 0
+            }
+        } else {
+            rotationPhase = 0
+        }
+
+        // Create varied jagged circular path for the glow with rotation
+        // Use same radius as mask (0.7) so glow appears at the consumption edge
+        let maxRadius = blockSize * 0.7
         let consumptionRadius = progress * maxRadius
 
         let path = CGMutablePath()
         let numPoints = 16
 
         for i in 0...numPoints {
-            let angle = (CGFloat(i) / CGFloat(numPoints)) * .pi * 2
+            let angle = (CGFloat(i) / CGFloat(numPoints)) * .pi * 2 + rotationPhase  // Add rotation phase
 
             // Combine base jitter with glow-specific variations
             // Base wave from mask
@@ -618,23 +524,33 @@ class TerrainLayer: SKNode {
         }
         path.closeSubpath()
 
-        // Create glowing shape node
-        let glowNode = SKShapeNode(path: path)
-        glowNode.strokeColor = UIColor(red: 1.0, green: 0.85, blue: 0.2, alpha: 1.0) // Brighter, more yellow
-        glowNode.lineWidth = 2  // 2px line width
-        glowNode.fillColor = .clear
-        glowNode.glowWidth = 1  // 1px glow - sharp glow with minimal blur
-        glowNode.zPosition = 16 // Above terrain (excavated=4, surface crop=7)
-        glowNode.name = glowName
+        // Check if glow already exists - if so, just update its path
+        if let existingGlow = childNode(withName: glowName) as? SKShapeNode {
+            // Update the path to include rotation
+            existingGlow.path = path
+        } else {
+            // First time - create glowing shape node
+            let glowNode = SKShapeNode(path: path)
+            glowNode.strokeColor = UIColor(red: 1.0, green: 0.85, blue: 0.2, alpha: 1.0) // Brighter, more yellow
+            glowNode.lineWidth = 2  // 2px line width
+            glowNode.fillColor = .clear
+            glowNode.glowWidth = 1  // 1px glow - sharp glow with minimal blur
+            glowNode.zPosition = 16 // Above terrain (excavated=4, surface crop=7)
+            glowNode.name = glowName
 
-        // Pulse animation for energy feel
-        let pulse = SKAction.sequence([
-            SKAction.fadeAlpha(to: 0.7, duration: 0.15),
-            SKAction.fadeAlpha(to: 1.0, duration: 0.15)
-        ])
-        glowNode.run(SKAction.repeatForever(pulse), withKey: "glowPulse")
+            // Store start time for rotation calculation
+            glowNode.userData = NSMutableDictionary()
+            glowNode.userData?["startTime"] = CACurrentMediaTime()
 
-        addChild(glowNode)
+            // Pulse animation for energy feel
+            let pulse = SKAction.sequence([
+                SKAction.fadeAlpha(to: 0.7, duration: 0.15),
+                SKAction.fadeAlpha(to: 1.0, duration: 0.15)
+            ])
+            glowNode.run(SKAction.repeatForever(pulse), withKey: "glowPulse")
+
+            addChild(glowNode)
+        }
     }
 
     // MARK: - Particle System

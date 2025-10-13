@@ -473,8 +473,9 @@ class TerrainManager {
 
     private func generateVeinsForChunk(chunkNumber: Int, startY: Int, endY: Int) {
         // Generate materials using clustering system
-        // Divide the chunk into 16×16 block regions for cluster generation
-        let clusterRegionSize = 16
+        // Divide the chunk into 4×4 block regions for cluster generation
+        // (Adjusted from 16×16 to account for 64px blocks instead of 16px blocks)
+        let clusterRegionSize = 4
 
         // Calculate which cluster regions overlap this chunk
         let startRegionY = startY / clusterRegionSize
@@ -756,10 +757,15 @@ class TerrainManager {
         if case .material(let mat) = cell {
             material = mat
 
+            print("📦 Block (\(x),\(y)) has material: \(mat.type)")
+
             // Remove material deposit visual
             if let deposit = materialDeposits[key] {
+                print("📦 Removing MaterialDeposit visual at (\(x),\(y))")
                 deposit.removeWithAnimation { }
                 materialDeposits.removeValue(forKey: key)
+            } else {
+                print("📦 ⚠️ No MaterialDeposit visual found in dictionary for (\(x),\(y))!")
             }
         }
 
@@ -786,15 +792,22 @@ class TerrainManager {
     private func cutSurfaceLayer(x: Int, y: Int) {
         let depth = Double(y)
 
+        print("✂️ cutSurfaceLayer called for block (\(x),\(y)) at depth \(depth)m")
+        print("✂️ Searching through \(allTerrainLayers.count) terrain layers...")
+
         // Find which terrain layer (or chunk) contains this depth
         // Use the same depthRange lookup as updateConsumptionMask for consistency
-        for entry in allTerrainLayers {
+        for (index, entry) in allTerrainLayers.enumerated() {
+            print("✂️ Layer \(index): range \(entry.depthRange) - contains? \(entry.depthRange.contains(depth))")
             if entry.depthRange.contains(depth) {
                 // Found the right layer - cut the surface
+                print("✂️ ✅ Found matching layer! Calling cutSurfaceAt...")
                 entry.layer.cutSurfaceAt(gridX: x, gridY: y, blockSize: TerrainBlock.size)
                 return
             }
         }
+
+        print("✂️ ❌ No matching layer found for depth \(depth)m!")
     }
 
     /// Remove all terrain (for game over / reset)
@@ -844,27 +857,51 @@ class TerrainManager {
         return (x, y)
     }
 
-    /// Clear a 3×3 area around a position (for bomb)
+    /// Clear a circular area around a position (for bomb)
     /// Returns array of materials collected from destroyed blocks
     func clearBombArea(at position: CGPoint) -> [Material] {
-        guard let centerGrid = worldToGrid(position) else { return [] }
+        guard let centerGrid = worldToGrid(position) else {
+            print("💣 ❌ Bomb failed: invalid grid position")
+            return []
+        }
 
+        print("💣 Bomb activated at grid (\(centerGrid.x), \(centerGrid.y))")
         var collectedMaterials: [Material] = []
+        var blocksChecked = 0
+        var blocksDestroyed = 0
 
-        // Clear 3×3 grid centered on position
-        for dy in -1...1 {
-            for dx in -1...1 {
-                let x = centerGrid.x + dx
-                let y = centerGrid.y + dy
+        // Blast radius: 2.5 blocks = 160 pixels (reasonable for 64px blocks)
+        let blastRadiusInBlocks = 2.5
+        let blastRadiusSquared = blastRadiusInBlocks * blastRadiusInBlocks
 
-                // Remove block and collect material
-                if let material = removeBlock(x: x, y: y) {
-                    collectedMaterials.append(material)
+        // Calculate bounds to check (3 blocks in each direction to cover 2.5 radius)
+        let searchRadius = Int(ceil(blastRadiusInBlocks))
+
+        // Find all blocks within circular blast radius
+        for dy in -searchRadius...searchRadius {
+            for dx in -searchRadius...searchRadius {
+                // Check if this block is within circular radius
+                let distanceSquared = Double(dx * dx + dy * dy)
+                if distanceSquared <= blastRadiusSquared {
+                    let x = centerGrid.x + dx
+                    let y = centerGrid.y + dy
+                    blocksChecked += 1
+
+                    print("💣 Checking block (\(x),\(y)) - distance: \(sqrt(distanceSquared))")
+
+                    // Remove block instantly and collect material
+                    if let material = removeBlock(x: x, y: y) {
+                        collectedMaterials.append(material)
+                        blocksDestroyed += 1
+                        print("💣 ✅ Destroyed block (\(x),\(y)) - got \(material.type)")
+                    } else {
+                        print("💣 ⚠️ Block (\(x),\(y)) returned nil (empty or already removed)")
+                    }
                 }
             }
         }
 
-        print("💣 Bomb cleared \(collectedMaterials.count) blocks")
+        print("💣 Bomb complete: checked \(blocksChecked) blocks, destroyed \(blocksDestroyed), collected \(collectedMaterials.count) materials")
         return collectedMaterials
     }
 }

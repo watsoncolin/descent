@@ -47,6 +47,29 @@ class MaterialDeposit: SKNode {
     // MARK: - Setup
 
     private func setupVisuals() {
+        // Check if this material has a custom image (coal uses custom SVG)
+        if material.type == .coal, let coalImage = UIImage(named: "coal") {
+            // Use custom coal image
+            let texture = SKTexture(image: coalImage)
+            let imageNode = SKSpriteNode(texture: texture)
+            imageNode.size = CGSize(width: depositSize * 3, height: depositSize * 3)
+            imageNode.zPosition = 11
+            addChild(imageNode)
+
+            // Store as coreNode for animation compatibility (hidden, no shadow)
+            coreNode = SKShapeNode(circleOfRadius: 0)
+            coreNode.isHidden = true
+
+            // Create empty glow nodes for compatibility
+            glowNode = SKShapeNode(circleOfRadius: 0)
+            glowNode.isHidden = true
+            glowEffectNode = SKEffectNode()
+            glowEffectNode.isHidden = true
+
+            return
+        }
+
+        // Original procedural generation for other materials
         // 1. Outer glow with Gaussian blur (1.5x size, blurred)
         let glowRadius = depositSize * 1.5
         glowNode = SKShapeNode(circleOfRadius: glowRadius)
@@ -140,12 +163,21 @@ class MaterialDeposit: SKNode {
     // MARK: - Removal Animation
 
     func removeWithAnimation(completion: @escaping () -> Void) {
+        print("🗑️ MaterialDeposit.removeWithAnimation called for \(material.type) at (\(gridPosition.x),\(gridPosition.y))")
+        print("🗑️ Current alpha: \(alpha), parent: \(parent != nil)")
+
         let fadeOut = SKAction.fadeOut(withDuration: 0.3)
         let scaleUp = SKAction.scale(to: 1.3, duration: 0.3)
         let group = SKAction.group([fadeOut, scaleUp])
 
         run(group) { [weak self] in
-            self?.removeFromParent()
+            guard let self = self else {
+                print("🗑️ ⚠️ MaterialDeposit was deallocated before animation completed!")
+                return
+            }
+            print("🗑️ ✅ Animation completed for \(self.material.type) at (\(self.gridPosition.x),\(self.gridPosition.y)) - removing from parent")
+            self.removeFromParent()
+            print("🗑️ ✅ Removed from parent successfully")
             completion()
         }
     }
