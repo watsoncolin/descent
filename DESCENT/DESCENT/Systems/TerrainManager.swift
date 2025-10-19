@@ -175,8 +175,12 @@ class TerrainManager {
                     // Convert grid Y to depth in meters for comparison
                     let depth = Double(y) * Double(TerrainBlock.metersPerBlock)
 
-                    // Bottom row of core chamber is indestructible bedrock floor
+                    // Calculate chamber parameters
+                    let centerX = width / 2
+                    let coreDepthInBlocks = Int(planetConfig.coreDepth / Double(TerrainBlock.metersPerBlock))
                     let totalDepthInBlocks = Int(planetConfig.totalDepth / Double(TerrainBlock.metersPerBlock))
+                    let chamberHeightInBlocks = totalDepthInBlocks - coreDepthInBlocks
+                    let centerY = coreDepthInBlocks + (chamberHeightInBlocks / 2)
 
                     // Create bedrock at the absolute bottom row (prevents falling into void)
                     // totalDepth is 2620m = 209.6 blocks, so y=209 is the bottom row
@@ -185,19 +189,25 @@ class TerrainManager {
                         createObstacleBlock(x: x, y: y, type: .bedrock, surfaceY: surfaceY)
 
                         // Debug: Log bedrock creation
-                        if x == width / 2 {
+                        if x == centerX {
                             print("🪨 Bedrock floor created at (\(x), \(y)) - depth \(Int(depth))m (totalDepthInBlocks: \(totalDepthInBlocks))")
                         }
                         continue
                     }
 
-                    // Rest of chamber is empty (safe zone)
-                    collisionGrid.setCell(x: x, y: y, to: .empty)
-
-                    // Spawn Dark Matter crystal once
+                    // Spawn Dark Matter crystal once at center of chamber
                     if !coreCrystalSpawned && depth >= planetConfig.coreDepth {
                         spawnCoreCrystal(surfaceY: surfaceY)
                     }
+
+                    // Check if this is the Dark Matter crystal position (don't overwrite it!)
+                    if x == centerX && y == centerY && coreCrystalSpawned {
+                        // This is the Dark Matter position - skip it to preserve the .material cell
+                        continue
+                    }
+
+                    // Rest of chamber is empty (safe zone)
+                    collisionGrid.setCell(x: x, y: y, to: .empty)
                     continue
                 }
 

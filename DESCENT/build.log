@@ -1,3 +1,24 @@
 Command line invocation:
     /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme DESCENT -destination "platform=iOS Simulator,name=iPhone 15" clean build
 
+2025-10-19 18:01:04.963 xcodebuild[98691:6208619] Writing error result bundle to /var/folders/c2/ggg7m9tj0hv7jkkgp8r3j5y80000gn/T/ResultBundle_2025-19-10_18-01-0004.xcresult
+xcodebuild: error: Unable to find a device matching the provided destination specifier:
+		{ platform:iOS Simulator, OS:latest, name:iPhone 15 }
+
+	The requested device could not be found because no available devices matched the request.
+
+	Available destinations for the "DESCENT" scheme:
+		{ platform:iOS, arch:arm64, id:00008120-00086C913444C01E, name:Colin's iPhone (2) }
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+		{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+		{ platform:iOS Simulator, arch:arm64, id:332593B2-8363-41E3-90F5-820364D4EF81, OS:26.0, name:iPad (A16) }
+		{ platform:iOS Simulator, arch:arm64, id:6894D01D-F08F-4038-B035-8B6E0B6DD6B7, OS:26.0, name:iPad Air 11-inch (M3) }
+		{ platform:iOS Simulator, arch:arm64, id:DA9A5CA1-F13A-4570-870C-F5315B3A6945, OS:26.0, name:iPad Air 13-inch (M3) }
+		{ platform:iOS Simulator, arch:arm64, id:1F41B6FA-CEEE-4F68-9D29-F95130B390BE, OS:26.0, name:iPad Pro 11-inch (M4) }
+		{ platform:iOS Simulator, arch:arm64, id:A6956134-4137-4AB1-B8AA-8628D2A02FFC, OS:26.0, name:iPad Pro 13-inch (M4) }
+		{ platform:iOS Simulator, arch:arm64, id:A89AEFC9-8EFE-423E-85BC-9C55ED890609, OS:26.0, name:iPad mini (A17 Pro) }
+		{ platform:iOS Simulator, arch:arm64, id:8C5DC5D2-6800-4286-BCC7-C338C5B794AE, OS:26.0, name:iPhone 16e }
+		{ platform:iOS Simulator, arch:arm64, id:8D4CB1A3-C6C0-47DB-B6BA-1E0F6C1DF502, OS:26.0, name:iPhone 17 }
+		{ platform:iOS Simulator, arch:arm64, id:2EC4102F-D805-4CCE-BA7D-30B9AA15C515, OS:26.0, name:iPhone 17 Pro }
+		{ platform:iOS Simulator, arch:arm64, id:C12CBA6C-E1F0-45DF-8DE8-DA0487A4B67C, OS:26.0, name:iPhone 17 Pro Max }
+		{ platform:iOS Simulator, arch:arm64, id:3FD58FD3-C205-4057-A913-5225A51B6F64, OS:26.0, name:iPhone Air }
