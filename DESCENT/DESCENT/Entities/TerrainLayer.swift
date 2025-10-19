@@ -292,19 +292,22 @@ class TerrainLayer: SKNode {
         guard stratumRange.contains(depthInMeters) else { return }
 
         // Convert to local grid coordinate within this stratum
-        let stratumStartGrid = Int(stratumRange.lowerBound / Double(TerrainBlock.metersPerBlock))
-        let localGridY = gridY - stratumStartGrid
+        // Use fractional start position to preserve sub-block precision
+        let stratumStartGrid = stratumRange.lowerBound / Double(TerrainBlock.metersPerBlock)
+        let localGridYFractional = Double(gridY) - stratumStartGrid
+        let localGridYInt = Int(localGridYFractional)
 
         let localBlockX = gridX
-        let localBlockY = localGridY
+        let localBlockY = localGridYInt
         let key = "\(localBlockX),\(localBlockY)"
 
         guard !drilledBlocks.contains(key) else {
             return
         }
 
+        // Calculate position using fractional coordinates for pixel-perfect alignment
         let posX = CGFloat(localBlockX) * blockSize
-        let posY = layerSize.height - CGFloat(localBlockY + 1) * blockSize
+        let posY = layerSize.height - (CGFloat(localGridYFractional) + 1.0) * blockSize
         let centerPos = CGPoint(x: posX + blockSize/2, y: posY + blockSize/2)
 
         // No need to place excavated block - background is already excavated layer (darker)
@@ -386,18 +389,25 @@ class TerrainLayer: SKNode {
         guard stratumRange.contains(depthInMeters) else { return }
 
         // Convert to local grid coordinate within this stratum
-        let stratumStartGrid = Int(stratumRange.lowerBound / Double(TerrainBlock.metersPerBlock))
-        let localGridY = gridY - stratumStartGrid
+        // Use fractional start position to preserve sub-block precision
+        let stratumStartGrid = stratumRange.lowerBound / Double(TerrainBlock.metersPerBlock)
+        let localGridYFractional = Double(gridY) - stratumStartGrid
+        let localGridYInt = Int(localGridYFractional)
 
         let localBlockX = gridX
-        let localBlockY = localGridY
+        let localBlockY = localGridYInt
         // Use local coordinates for the key (local to this terrain layer)
         let key = "\(localBlockX),\(localBlockY)"
 
-        // Calculate position
+        // Calculate position using fractional coordinates for pixel-perfect alignment
         let posX = CGFloat(localBlockX) * blockSize
-        let posY = layerSize.height - CGFloat(localBlockY + 1) * blockSize
+        let posY = layerSize.height - (CGFloat(localGridYFractional) + 1.0) * blockSize
         let centerPos = CGPoint(x: posX + blockSize/2, y: posY + blockSize/2)  // Center of block
+
+        // Debug: Check for position errors
+        if localBlockY < 5 || localBlockY > Int(layerSize.height / blockSize) - 5 {
+            print("🔍 Block position: localBlockY=\(localBlockY), posY=\(posY), layerHeight=\(layerSize.height)")
+        }
 
         // Check if crop node already exists
         if let cropNode = childNode(withName: "consumeCropNode_\(key)") as? SKCropNode {

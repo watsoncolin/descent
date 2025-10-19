@@ -968,6 +968,29 @@ extension GameScene {
             return  // Can't drill empty space
         }
 
+        // Check if block is an obstacle that cannot be drilled
+        if case .obstacle(let blockType) = cell {
+            // Check if this obstacle can be drilled with current drill level
+            let canDrill: Bool
+            switch blockType {
+            case .normal:
+                canDrill = true
+            case .bedrock:
+                canDrill = false  // Never drillable
+            case .hardCrystal:
+                canDrill = false  // Only bombs can break
+            case .reinforcedRock:
+                canDrill = gameState.drillStrengthLevel >= 4  // Requires Drill Level 4+
+            }
+
+            if !canDrill {
+                // Visual/audio feedback for hitting indestructible block
+                print("⚠️ Cannot drill \(blockType) with drill level \(gameState.drillStrengthLevel)")
+                // TODO: Play "clang" sound effect
+                return
+            }
+        }
+
         // Get block hardness
         let depth = Double(gridPos.y)
         let strataHardness = terrainManager.getHardnessAtDepth(depth) ?? 1.0
@@ -1061,6 +1084,9 @@ extension GameScene {
             if material.type == Material.MaterialType.darkMatter {
                 gameState.currentRun?.coreExtracted = true
                 print("💎 CORE EXTRACTED! You can now prestige at the surface!")
+
+                // Trigger special core collection effects
+                createCoreCollectionEffect(at: player.position)
             }
 
             if gameState.addToCargo(material) {
@@ -1433,6 +1459,80 @@ extension GameScene {
                 removeDroplet
             ]))
         }
+    }
+
+    private func createCoreCollectionEffect(at position: CGPoint) {
+        // Screen flash effect (orange-red pulse)
+        let flash = SKSpriteNode(color: UIColor(red: 1.0, green: 0.3, blue: 0.0, alpha: 0.6), size: view?.bounds.size ?? CGSize(width: 1000, height: 2000))
+        flash.position = cameraNode.position
+        flash.zPosition = 3000  // Above everything
+        addChild(flash)
+
+        let fadeOut = SKAction.fadeOut(withDuration: 0.5)
+        let remove = SKAction.removeFromParent()
+        flash.run(SKAction.sequence([fadeOut, remove]))
+
+        // Large particle burst at collection point
+        let burst = SKShapeNode(circleOfRadius: 20)
+        burst.fillColor = UIColor(red: 1.0, green: 0.3, blue: 0.0, alpha: 1.0)
+        burst.strokeColor = .red
+        burst.lineWidth = 6
+        burst.glowWidth = 20
+        burst.position = position
+        burst.zPosition = 250
+        addChild(burst)
+
+        // Massive expansion
+        let expand = SKAction.scale(to: 15.0, duration: 0.8)
+        let fade = SKAction.fadeOut(withDuration: 0.8)
+        let removeBurst = SKAction.removeFromParent()
+        burst.run(SKAction.sequence([
+            SKAction.group([expand, fade]),
+            removeBurst
+        ]))
+
+        // Energy particles flying outward (24 particles for intense effect)
+        for i in 0..<24 {
+            let angle = CGFloat(i) * .pi / 12
+            let particle = SKShapeNode(circleOfRadius: 8)
+            particle.fillColor = UIColor(red: 1.0, green: CGFloat.random(in: 0.3...0.6), blue: 0.0, alpha: 1.0)
+            particle.strokeColor = .red
+            particle.lineWidth = 3
+            particle.glowWidth = 8
+            particle.position = position
+            particle.zPosition = 251
+            addChild(particle)
+
+            let distance: CGFloat = 200
+            let moveBy = CGVector(dx: cos(angle) * distance, dy: sin(angle) * distance)
+            let moveOut = SKAction.move(by: moveBy, duration: 0.8)
+            let particleFade = SKAction.fadeOut(withDuration: 0.8)
+            let removeParticle = SKAction.removeFromParent()
+            particle.run(SKAction.sequence([
+                SKAction.group([moveOut, particleFade]),
+                removeParticle
+            ]))
+        }
+
+        // Camera shake (stronger than normal)
+        let shakeAmount: CGFloat = 15.0
+        let shakeDuration: TimeInterval = 0.6
+        let originalPosition = cameraNode.position
+
+        let shakeLeft = SKAction.moveBy(x: -shakeAmount, y: 0, duration: 0.05)
+        let shakeRight = SKAction.moveBy(x: shakeAmount * 2, y: 0, duration: 0.05)
+        let shakeUp = SKAction.moveBy(x: -shakeAmount, y: shakeAmount, duration: 0.05)
+        let shakeDown = SKAction.moveBy(x: 0, y: -shakeAmount * 2, duration: 0.05)
+        let shakeCenter = SKAction.move(to: originalPosition, duration: 0.05)
+
+        let shakeSequence = SKAction.sequence([shakeLeft, shakeRight, shakeUp, shakeDown, shakeCenter])
+        let repeatShake = SKAction.repeat(shakeSequence, count: Int(shakeDuration / 0.25))
+        cameraNode.run(repeatShake)
+
+        // HUD notification
+        hud.showNotification(message: "CORE EXTRACTED!\nReturn to surface to prestige!", color: UIColor(red: 1.0, green: 0.4, blue: 0.0, alpha: 1.0))
+
+        print("💎 CORE COLLECTION SPECIAL EFFECTS TRIGGERED")
     }
 }
 

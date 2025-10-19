@@ -441,6 +441,12 @@ class GameState {
 
     /// Use a teleporter (returns to surface)
     func useTeleporter() -> Bool {
+        // Check if core has been extracted - teleporter disabled after core collection
+        if currentRun?.coreExtracted == true {
+            print("❌ Teleporter disabled - Core extracted! Return to surface manually.")
+            return false
+        }
+
         guard let planet = planetState, planet.consumables.teleporters > 0 else {
             return false
         }

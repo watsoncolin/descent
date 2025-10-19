@@ -34,6 +34,7 @@ class TerrainManager {
 
     // Core chamber
     private var coreCrystalSpawned: Bool = false
+    private var coreChamberDetected: Bool = false  // Debug flag for first detection
 
     // MARK: - Initialization
 
@@ -145,12 +146,31 @@ class TerrainManager {
                     continue
                 }
 
-                // Skip core chamber
+                // Handle core chamber
                 if isInCoreChamber(x: x, y: y) {
+                    // Convert grid Y to depth in meters for comparison
+                    let depth = Double(y) * Double(TerrainBlock.metersPerBlock)
+
+                    // Bottom row of core chamber is indestructible bedrock floor
+                    let totalDepthInBlocks = Int(planetConfig.totalDepth / Double(TerrainBlock.metersPerBlock))
+
+                    // Create bedrock at the absolute bottom row (prevents falling into void)
+                    // totalDepth is 2620m = 209.6 blocks, so y=209 is the bottom row
+                    if y == totalDepthInBlocks - 1 {
+                        collisionGrid.setCell(x: x, y: y, to: .obstacle(.bedrock))
+                        createObstacleBlock(x: x, y: y, type: .bedrock, surfaceY: surfaceY)
+
+                        // Debug: Log bedrock creation
+                        if x == width / 2 {
+                            print("🪨 Bedrock floor created at (\(x), \(y)) - depth \(Int(depth))m (totalDepthInBlocks: \(totalDepthInBlocks))")
+                        }
+                        continue
+                    }
+
+                    // Rest of chamber is empty (safe zone)
                     collisionGrid.setCell(x: x, y: y, to: .empty)
 
                     // Spawn Dark Matter crystal once
-                    let depth = Double(y)
                     if !coreCrystalSpawned && depth >= planetConfig.coreDepth {
                         spawnCoreCrystal(surfaceY: surfaceY)
                     }
@@ -160,7 +180,7 @@ class TerrainManager {
                 // Check for obstacle
                 if let obstacleType = obstacleMap[key] {
                     collisionGrid.setCell(x: x, y: y, to: .obstacle(obstacleType))
-                    createPhysicsBody(x: x, y: y, surfaceY: surfaceY)
+                    createObstacleBlock(x: x, y: y, type: obstacleType, surfaceY: surfaceY)
                 }
                 // Check for material
                 else if let material = veinMap[key] {
@@ -233,7 +253,31 @@ class TerrainManager {
         materialDeposits[key] = deposit
     }
 
-    /// Create invisible physics body at grid position for collision
+    /// Create visible obstacle block (bedrock, hard crystal, reinforced rock)
+    private func createObstacleBlock(x: Int, y: Int, type: TerrainBlock.BlockType, surfaceY: CGFloat) {
+        guard let scene = scene else { return }
+
+        let key = "\(x),\(y)"
+        guard physicsBlocks[key] == nil else { return }  // Already exists
+
+        // Calculate world position (center of grid cell)
+        let worldX = scene.frame.minX + (CGFloat(x) + 0.5) * TerrainBlock.size
+        let worldY = surfaceY - (CGFloat(y) + 0.5) * TerrainBlock.size
+
+        // Convert grid Y to depth for TerrainBlock initialization
+        let depth = Double(y) * Double(TerrainBlock.metersPerBlock)
+
+        // Create visible TerrainBlock with obstacle type
+        let block = TerrainBlock(material: nil, depth: depth, strataHardness: 1.0, blockType: type)
+        block.position = CGPoint(x: worldX, y: worldY)
+        block.zPosition = 20  // Above terrain layers (0-4) and core chamber background (9)
+        block.name = key  // Store coordinates for lookup
+
+        scene.addChild(block)
+        physicsBlocks[key] = block
+    }
+
+    /// Create invisible physics body at grid position for collision (used for regular terrain)
     private func createPhysicsBody(x: Int, y: Int, surfaceY: CGFloat) {
         guard let scene = scene else { return }
 
@@ -439,7 +483,8 @@ class TerrainManager {
             for regionX in 0..<numRegionsX {
                 let regionCenterX = regionX * clusterRegionSize + clusterRegionSize / 2
                 let regionCenterY = regionY * clusterRegionSize + clusterRegionSize / 2
-                let depth = Double(regionCenterY)
+                // Convert grid Y to depth in meters
+                let depth = Double(regionCenterY) * Double(TerrainBlock.metersPerBlock)
 
                 // Get the strata layer for this depth
                 guard let layer = planetConfig.strata.first(where: { $0.contains(depth: depth) }) else {
@@ -611,9 +656,10 @@ class TerrainManager {
 
     /// Check if a position is inside the core chamber
     private func isInCoreChamber(x: Int, y: Int) -> Bool {
-        let depth = Double(y)
+        // Convert grid Y coordinate (blocks) to depth in meters
+        let depth = Double(y) * Double(TerrainBlock.metersPerBlock)
 
-        // Core chamber is at 490-500m depth
+        // Core chamber is from coreDepth to totalDepth
         guard depth >= planetConfig.coreDepth && depth < planetConfig.totalDepth else {
             return false
         }
@@ -625,7 +671,17 @@ class TerrainManager {
         let chamberRadius = 5  // 5 tiles on each side of center
         let xDistance = abs(x - centerX)
 
-        return xDistance <= chamberRadius
+        let inChamber = xDistance <= chamberRadius
+
+        // Debug logging for first chamber block detected
+        if inChamber && !coreChamberDetected {
+            coreChamberDetected = true
+            print("🎯 Core chamber detected! Block (\(x), \(y)) at depth \(Int(depth))m")
+            print("   Chamber range: \(Int(planetConfig.coreDepth))m - \(Int(planetConfig.totalDepth))m")
+            print("   Chamber X range: \(centerX - chamberRadius) - \(centerX + chamberRadius)")
+        }
+
+        return inChamber
     }
 
     /// Spawn the Dark Matter crystal at the center of the core chamber
@@ -634,7 +690,15 @@ class TerrainManager {
 
         // Calculate center position of core chamber
         let centerX = width / 2
-        let centerY = Int(planetConfig.coreDepth) + 5  // Middle of 10-tile vertical chamber
+
+        // Convert coreDepth (meters) to grid blocks
+        let coreDepthInBlocks = Int(planetConfig.coreDepth / Double(TerrainBlock.metersPerBlock))
+        let totalDepthInBlocks = Int(planetConfig.totalDepth / Double(TerrainBlock.metersPerBlock))
+        let chamberHeightInBlocks = totalDepthInBlocks - coreDepthInBlocks
+        let centerY = coreDepthInBlocks + (chamberHeightInBlocks / 2)  // Middle of chamber
+
+        // Create core chamber background visual
+        createCoreChamberBackground(centerX: centerX, centerY: centerY, surfaceY: surfaceY)
 
         // Create Dark Matter material
         let darkMatter = Material(type: .darkMatter, planetMultiplier: planetConfig.valueMultiplier, soulCrystalBonus: soulCrystalBonus)
@@ -645,7 +709,60 @@ class TerrainManager {
 
         coreCrystalSpawned = true
 
-        print("💎 Dark Matter core crystal spawned at (\(centerX), \(centerY)) - depth \(centerY)m")
+        let depthInMeters = Double(centerY) * Double(TerrainBlock.metersPerBlock)
+        print("💎 Dark Matter core crystal spawned at grid(\(centerX), \(centerY)) - depth \(Int(depthInMeters))m")
+    }
+
+    /// Create the visual background for the core chamber
+    private func createCoreChamberBackground(centerX: Int, centerY: Int, surfaceY: CGFloat) {
+        guard let scene = scene else { return }
+
+        // Calculate chamber dimensions
+        let coreDepthInBlocks = Int(planetConfig.coreDepth / Double(TerrainBlock.metersPerBlock))
+        let totalDepthInBlocks = Int(planetConfig.totalDepth / Double(TerrainBlock.metersPerBlock))
+        let chamberHeightInBlocks = totalDepthInBlocks - coreDepthInBlocks
+        let chamberRadius = 5  // 5 blocks on each side
+
+        // Chamber dimensions in points
+        let chamberWidth = CGFloat(chamberRadius * 2 + 1) * TerrainBlock.size
+        let chamberHeight = CGFloat(chamberHeightInBlocks) * TerrainBlock.size
+
+        // Calculate world position (centered on chamber)
+        let worldX = CGFloat(centerX) * TerrainBlock.size
+        let worldY = surfaceY - CGFloat(centerY) * TerrainBlock.size
+
+        // Create light background rectangle (soft white/cream color)
+        let background = SKSpriteNode(color: UIColor(white: 0.95, alpha: 1.0), size: CGSize(width: chamberWidth, height: chamberHeight))
+        background.position = CGPoint(x: worldX, y: worldY)
+        background.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        background.zPosition = 9  // In front of all terrain layers (which are 0-4) but below materials (10)
+        background.name = "coreChamberBackground"
+        scene.addChild(background)
+
+        // Add subtle radial glow in center (very light orange) with blur effect
+        let glowSize = chamberWidth * 1.2
+        let glow = SKSpriteNode(color: UIColor(red: 1.0, green: 0.9, blue: 0.8, alpha: 0.3), size: CGSize(width: glowSize, height: glowSize))
+        glow.position = CGPoint(x: 0, y: 0)
+        glow.zPosition = 0
+
+        // Wrap glow in SKEffectNode for blur
+        let glowEffect = SKEffectNode()
+        glowEffect.filter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": 40.0])
+        glowEffect.shouldRasterize = true
+        glowEffect.addChild(glow)  // Add glow to effect node
+        glowEffect.position = CGPoint(x: 0, y: 0)
+        glowEffect.zPosition = 1
+        background.addChild(glowEffect)  // Add effect node to background
+
+        // Add gentle pulsing animation to glow
+        let fadeIn = SKAction.fadeAlpha(to: 0.4, duration: 2.0)
+        fadeIn.timingMode = .easeInEaseOut
+        let fadeOut = SKAction.fadeAlpha(to: 0.2, duration: 2.0)
+        fadeOut.timingMode = .easeInEaseOut
+        let pulse = SKAction.sequence([fadeIn, fadeOut])
+        glowEffect.run(SKAction.repeatForever(pulse))
+
+        print("🌟 Core chamber background created at (\(Int(worldX)), \(Int(worldY)))")
     }
 
     // MARK: - Material Creation
@@ -702,6 +819,15 @@ class TerrainManager {
         // Skip empty cells
         if case .empty = cell {
             return nil
+        }
+
+        // Skip indestructible obstacles (bedrock) - safety check
+        if case .obstacle(let blockType) = cell {
+            if blockType == .bedrock {
+                print("⚠️ Attempted to remove indestructible bedrock at (\(x),\(y)) - blocked!")
+                return nil
+            }
+            // Note: hardCrystal and reinforcedRock can be removed (bombs or high-level drill)
         }
 
         var material: Material?

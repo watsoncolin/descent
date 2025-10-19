@@ -16,19 +16,7 @@ class TextureGenerator {
     private var textureCache: [String: SKTexture] = [:]
 
     // MARK: - Public API
-
-    /// Get or generate a texture for a material type
-    func texture(for materialType: Material.MaterialType) -> SKTexture {
-        let cacheKey = materialType.rawValue
-
-        if let cached = textureCache[cacheKey] {
-            return cached
-        }
-
-        let texture = generateTexture(for: materialType)
-        textureCache[cacheKey] = texture
-        return texture
-    }
+    // NOTE: Material textures removed - materials now use PNG assets via MaterialDeposit system
 
     /// Get or generate a texture for terrain (dirt/stone) at a given depth
     func terrainTexture(depth: Double) -> SKTexture {
@@ -43,11 +31,6 @@ class TextureGenerator {
         return texture
     }
 
-    /// Generate a unique crack texture based on damage level (1 = light cracks, 2 = medium, 3 = heavy)
-    /// Always generates a new random crack pattern - NOT cached
-    func crackTexture(level: Int) -> SKTexture {
-        return generateCrackTexture(level: level)
-    }
 
     /// Get or generate texture for Bedrock obstacle
     func bedrockTexture() -> SKTexture {
@@ -83,7 +66,9 @@ class TextureGenerator {
     }
 
     // MARK: - Material Textures
+    // NOTE: Material texture generation has been removed - materials now use PNG assets via MaterialDeposit system
 
+    /* REMOVED: generateTexture(for: Material.MaterialType) - ~55 lines
     private func generateTexture(for materialType: Material.MaterialType) -> SKTexture {
         let size = 24 // 24x24 pixel art
         let scale: CGFloat = 3.0 // Use 3x for retina displays
@@ -139,9 +124,12 @@ class TextureGenerator {
 
         return SKTexture(image: image ?? UIImage())
     }
+    */
 
     // MARK: - Crack Textures
+    // NOTE: Crack textures removed - now using consuming block animation instead
 
+    /* REMOVED: All crack texture generation methods (~300 lines)
     private func generateCrackTexture(level: Int) -> SKTexture {
         let size = 24
         let scale: CGFloat = 3.0
@@ -448,106 +436,108 @@ class TextureGenerator {
             return CGPoint(x: size/2, y: size/2)
         }
     }
+    */
 
     // MARK: - Terrain Textures
 
     private func generateTerrainTexture(depth: Double) -> SKTexture {
-        let size = 24
-        let scale: CGFloat = 3.0 // Use 3x for retina displays
+        let size = CGSize(width: 64, height: 64)  // Full block size for smooth rendering
 
-        UIGraphicsBeginImageContextWithOptions(CGSize(width: size, height: size), false, scale)
-        guard let context = UIGraphicsGetCurrentContext() else {
-            UIGraphicsEndImageContext()
-            return SKTexture()
-        }
+        // Use scale of 1.0 to prevent renderer from multiplying dimensions by screen scale
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1.0
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
 
-        // Base color based on depth
-        let baseColor: UIColor
-        if depth < 100 {
-            baseColor = UIColor(red: 0.55, green: 0.45, blue: 0.35, alpha: 1.0) // Light brown dirt
-        } else if depth < 300 {
-            baseColor = UIColor(red: 0.45, green: 0.35, blue: 0.25, alpha: 1.0) // Darker dirt
-        } else {
-            baseColor = UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0) // Stone
-        }
+        let image = renderer.image { context in
+            let ctx = context.cgContext
 
-        // Fill with base color
-        baseColor.setFill()
-        context.fill(CGRect(x: 0, y: 0, width: size, height: size))
+            // Determine base colors based on depth (smooth gradients, not pixel-art)
+            let topColor: UIColor
+            let bottomColor: UIColor
 
-        // Add noise/texture with darker pixels
-        let darkColor = baseColor.darker(by: 0.2)
-        let lightColor = baseColor.lighter(by: 0.1)
+            if depth < 100 {
+                // Shallow dirt - light brown gradient
+                topColor = UIColor(red: 0.60, green: 0.50, blue: 0.40, alpha: 1.0)
+                bottomColor = UIColor(red: 0.50, green: 0.40, blue: 0.30, alpha: 1.0)
+            } else if depth < 300 {
+                // Deep dirt - darker brown gradient
+                topColor = UIColor(red: 0.50, green: 0.40, blue: 0.30, alpha: 1.0)
+                bottomColor = UIColor(red: 0.40, green: 0.30, blue: 0.20, alpha: 1.0)
+            } else {
+                // Stone - gray gradient
+                topColor = UIColor(red: 0.35, green: 0.35, blue: 0.35, alpha: 1.0)
+                bottomColor = UIColor(red: 0.25, green: 0.25, blue: 0.25, alpha: 1.0)
+            }
 
-        for y in 0..<size {
-            for x in 0..<size {
-                let random = Double.random(in: 0...1)
-                if random < 0.15 {
-                    darkColor.setFill()
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                } else if random > 0.85 {
-                    lightColor.setFill()
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                }
+            // Create smooth vertical gradient
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            let colors = [topColor.cgColor, bottomColor.cgColor] as CFArray
+            guard let gradient = CGGradient(colorsSpace: colorSpace, colors: colors, locations: [0.0, 1.0]) else {
+                return
+            }
+
+            let startPoint = CGPoint(x: size.width / 2, y: 0)
+            let endPoint = CGPoint(x: size.width / 2, y: size.height)
+            ctx.drawLinearGradient(gradient, start: startPoint, end: endPoint, options: [])
+
+            // Add subtle noise texture (fewer, larger dots for smooth look)
+            let noiseColor = UIColor(white: 0.0, alpha: 0.15)
+            ctx.setFillColor(noiseColor.cgColor)
+
+            // Add 15-25 random noise dots for subtle texture
+            let dotCount = Int.random(in: 15...25)
+            for _ in 0..<dotCount {
+                let x = CGFloat.random(in: 0...size.width)
+                let y = CGFloat.random(in: 0...size.height)
+                let radius = CGFloat.random(in: 1.5...3.0)
+                ctx.fillEllipse(in: CGRect(x: x - radius/2, y: y - radius/2, width: radius, height: radius))
             }
         }
 
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return SKTexture(image: image ?? UIImage())
+        return SKTexture(image: image)
     }
 
     // MARK: - Obstacle Block Textures
 
     private func generateBedrockTexture() -> SKTexture {
-        let size = 24
-        let scale: CGFloat = 3.0
+        let size = CGSize(width: 64, height: 64)  // Full block size for smooth rendering
 
-        UIGraphicsBeginImageContextWithOptions(CGSize(width: size, height: size), false, scale)
-        guard let context = UIGraphicsGetCurrentContext() else {
-            UIGraphicsEndImageContext()
-            return SKTexture()
-        }
+        // Use scale of 1.0 to prevent renderer from multiplying dimensions by screen scale
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1.0
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
 
-        // Very dark gray/black base (#1a1a1a)
-        let bedrock = UIColor(red: 0x1a / 255.0, green: 0x1a / 255.0, blue: 0x1a / 255.0, alpha: 1.0)
-        let darker = UIColor(red: 0x10 / 255.0, green: 0x10 / 255.0, blue: 0x10 / 255.0, alpha: 1.0)
-        let lighter = UIColor(red: 0x25 / 255.0, green: 0x25 / 255.0, blue: 0x25 / 255.0, alpha: 1.0)
+        let image = renderer.image { context in
+            let ctx = context.cgContext
 
-        // Fill with base color
-        bedrock.setFill()
-        context.fill(CGRect(x: 0, y: 0, width: size, height: size))
+            // Very dark purple gradient (#2a1a3a → #1a0a2a)
+            let topColor = UIColor(red: 0x2a / 255.0, green: 0x1a / 255.0, blue: 0x3a / 255.0, alpha: 1.0)
+            let bottomColor = UIColor(red: 0x1a / 255.0, green: 0x0a / 255.0, blue: 0x2a / 255.0, alpha: 1.0)
 
-        // Add rough stone-like texture with blocky pattern
-        for y in stride(from: 0, to: size, by: 4) {
-            for x in stride(from: 0, to: size, by: 4) {
-                if Bool.random() {
-                    darker.setFill()
-                } else {
-                    lighter.setFill()
-                }
-                let blockSize = Int.random(in: 2...4)
-                context.fill(CGRect(x: x, y: y, width: blockSize, height: blockSize))
+            // Create vertical gradient
+            let colors = [topColor.cgColor, bottomColor.cgColor] as CFArray
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            guard let gradient = CGGradient(colorsSpace: colorSpace, colors: colors, locations: [0.0, 1.0]) else {
+                return
+            }
+
+            let startPoint = CGPoint(x: size.width / 2, y: 0)
+            let endPoint = CGPoint(x: size.width / 2, y: size.height)
+            ctx.drawLinearGradient(gradient, start: startPoint, end: endPoint, options: [])
+
+            // Add subtle noise for texture
+            let lighter = UIColor(red: 0x35 / 255.0, green: 0x25 / 255.0, blue: 0x45 / 255.0, alpha: 0.15)
+            lighter.setFill()
+
+            for _ in 0..<30 {
+                let x = CGFloat.random(in: 0...size.width)
+                let y = CGFloat.random(in: 0...size.height)
+                let radius = CGFloat.random(in: 1...3)
+                ctx.fillEllipse(in: CGRect(x: x, y: y, width: radius, height: radius))
             }
         }
 
-        // Add some random pixels for grit
-        for _ in 0..<20 {
-            let x = Int.random(in: 0..<size)
-            let y = Int.random(in: 0..<size)
-            if Bool.random() {
-                darker.setFill()
-            } else {
-                lighter.setFill()
-            }
-            context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-        }
-
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return SKTexture(image: image ?? UIImage())
+        return SKTexture(image: image)
     }
 
     private func generateHardCrystalTexture() -> SKTexture {
@@ -617,11 +607,11 @@ class TextureGenerator {
             return SKTexture()
         }
 
-        // Medium gray reinforced rock (#4a4a4a)
-        let reinforced = UIColor(red: 0x4a / 255.0, green: 0x4a / 255.0, blue: 0x4a / 255.0, alpha: 1.0)
-        let dark = UIColor(red: 0x35 / 255.0, green: 0x35 / 255.0, blue: 0x35 / 255.0, alpha: 1.0)
-        let light = UIColor(red: 0x60 / 255.0, green: 0x60 / 255.0, blue: 0x60 / 255.0, alpha: 1.0)
-        let metallic = UIColor(red: 0x80 / 255.0, green: 0x80 / 255.0, blue: 0x80 / 255.0, alpha: 1.0)
+        // Medium purple reinforced rock (#5a3a6a)
+        let reinforced = UIColor(red: 0x5a / 255.0, green: 0x3a / 255.0, blue: 0x6a / 255.0, alpha: 1.0)
+        let dark = UIColor(red: 0x45 / 255.0, green: 0x25 / 255.0, blue: 0x55 / 255.0, alpha: 1.0)
+        let light = UIColor(red: 0x70 / 255.0, green: 0x50 / 255.0, blue: 0x80 / 255.0, alpha: 1.0)
+        let metallic = UIColor(red: 0x90 / 255.0, green: 0x70 / 255.0, blue: 0xa0 / 255.0, alpha: 1.0)
 
         // Fill with base color
         reinforced.setFill()
@@ -664,7 +654,10 @@ class TextureGenerator {
     }
 
     // MARK: - Individual Material Patterns
+    // NOTE: All material draw helper methods below are UNUSED
+    // Materials now use PNG assets via MaterialDeposit system
 
+    /* REMOVED: All draw*Texture helper methods for materials (~300 lines)
     private func drawCoalTexture(context: CGContext, size: Int) {
         // Black coal with dark gray chunks
         let black = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1.0)
@@ -977,187 +970,13 @@ class TextureGenerator {
             }
         }
     }
+    */
 
-    // MARK: - Embedded Material Textures
-
-    /// Generate texture showing an ore chunk embedded in soil
-    func embeddedOreTexture(materialColor: UIColor, soilColor: UIColor) -> SKTexture {
-        let size = 24
-        let scale: CGFloat = 3.0
-
-        UIGraphicsBeginImageContextWithOptions(CGSize(width: size, height: size), false, scale)
-        guard let context = UIGraphicsGetCurrentContext() else {
-            UIGraphicsEndImageContext()
-            return SKTexture()
-        }
-
-        // Fill background with soil
-        soilColor.setFill()
-        context.fill(CGRect(x: 0, y: 0, width: size, height: size))
-
-        // Add soil texture noise
-        let darkSoil = soilColor.darker(by: 0.2)
-        let lightSoil = soilColor.lighter(by: 0.1)
-
-        for y in 0..<size {
-            for x in 0..<size {
-                let random = Double.random(in: 0...1)
-                if random < 0.15 {
-                    darkSoil.setFill()
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                } else if random > 0.85 {
-                    lightSoil.setFill()
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                }
-            }
-        }
-
-        // Draw irregular ore chunk in center (taking up ~60% of block)
-        let centerX = size / 2
-        let centerY = size / 2
-        let oreRadius = 6 // Approximate radius
-
-        materialColor.setFill()
-
-        // Create organic blob shape for ore
-        for y in 0..<size {
-            for x in 0..<size {
-                let dx = Double(x - centerX)
-                let dy = Double(y - centerY)
-                let distance = sqrt(dx * dx + dy * dy)
-
-                // Use noise-based threshold for irregular edge
-                let angle = atan2(dy, dx)
-                let noiseOffset = sin(angle * 3.0) * 2.0 + cos(angle * 5.0) * 1.5
-                let threshold = Double(oreRadius) + noiseOffset
-
-                if distance < threshold {
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                }
-            }
-        }
-
-        // Add highlights and shadows to ore for depth
-        let highlight = materialColor.lighter(by: 0.3)
-        let shadow = materialColor.darker(by: 0.3)
-
-        for y in 0..<size {
-            for x in 0..<size {
-                let dx = Double(x - centerX)
-                let dy = Double(y - centerY)
-                let distance = sqrt(dx * dx + dy * dy)
-                let angle = atan2(dy, dx)
-                let noiseOffset = sin(angle * 3.0) * 2.0 + cos(angle * 5.0) * 1.5
-                let threshold = Double(oreRadius) + noiseOffset
-
-                if distance < threshold {
-                    // Add highlights on top-left
-                    if x < centerX && y < centerY && Double.random(in: 0...1) < 0.2 {
-                        highlight.setFill()
-                        context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                    }
-                    // Add shadows on bottom-right
-                    else if x > centerX && y > centerY && Double.random(in: 0...1) < 0.15 {
-                        shadow.setFill()
-                        context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                    }
-                }
-            }
-        }
-
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return SKTexture(image: image ?? UIImage())
-    }
-
-    /// Generate texture showing a crystal formation embedded in soil
-    func embeddedCrystalTexture(materialColor: UIColor, soilColor: UIColor) -> SKTexture {
-        let size = 24
-        let scale: CGFloat = 3.0
-
-        UIGraphicsBeginImageContextWithOptions(CGSize(width: size, height: size), false, scale)
-        guard let context = UIGraphicsGetCurrentContext() else {
-            UIGraphicsEndImageContext()
-            return SKTexture()
-        }
-
-        // Fill background with soil
-        soilColor.setFill()
-        context.fill(CGRect(x: 0, y: 0, width: size, height: size))
-
-        // Add soil texture noise
-        let darkSoil = soilColor.darker(by: 0.2)
-        let lightSoil = soilColor.lighter(by: 0.1)
-
-        for y in 0..<size {
-            for x in 0..<size {
-                let random = Double.random(in: 0...1)
-                if random < 0.15 {
-                    darkSoil.setFill()
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                } else if random > 0.85 {
-                    lightSoil.setFill()
-                    context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-                }
-            }
-        }
-
-        // Draw crystal cluster in center
-        let centerX = size / 2
-        let centerY = size / 2
-
-        materialColor.setFill()
-
-        // Draw 3-5 crystal shards radiating from center
-        let numCrystals = Int.random(in: 3...5)
-        for i in 0..<numCrystals {
-            let angle = (Double(i) / Double(numCrystals)) * .pi * 2.0 + Double.random(in: -0.3...0.3)
-            let length = Double.random(in: 5...8)
-            let width = Double.random(in: 2...3)
-
-            // Draw crystal shard as elongated diamond shape
-            context.beginPath()
-
-            // Tip of crystal
-            let tipX = centerX + Int(cos(angle) * length)
-            let tipY = centerY + Int(sin(angle) * length)
-
-            // Perpendicular offset for width
-            let perpAngle = angle + .pi / 2.0
-            let w1X = centerX + Int(cos(perpAngle) * width)
-            let w1Y = centerY + Int(sin(perpAngle) * width)
-            let w2X = centerX - Int(cos(perpAngle) * width)
-            let w2Y = centerY - Int(sin(perpAngle) * width)
-
-            context.move(to: CGPoint(x: tipX, y: tipY))
-            context.addLine(to: CGPoint(x: w1X, y: w1Y))
-            context.addLine(to: CGPoint(x: centerX, y: centerY))
-            context.addLine(to: CGPoint(x: w2X, y: w2Y))
-            context.closePath()
-            context.fillPath()
-        }
-
-        // Add bright highlights to crystals for sparkle
-        let highlight = materialColor.lighter(by: 0.5)
-        highlight.setFill()
-
-        for _ in 0...(numCrystals * 2) {
-            let angle = Double.random(in: 0...(.pi * 2))
-            let distance = Double.random(in: 1...6)
-            let x = centerX + Int(cos(angle) * distance)
-            let y = centerY + Int(sin(angle) * distance)
-
-            if x >= 0 && x < size && y >= 0 && y < size {
-                context.fill(CGRect(x: x, y: y, width: 1, height: 1))
-            }
-        }
-
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return SKTexture(image: image ?? UIImage())
-    }
+    // MARK: - Material Rendering
+    // NOTE: Materials are now rendered using PNG assets via MaterialDeposit system
+    // Two sections of pixel-art material generation code have been commented out:
+    //   1. generateTexture(for: MaterialType) method (~55 lines)
+    //   2. All draw*Texture helper methods (~300 lines)
 }
 
 // MARK: - UIColor Extensions

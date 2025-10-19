@@ -1,7 +1,7 @@
 {
   "name": "Mars",
-  "totalDepth": 2560,
-  "coreDepth": 2500,
+  "totalDepth": 2620,
+  "coreDepth": 2560,
   "valueMultiplier": 1.0,
   "tileSize": 64,
   "difficulty": "Tutorial",
@@ -32,6 +32,19 @@
           "clusterRadiusMax": 3,
           "clusterSizeMin": 8,
           "clusterSizeMax": 12
+        },
+        {
+          "type": "iron",
+          "seedRate": 0.1,
+          "value": 25,
+          "size": 1.5,
+          "veinSizeMin": 2,
+          "veinSizeMax": 6,
+          "colorHex": "#808080",
+          "clusterRadiusMin": 2,
+          "clusterRadiusMax": 4,
+          "clusterSizeMin": 5,
+          "clusterSizeMax": 10
         }
       ],
       "hazards": [],
@@ -76,7 +89,7 @@
         },
         {
           "type": "iron",
-          "seedRate": 0.22,
+          "seedRate": 0.9,
           "value": 25,
           "size": 1.5,
           "veinSizeMin": 2,

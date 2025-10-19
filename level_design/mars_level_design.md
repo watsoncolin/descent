@@ -1,12 +1,14 @@
 # Mars Level Design - Complete Strata System
 
-**Planet:** Mars  
-**Difficulty:** Tutorial/Beginner  
-**Theme:** Rust-colored Martian excavation  
-**Total Depth:** 500m (40 rows × 64px per block, scale: 64px = 12.5m)  
-**Core Location:** 490m depth  
-**Planet Order:** 1 of 8  
+**Planet:** Mars
+**Difficulty:** Tutorial/Beginner
+**Theme:** Rust-colored Martian excavation
+**Total Depth:** 2560m (configurable per planet in mars.json)
+**Core Location:** 2500m depth (configurable per planet - see `coreDepth` in mars.json)
+**Planet Order:** 1 of 8
 **Unlock Requirements:** None (starting planet)
+
+> **Note:** Core depth is a per-planet configuration stored in the planet's JSON file. Each planet can have different total depth and core placement based on difficulty and design.
 
 ---
 
@@ -31,22 +33,22 @@ Mars features **4 distinct strata layers** that the player descends through. Eac
 
 ```
 ┌────────────────────────────────────────┐
-│  STRATA 1: SURFACE SAND (0-125m)       │  Light tan sediment
-│    Blocks 1-10                          │
+│  STRATA 1: SURFACE SAND (0-640m)       │  Light tan sediment
+│    Blocks 0-51                          │
 │    Materials: Coal (common)             │
 ├────────────────────────────────────────┤
-│  STRATA 2: STONE LAYER (125-250m)      │  Gray sedimentary rock
-│    Blocks 11-20                         │
+│  STRATA 2: STONE LAYER (640-1280m)     │  Gray sedimentary rock
+│    Blocks 51-102                        │
 │    Materials: Iron, Coal                │
 ├────────────────────────────────────────┤
-│  STRATA 3: DEEP ROCK (250-375m)        │  Dark metamorphic rock
-│    Blocks 21-30                         │
-│    Materials: Copper, Iron              │
+│  STRATA 3: DEEP ROCK (1280-1920m)      │  Dark metamorphic rock
+│    Blocks 102-154                       │
+│    Materials: Copper, Iron, Silicon     │
 ├────────────────────────────────────────┤
-│  STRATA 4: MARS CORE (375-500m)        │  Ancient red planetary core
-│    Blocks 31-40                         │
+│  STRATA 4: MARS CORE (1920-2560m)      │  Ancient red planetary core
+│    Blocks 154-205                       │
 │    Materials: Gold, Silicon, Copper     │
-│    Core Chamber at 490m                 │
+│    Core Chamber at 2500m (Block 200)    │
 └────────────────────────────────────────┘
 ```
 
@@ -255,10 +257,10 @@ Contrast:   ~35% darker when mined
 
 ---
 
-### Strata 4: Mars Core Zone (375-500m, Blocks 31-40)
+### Strata 4: Mars Core Zone (1920-2560m, Blocks 154-205)
 
-**Terrain Type:** Mars Rock  
-**Visual Theme:** Ancient red planetary core, oxidized deep layers  
+**Terrain Type:** Mars Rock
+**Visual Theme:** Ancient red planetary core, oxidized deep layers
 **Mining Difficulty:** Very Hard (requires high-level upgrades)
 
 **Technical Properties:**

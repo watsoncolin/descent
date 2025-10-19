@@ -29,12 +29,6 @@ class TerrainBlock: SKSpriteNode {
     private var primaryDrillDirection: DrillDirection?
     private var originalPosition: CGPoint = .zero  // Store initial position
 
-    // Crack overlay sprites (additive layers)
-    private var crackOverlay1: SKSpriteNode?  // Light cracks (generated once)
-    private var crackOverlay2: SKSpriteNode?  // Medium cracks (generated once)
-    private var crackOverlay3: SKSpriteNode?  // Heavy cracks (generated once)
-    private var currentCrackLevel: Int = 0    // Track which level we've reached
-
     // Block size (in pixels) - Grid size for continuous terrain system (64px = 12.5m)
     static let size: CGFloat = 64
 
@@ -58,7 +52,8 @@ class TerrainBlock: SKSpriteNode {
         self.maxHealth = hardness * 2  // Store initial health
         self.strataHardness = strataHardness
 
-        // Determine texture and color based on block type or material
+        // Determine texture and color based on block type
+        // NOTE: Materials are no longer rendered as TerrainBlocks - they use MaterialDeposit with PNG assets
         let texture: SKTexture?
         let color: UIColor
 
@@ -72,26 +67,9 @@ class TerrainBlock: SKSpriteNode {
         } else if blockType == .reinforcedRock {
             texture = TextureGenerator.shared.reinforcedRockTexture()
             color = .white
-        } else if let material = material {
-            // Material blocks show soil with embedded ore/crystal
-            let soilColor = TerrainBlock.getSoilColor(forDepth: depth)
-            let materialColor = TerrainBlock.colorForMaterial(material.type)
-
-            // Generate embedded material texture based on visual type
-            if material.type.visualType == .crystal {
-                texture = TextureGenerator.shared.embeddedCrystalTexture(
-                    materialColor: materialColor,
-                    soilColor: soilColor
-                )
-            } else {
-                texture = TextureGenerator.shared.embeddedOreTexture(
-                    materialColor: materialColor,
-                    soilColor: soilColor
-                )
-            }
-            color = .white
         } else {
-            // Use procedural terrain texture for dirt/stone
+            // Regular terrain blocks (no longer used for materials)
+            // Materials are now rendered via MaterialDeposit system
             texture = TextureGenerator.shared.terrainTexture(depth: depth)
             color = .white
         }
@@ -99,11 +77,6 @@ class TerrainBlock: SKSpriteNode {
         super.init(texture: texture, color: color, size: CGSize(width: TerrainBlock.size, height: TerrainBlock.size))
 
         setupPhysics()
-
-        // Only setup crack overlay for normal drillable blocks
-        if blockType == .normal {
-            setupCrackOverlay()
-        }
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -118,59 +91,6 @@ class TerrainBlock: SKSpriteNode {
         physicsBody?.categoryBitMask = 2  // Terrain
         physicsBody?.contactTestBitMask = 1  // Player
         physicsBody?.collisionBitMask = 1  // Player
-    }
-
-    private func setupCrackOverlay() {
-        // Create three invisible crack overlay layers (will be shown progressively when damaged)
-        crackOverlay1 = SKSpriteNode(color: .clear, size: CGSize(width: TerrainBlock.size, height: TerrainBlock.size))
-        crackOverlay1?.zPosition = 1
-        crackOverlay1?.alpha = 0
-        if let overlay = crackOverlay1 {
-            addChild(overlay)
-        }
-
-        crackOverlay2 = SKSpriteNode(color: .clear, size: CGSize(width: TerrainBlock.size, height: TerrainBlock.size))
-        crackOverlay2?.zPosition = 2
-        crackOverlay2?.alpha = 0
-        if let overlay = crackOverlay2 {
-            addChild(overlay)
-        }
-
-        crackOverlay3 = SKSpriteNode(color: .clear, size: CGSize(width: TerrainBlock.size, height: TerrainBlock.size))
-        crackOverlay3?.zPosition = 3
-        crackOverlay3?.alpha = 0
-        if let overlay = crackOverlay3 {
-            addChild(overlay)
-        }
-    }
-
-    private func updateCrackOverlay() {
-        // Calculate damage percentage
-        let healthPercent = Double(health) / Double(maxHealth)
-
-        // Level 1: Light cracks (50-75% health)
-        if healthPercent <= 0.75 && currentCrackLevel < 1 {
-            // Generate light cracks ONCE and keep them
-            crackOverlay1?.texture = TextureGenerator.shared.crackTexture(level: 1)
-            crackOverlay1?.alpha = 0.7
-            currentCrackLevel = 1
-        }
-
-        // Level 2: Add medium cracks (25-50% health)
-        if healthPercent <= 0.5 && currentCrackLevel < 2 {
-            // Generate medium cracks ONCE and add on top of light cracks
-            crackOverlay2?.texture = TextureGenerator.shared.crackTexture(level: 2)
-            crackOverlay2?.alpha = 0.8
-            currentCrackLevel = 2
-        }
-
-        // Level 3: Add heavy cracks (<25% health)
-        if healthPercent <= 0.25 && currentCrackLevel < 3 {
-            // Generate heavy cracks ONCE and add on top of previous cracks
-            crackOverlay3?.texture = TextureGenerator.shared.crackTexture(level: 3)
-            crackOverlay3?.alpha = 0.9
-            currentCrackLevel = 3
-        }
     }
 
     // MARK: - Damage
@@ -228,9 +148,6 @@ class TerrainBlock: SKSpriteNode {
 
         // Apply directional scaling and positioning based on current direction
         updateDirectionalAppearance()
-
-        // Update crack overlay based on new health
-        updateCrackOverlay()
 
         // Visual feedback - flash white when damaged (works with textures)
         let flash = SKAction.sequence([
@@ -370,17 +287,7 @@ class TerrainBlock: SKSpriteNode {
     }
 
     // MARK: - Helper Methods
-
-    /// Get soil color based on depth (matching terrain texture generation)
-    private static func getSoilColor(forDepth depth: Double) -> UIColor {
-        if depth < 100 {
-            return UIColor(red: 0.55, green: 0.45, blue: 0.35, alpha: 1.0) // Light brown dirt
-        } else if depth < 300 {
-            return UIColor(red: 0.45, green: 0.35, blue: 0.25, alpha: 1.0) // Darker dirt
-        } else {
-            return UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0) // Stone
-        }
-    }
+    // NOTE: getSoilColor removed - no longer needed with PNG material assets
 
     // MARK: - Material Colors
 

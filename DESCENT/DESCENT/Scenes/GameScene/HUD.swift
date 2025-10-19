@@ -127,6 +127,40 @@ class HUD: SKNode {
         // Update credits
         creditsLabel.text = "$\(Int(gameState.credits))"
     }
+
+    // MARK: - Notifications
+
+    /// Show a large notification message that fades out after a few seconds
+    func showNotification(message: String, color: UIColor = .orange) {
+        // Create notification label
+        let notification = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        notification.text = message
+        notification.fontSize = 24
+        notification.fontColor = color
+        notification.horizontalAlignmentMode = .center
+        notification.verticalAlignmentMode = .center
+        notification.position = CGPoint(x: 0, y: 0)  // Center of screen
+        notification.zPosition = 2000  // Above everything
+
+        // Add glow effect
+        let glow = SKEffectNode()
+        glow.shouldRasterize = true
+        if let glowFilter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": 10.0]) {
+            glow.filter = glowFilter
+        }
+        glow.addChild(notification)
+        glow.zPosition = 2000
+        addChild(glow)
+
+        // Animate: fade in, stay, fade out
+        let fadeIn = SKAction.fadeAlpha(to: 1.0, duration: 0.3)
+        let wait = SKAction.wait(forDuration: 3.0)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.5)
+        let remove = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([fadeIn, wait, fadeOut, remove])
+
+        glow.run(sequence)
+    }
 }
 
 // MARK: - Progress Bar Component

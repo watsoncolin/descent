@@ -47,14 +47,58 @@ class MaterialDeposit: SKNode {
     // MARK: - Setup
 
     private func setupVisuals() {
-        // Check if this material has a custom image (coal uses custom SVG)
-        if material.type == .coal, let coalImage = UIImage(named: "coal") {
-            // Use custom coal image
-            let texture = SKTexture(image: coalImage)
+        // Check if this material has a custom image asset
+        // Asset names: coal, iron, copper, gold, silicon, dark_matter
+        let assetName = material.type.rawValue.lowercased().replacingOccurrences(of: "darkmatter", with: "dark_matter")
+
+        if let materialImage = UIImage(named: assetName) {
+            // Use custom material image from asset catalog
+            let texture = SKTexture(image: materialImage)
             let imageNode = SKSpriteNode(texture: texture)
-            imageNode.size = CGSize(width: depositSize * 3, height: depositSize * 3)
-            imageNode.zPosition = 11
-            addChild(imageNode)
+
+            // Dark Matter gets special treatment (larger size, pulsing animation)
+            if material.type == .darkMatter {
+                imageNode.size = CGSize(width: depositSize * 5, height: depositSize * 5)  // Larger than normal
+                imageNode.zPosition = 15  // Higher z to ensure always visible
+                addChild(imageNode)
+
+                // Add pulsing animation (0.8 → 1.2 → 0.8 scale, 2 second cycle)
+                let scaleDown = SKAction.scale(to: 0.8, duration: 1.0)
+                scaleDown.timingMode = .easeInEaseOut
+                let scaleUp = SKAction.scale(to: 1.2, duration: 1.0)
+                scaleUp.timingMode = .easeInEaseOut
+                let pulse = SKAction.sequence([scaleDown, scaleUp])
+                let repeatPulse = SKAction.repeatForever(pulse)
+                imageNode.run(repeatPulse, withKey: "darkMatterPulse")
+
+                // Add outer glow for Dark Matter
+                let glowSize = depositSize * 7
+                let glowSprite = SKSpriteNode(texture: texture)
+                glowSprite.size = CGSize(width: glowSize, height: glowSize)
+                glowSprite.alpha = 0.3
+                glowSprite.zPosition = 14
+                glowSprite.colorBlendFactor = 1.0
+                glowSprite.color = UIColor(red: 1.0, green: 0.3, blue: 0.0, alpha: 1.0)  // Orange glow
+
+                // Add blur effect to glow
+                let glowEffect = SKEffectNode()
+                glowEffect.filter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": 15.0])
+                glowEffect.addChild(glowSprite)
+                glowEffect.zPosition = 14
+                addChild(glowEffect)
+
+                // Glow also pulses (slightly offset for visual interest)
+                let glowPulse = SKAction.sequence([scaleUp, scaleDown])
+                let repeatGlowPulse = SKAction.repeatForever(glowPulse)
+                glowEffect.run(repeatGlowPulse, withKey: "darkMatterGlowPulse")
+
+                print("💎 Dark Matter core crystal created with pulsing animation")
+            } else {
+                // Normal size for other materials
+                imageNode.size = CGSize(width: depositSize * 3, height: depositSize * 3)
+                imageNode.zPosition = 11
+                addChild(imageNode)
+            }
 
             // Store as coreNode for animation compatibility (hidden, no shadow)
             coreNode = SKShapeNode(circleOfRadius: 0)

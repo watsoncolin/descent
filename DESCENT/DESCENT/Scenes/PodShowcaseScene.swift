@@ -232,9 +232,10 @@ class PodShowcaseScene: SKScene {
         // Create multiple rows if needed (7 materials per row)
         let materialsPerRow = 7
         let rowCount = (materials.count + materialsPerRow - 1) / materialsPerRow
-        let blockSize: CGFloat = 48
-        let horizontalSpacing: CGFloat = 70
-        let verticalSpacing: CGFloat = 85
+        let soilSize: CGFloat = 64  // Mars sand soil block size
+        let materialSize: CGFloat = 48  // Material sprite size
+        let horizontalSpacing: CGFloat = 85
+        let verticalSpacing: CGFloat = 100
 
         for row in 0..<rowCount {
             let startIndex = row * materialsPerRow
@@ -248,19 +249,37 @@ class PodShowcaseScene: SKScene {
             for (index, materialType) in rowMaterials.enumerated() {
                 let x = startX + CGFloat(index) * horizontalSpacing
 
-                // Create material block embedded in soil (depth 150 for mid-level dirt)
-                let material = Material(type: materialType)
-                let block = TerrainBlock(material: material, depth: 150)
-                block.position = CGPoint(x: x, y: y)
-                block.physicsBody?.isDynamic = false
-                contentNode.addChild(block)
+                // Create Mars sand soil background (Surface Sand colors from mars.json)
+                let soil = SKSpriteNode(color: UIColor(red: 0.77, green: 0.65, blue: 0.48, alpha: 1.0), size: CGSize(width: soilSize, height: soilSize))
+                soil.position = CGPoint(x: x, y: y)
+                soil.zPosition = 0
+                contentNode.addChild(soil)
+
+                // Add material PNG sprite on top of soil
+                let assetName = materialType.rawValue.lowercased().replacingOccurrences(of: "darkmatter", with: "dark_matter")
+                if let materialImage = UIImage(named: assetName) {
+                    let texture = SKTexture(image: materialImage)
+                    let materialSprite = SKSpriteNode(texture: texture)
+                    materialSprite.size = CGSize(width: materialSize, height: materialSize)
+                    materialSprite.position = CGPoint(x: 0, y: 0)
+                    materialSprite.zPosition = 1
+                    soil.addChild(materialSprite)
+                } else {
+                    // Fallback: create colored circle if no PNG asset found
+                    let fallback = SKShapeNode(circleOfRadius: materialSize / 2)
+                    fallback.fillColor = TerrainBlock.colorForMaterial(materialType)
+                    fallback.strokeColor = .clear
+                    fallback.position = CGPoint(x: 0, y: 0)
+                    fallback.zPosition = 1
+                    soil.addChild(fallback)
+                }
 
                 // Add material name label
                 let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
                 label.text = materialType.rawValue.capitalized
                 label.fontSize = 10
                 label.fontColor = .white
-                label.position = CGPoint(x: x, y: y - 35)
+                label.position = CGPoint(x: x, y: y - 40)
                 contentNode.addChild(label)
 
                 // Add visual type label (ore/crystal)
@@ -268,11 +287,11 @@ class PodShowcaseScene: SKScene {
                 typeLabel.text = materialType.visualType == .ore ? "ore" : "crystal"
                 typeLabel.fontSize = 8
                 typeLabel.fontColor = UIColor(white: 0.6, alpha: 1.0)
-                typeLabel.position = CGPoint(x: x, y: y - 47)
+                typeLabel.position = CGPoint(x: x, y: y - 52)
                 contentNode.addChild(typeLabel)
 
                 // Add background panel
-                let panel = SKShapeNode(rectOf: CGSize(width: 65, height: 75), cornerRadius: 3)
+                let panel = SKShapeNode(rectOf: CGSize(width: 75, height: 85), cornerRadius: 3)
                 panel.fillColor = UIColor(white: 0.1, alpha: 0.3)
                 panel.strokeColor = UIColor(white: 0.3, alpha: 0.5)
                 panel.lineWidth = 1
