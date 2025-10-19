@@ -38,6 +38,9 @@ class TerrainBlock: SKSpriteNode {
     // Block size (in pixels) - Grid size for continuous terrain system (64px = 12.5m)
     static let size: CGFloat = 64
 
+    // Conversion factor: meters per block (1 block = 12.5 meters)
+    static let metersPerBlock: CGFloat = 12.5
+
     // MARK: - Initialization
 
     init(material: Material?, depth: Double, strataHardness: Double = 1.0, blockType: BlockType = .normal) {

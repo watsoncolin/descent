@@ -35,6 +35,7 @@ class SurfaceUI: SKNode {
     var onPurchaseConsumable: ((ConsumableType) -> Void)?
     var onResetProgress: (() -> Void)?
     var onShowcasePod: (() -> Void)?
+    var onExplorePlanet: (() -> Void)?
 
     enum UpgradeType {
         case fuelTank
@@ -211,6 +212,23 @@ class SurfaceUI: SKNode {
         showcaseLabel.fontColor = .white
         showcaseLabel.verticalAlignmentMode = .center
         showcaseButton.addChild(showcaseLabel)
+
+        // Explorer button - next to showcase button
+        let explorerButton = SKShapeNode(rectOf: CGSize(width: 80, height: 30), cornerRadius: 5)
+        explorerButton.fillColor = UIColor(red: 0.6, green: 0.3, blue: 0.8, alpha: 0.8)
+        explorerButton.strokeColor = .white
+        explorerButton.lineWidth = 1
+        explorerButton.position = CGPoint(x: -screenWidth / 2 + 240, y: -screenHeight / 2 + 25)
+        explorerButton.zPosition = 1
+        explorerButton.name = "explorerButton"
+        addChild(explorerButton)
+
+        let explorerLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        explorerLabel.text = "MAP"
+        explorerLabel.fontSize = 12
+        explorerLabel.fontColor = .white
+        explorerLabel.verticalAlignmentMode = .center
+        explorerButton.addChild(explorerLabel)
 
         updateTabColors()
     }
@@ -438,6 +456,11 @@ class SurfaceUI: SKNode {
 
         if nodes.contains(where: { $0.name == "showcaseButton" }) {
             onShowcasePod?()
+            return true
+        }
+
+        if nodes.contains(where: { $0.name == "explorerButton" }) {
+            onExplorePlanet?()
             return true
         }
 

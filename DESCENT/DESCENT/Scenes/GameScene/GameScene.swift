@@ -177,6 +177,9 @@ class GameScene: SKScene {
         surfaceUI.onShowcasePod = { [weak self] in
             self?.openPodShowcase()
         }
+        surfaceUI.onExplorePlanet = { [weak self] in
+            self?.openLevelExplorer()
+        }
         cameraNode.addChild(surfaceUI)
 
         // Create Sell Dialog (attach to camera)
@@ -385,6 +388,13 @@ class GameScene: SKScene {
         view?.presentScene(showcaseScene, transition: SKTransition.fade(withDuration: 0.3))
     }
 
+    private func openLevelExplorer() {
+        print("🗺️ Opening Level Explorer...")
+        let explorerScene = LevelExplorerScene(size: size)
+        explorerScene.scaleMode = scaleMode
+        view?.presentScene(explorerScene, transition: SKTransition.fade(withDuration: 0.3))
+    }
+
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         inputManager.handleTouchesMoved(touches, in: self)
     }
@@ -469,9 +479,9 @@ class GameScene: SKScene {
 
         // Update depth tracking
         let surfaceY = frame.maxY - 100
-        // Calculate depth in meters (64px = 12.5m scale: each block = 12.5m)
+        // Calculate depth in meters
         let depthInBlocks = (surfaceY - player.position.y) / TerrainBlock.size
-        let currentDepth = max(0, depthInBlocks * 12.5)  // Convert blocks to meters
+        let currentDepth = max(0, depthInBlocks * TerrainBlock.metersPerBlock)  // Convert blocks to meters
         gameState.currentDepth = currentDepth
 
         // Update terrain chunks (load/unload based on player position)
@@ -970,6 +980,8 @@ extension GameScene {
         currentDrillingBlock = (x: gridPos.x, y: gridPos.y)
         drillStartPosition = player.position
 
+        print("🎯 Starting drill on block (\(gridPos.x), \(gridPos.y)) at world pos (\(Int(drillTipPosition.x)), \(Int(drillTipPosition.y)))")
+
         // Calculate target position - pod descends INTO the block position (centered on block)
         let surfaceY = frame.maxY - 100
         let blockWorldX = frame.minX + (CGFloat(gridPos.x) + 0.5) * TerrainBlock.size  // Center of block X
@@ -982,8 +994,6 @@ extension GameScene {
 
         // Make physics body kinematic during drilling to prevent collision interference
         player.physicsBody?.isDynamic = false
-
-        print("🔨 Started drilling \(drillDirection) block (\(gridPos.x),\(gridPos.y)) - duration: \(String(format: "%.2f", drillDuration))s")
     }
 
     /// Update drilling progress each frame
@@ -1000,6 +1010,7 @@ extension GameScene {
         player.position = CGPoint(x: newX, y: newY)
 
         // Update consumption visual (circular mask expanding from center)
+        // Note: block.x and block.y are world grid coordinates, not local coordinates
         terrainManager.updateConsumptionMask(x: block.x, y: block.y, progress: drillProgress)
 
         // Apply slight wobble to pod for drilling effect
@@ -1058,8 +1069,6 @@ extension GameScene {
                 print("📦 Cargo full! Can't collect \(material.type.rawValue)")
             }
         }
-
-        print("💥 Block (\(block.x),\(block.y)) consumed! Progress: 100%")
 
         // Clear drilling state
         currentDrillingBlock = nil

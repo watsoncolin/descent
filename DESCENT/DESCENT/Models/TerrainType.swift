@@ -116,4 +116,25 @@ enum TerrainType {
             return 0.12...0.18
         }
     }
+
+    /// Map a stratum name to its appropriate TerrainType
+    /// This is the canonical mapping used by both TerrainManager and LevelExplorerScene
+    static func fromStratumName(_ name: String) -> TerrainType {
+        let lowerName = name.lowercased()
+
+        // Match in order of specificity (most specific first)
+        if lowerName.contains("core") {
+            return .marsRock  // Core zones use Mars rock coloring
+        } else if lowerName.contains("deep") {
+            return .rock  // Deep rock layers
+        } else if lowerName.contains("stone") || lowerName.contains("sediment") {
+            return .stone  // Stone/sediment layers
+        } else if lowerName.contains("sand") || lowerName.contains("surface") || lowerName.contains("regolith") {
+            return .sand  // Surface sand/regolith
+        } else if lowerName.contains("rock") {
+            return .rock  // Generic rock
+        } else {
+            return .sand  // Default fallback
+        }
+    }
 }

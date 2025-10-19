@@ -67,6 +67,28 @@ class TerrainManager {
         print("   - Strata layers: \(config.strata.count)")
         print("   - Grid size: \(width)×\(gridHeight)")
         print("   - Soul Crystal bonus: \(soulCrystalBonus)x")
+
+        // Load all terrain layers immediately (not lazy loading)
+        loadAllTerrainLayers()
+    }
+
+    // MARK: - Terrain Layer Loading
+
+    /// Load all terrain layers immediately at initialization
+    private func loadAllTerrainLayers() {
+        guard let scene = scene else { return }
+
+        let surfaceY = scene.frame.maxY - 100
+
+        print("🏔️ Loading all terrain layers immediately...")
+
+        // Load each stratum (same logic as Level Explorer)
+        for (stratumIndex, stratum) in planetConfig.strata.enumerated() {
+            loadStratumLayer(stratumIndex: stratumIndex, surfaceY: surfaceY)
+            loadedStratumIndices.insert(stratumIndex)
+        }
+
+        print("✅ All \(planetConfig.strata.count) terrain layers loaded")
     }
 
     // MARK: - Chunk Management
@@ -106,20 +128,8 @@ class TerrainManager {
         let startY = chunkNumber * chunkHeight
         let endY = startY + chunkHeight
 
-        // Determine which strata overlap this chunk
-        for (stratumIndex, stratum) in planetConfig.strata.enumerated() {
-            let stratumStart = Int(stratum.depthMin)
-            let stratumEnd = Int(stratum.depthMax)
-
-            // Check if stratum overlaps with this chunk
-            guard stratumEnd > startY && stratumStart < endY else { continue }
-
-            // Load stratum layer if not already loaded
-            if !loadedStratumIndices.contains(stratumIndex) {
-                loadStratumLayer(stratumIndex: stratumIndex, surfaceY: surfaceY)
-                loadedStratumIndices.insert(stratumIndex)
-            }
-        }
+        // Note: Terrain layers are already loaded at initialization
+        // This method now only generates obstacles and materials for this chunk
 
         // Generate obstacles and materials for this chunk
         generateObstaclesForChunk(chunkNumber: chunkNumber, startY: startY, endY: endY)
@@ -168,98 +178,40 @@ class TerrainManager {
     }
 
     /// Load a continuous terrain layer for an entire stratum
-    /// Splits large strata into chunks to avoid Metal's 8192 pixel texture limit
     private func loadStratumLayer(stratumIndex: Int, surfaceY: CGFloat) {
         guard let scene = scene else { return }
 
         let stratum = planetConfig.strata[stratumIndex]
 
-        // Map stratum name to TerrainType
-        let terrainType: TerrainType
-        let lowerName = stratum.name.lowercased()
-        if lowerName.contains("surface") || lowerName.contains("sand") || lowerName.contains("regolith") {
-            terrainType = .sand
-        } else if lowerName.contains("stone") || lowerName.contains("sediment") || lowerName.contains("iron-rich") {
-            terrainType = .marsRock
-        } else if lowerName.contains("deep") || lowerName.contains("dense") || lowerName.contains("mantle") {
-            terrainType = .stone
-        } else if lowerName.contains("basalt") || lowerName.contains("volcanic") || lowerName.contains("lava") {
-            terrainType = .marsRock
-        } else if lowerName.contains("fractured") || lowerName.contains("crystalline") {
-            terrainType = .rock
-        } else if lowerName.contains("core") && lowerName.contains("zone") {
-            terrainType = .stone  // Core zone gets darkest coloring
-        } else if lowerName.contains("core") && lowerName.contains("chamber") {
-            terrainType = .marsRock  // Core chamber gets Mars rock coloring
-        } else {
-            terrainType = .rock  // Default fallback
-        }
+        // Use canonical stratum name to TerrainType mapping
+        let terrainType = TerrainType.fromStratumName(stratum.name)
 
         let levelWidth = CGFloat(width) * TerrainBlock.size
 
-        // Metal texture limit: 8192 pixels max
-        // With 64px = 12.5m scale: 400 meters = 32 blocks = 2048 pixels (25% of limit, very safe)
-        // Conservative size to ensure SKCropNode mask operations never exceed limits
-        let maxChunkMeters: Double = 400.0
-        let stratumDepth = stratum.depthMax - stratum.depthMin
+        // Create single layer for entire stratum
+        let layer = TerrainLayer(
+            stratumRange: stratum.depthMin...stratum.depthMax,
+            terrainType: terrainType,
+            levelWidth: levelWidth,
+            surfaceColors: stratum.surfaceGradient,
+            excavatedColors: stratum.excavatedGradient
+        )
 
-        if stratumDepth <= maxChunkMeters {
-            // Small enough - create single layer
-            let layer = TerrainLayer(
-                stratumRange: stratum.depthMin...stratum.depthMax,
-                terrainType: terrainType,
-                levelWidth: levelWidth,
-                surfaceColors: stratum.surfaceGradient,
-                excavatedColors: stratum.excavatedGradient
-            )
-            layer.positionInWorld(surfaceY: surfaceY, sceneMinX: scene.frame.minX)
-            scene.addChild(layer)
-            terrainLayers[stratumIndex] = layer
-            allTerrainLayers.append((layer: layer, depthRange: stratum.depthMin...stratum.depthMax))
+        // Deeper strata need higher z-positions so their excavated layers render in front
+        // This prevents lower strata from showing through upper strata when drilling
+        layer.zPosition = CGFloat(stratumIndex)
+        layer.positionInWorld(surfaceY: surfaceY, sceneMinX: scene.frame.minX)
+        scene.addChild(layer)
+        terrainLayers[stratumIndex] = layer
+        allTerrainLayers.append((layer: layer, depthRange: stratum.depthMin...stratum.depthMax))
 
-            print("🏔️ Created stratum layer \(stratumIndex): \(stratum.name)")
-            print("   - Depth range: \(stratum.depthMin)...\(stratum.depthMax)m")
-            print("   - Size: \(layer.layerSize)")
-        } else {
-            // Too large - split into chunks with non-overlapping boundaries
-            var currentDepth = stratum.depthMin
-            var chunkIndex = 0
-
-            while currentDepth < stratum.depthMax {
-                let chunkEnd = min(currentDepth + maxChunkMeters, stratum.depthMax)
-
-                // For depthRange lookup, add tiny epsilon to avoid boundary overlaps
-                // (except for the first chunk which starts exactly at depthMin)
-                let rangeStart = (chunkIndex == 0) ? currentDepth : currentDepth + 0.001
-                let chunkRange = currentDepth...chunkEnd
-
-                let layer = TerrainLayer(
-                    stratumRange: chunkRange,
-                    terrainType: terrainType,
-                    levelWidth: levelWidth,
-                    surfaceColors: stratum.surfaceGradient,
-                    excavatedColors: stratum.excavatedGradient
-                )
-                layer.positionInWorld(surfaceY: surfaceY, sceneMinX: scene.frame.minX)
-                scene.addChild(layer)
-                // Use non-overlapping range for lookup
-                allTerrainLayers.append((layer: layer, depthRange: rangeStart...chunkEnd))
-
-                // Store first chunk as the main layer for this stratum
-                if chunkIndex == 0 {
-                    terrainLayers[stratumIndex] = layer
-                }
-
-                print("🏔️ Created stratum layer \(stratumIndex).\(chunkIndex): \(stratum.name) [chunk]")
-                print("   - Depth range: \(currentDepth)...\(chunkEnd)m (lookup: \(rangeStart)...\(chunkEnd))")
-                print("   - Size: \(layer.layerSize)")
-
-                currentDepth = chunkEnd
-                chunkIndex += 1
-            }
-
-            print("   ✅ Split into \(chunkIndex) chunks")
-        }
+        print("🏔️ Created stratum layer \(stratumIndex): \(stratum.name)")
+        print("   - Depth range: \(stratum.depthMin)...\(stratum.depthMax)m")
+        print("   - Size: \(layer.layerSize)")
+        print("   - TerrainType: \(terrainType)")
+        print("   - Surface colors from mars.json: \(stratum.surfaceGradient.map { $0.toHex() })")
+        print("   - Excavated colors from mars.json: \(stratum.excavatedGradient.map { $0.toHex() })")
+        print("   - Layer zPosition: \(layer.zPosition)")
     }
 
     /// Create a material deposit node at grid position
@@ -723,7 +675,8 @@ class TerrainManager {
 
     /// Update circular consumption visual for a block being drilled
     func updateConsumptionMask(x: Int, y: Int, progress: CGFloat) {
-        let depth = Double(y)
+        // Convert grid Y (blocks) to depth in meters
+        let depth = Double(y) * Double(TerrainBlock.metersPerBlock)
 
         // Find which terrain layer contains this depth
         for entry in allTerrainLayers {
@@ -757,11 +710,8 @@ class TerrainManager {
         if case .material(let mat) = cell {
             material = mat
 
-            print("📦 Block (\(x),\(y)) has material: \(mat.type)")
-
             // Remove material deposit visual
             if let deposit = materialDeposits[key] {
-                print("📦 Removing MaterialDeposit visual at (\(x),\(y))")
                 deposit.removeWithAnimation { }
                 materialDeposits.removeValue(forKey: key)
             } else {
@@ -784,30 +734,17 @@ class TerrainManager {
         // Mark as drilled
         drilledPositions.insert(key)
 
-        print("💥 Block (\(x),\(y)) removed!")
         return material
     }
 
     /// Cut the surface layer at the given grid position to reveal excavated terrain
     private func cutSurfaceLayer(x: Int, y: Int) {
-        let depth = Double(y)
-
-        print("✂️ cutSurfaceLayer called for block (\(x),\(y)) at depth \(depth)m")
-        print("✂️ Searching through \(allTerrainLayers.count) terrain layers...")
-
-        // Find which terrain layer (or chunk) contains this depth
-        // Use the same depthRange lookup as updateConsumptionMask for consistency
-        for (index, entry) in allTerrainLayers.enumerated() {
-            print("✂️ Layer \(index): range \(entry.depthRange) - contains? \(entry.depthRange.contains(depth))")
-            if entry.depthRange.contains(depth) {
-                // Found the right layer - cut the surface
-                print("✂️ ✅ Found matching layer! Calling cutSurfaceAt...")
-                entry.layer.cutSurfaceAt(gridX: x, gridY: y, blockSize: TerrainBlock.size)
-                return
-            }
+        // Call cutSurfaceAt on all layers - each layer will check if the block is within its range
+        // This ensures that layers at boundaries properly cut their surfaces (e.g., when drilling
+        // at the top of the stone layer, the sand layer's bottom surface also gets cut)
+        for entry in allTerrainLayers {
+            entry.layer.cutSurfaceAt(gridX: x, gridY: y, blockSize: TerrainBlock.size)
         }
-
-        print("✂️ ❌ No matching layer found for depth \(depth)m!")
     }
 
     /// Remove all terrain (for game over / reset)

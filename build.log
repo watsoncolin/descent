@@ -1,0 +1,9 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme DESCENT -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 17" clean build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator26.0
+
+2025-10-19 15:45:46.688 xcodebuild[42077:5976579] Writing error result bundle to /var/folders/c2/ggg7m9tj0hv7jkkgp8r3j5y80000gn/T/ResultBundle_2025-19-10_15-45-0046.xcresult
+xcodebuild: error: The directory /Users/colinwatson/descent does not contain an Xcode project, workspace or package.
+

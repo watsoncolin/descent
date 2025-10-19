@@ -163,21 +163,15 @@ class MaterialDeposit: SKNode {
     // MARK: - Removal Animation
 
     func removeWithAnimation(completion: @escaping () -> Void) {
-        print("🗑️ MaterialDeposit.removeWithAnimation called for \(material.type) at (\(gridPosition.x),\(gridPosition.y))")
-        print("🗑️ Current alpha: \(alpha), parent: \(parent != nil)")
-
         let fadeOut = SKAction.fadeOut(withDuration: 0.3)
         let scaleUp = SKAction.scale(to: 1.3, duration: 0.3)
         let group = SKAction.group([fadeOut, scaleUp])
 
         run(group) { [weak self] in
             guard let self = self else {
-                print("🗑️ ⚠️ MaterialDeposit was deallocated before animation completed!")
                 return
             }
-            print("🗑️ ✅ Animation completed for \(self.material.type) at (\(self.gridPosition.x),\(self.gridPosition.y)) - removing from parent")
             self.removeFromParent()
-            print("🗑️ ✅ Removed from parent successfully")
             completion()
         }
     }
