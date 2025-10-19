@@ -1113,6 +1113,43 @@ extension GameScene: SKPhysicsContactDelegate {
 
         let bodies = [contact.bodyA, contact.bodyB]
 
+        // Check for Dark Matter crystal contact (category 8 + category 1 = player)
+        if let darkMatterNode = bodies.first(where: { $0.node?.name == "darkMatter" })?.node,
+           bodies.contains(where: { $0.categoryBitMask == 1 }) {
+            // Player touched Dark Matter crystal - collect it!
+            print("💎 Player touched Dark Matter crystal!")
+
+            // Get grid position from the MaterialDeposit
+            if let deposit = darkMatterNode as? MaterialDeposit {
+                let gridX = deposit.gridPosition.x
+                let gridY = deposit.gridPosition.y
+
+                print("💎 Attempting to collect Dark Matter at grid (\(gridX), \(gridY))")
+
+                // Remove block and collect material
+                if let material = terrainManager.removeBlock(x: gridX, y: gridY) {
+                    // Mark core as extracted
+                    gameState.currentRun?.coreExtracted = true
+                    print("💎 CORE EXTRACTED! You can now prestige at the surface!")
+
+                    // Add to cargo
+                    if gameState.addToCargo(material) {
+                        print("⛏️ Collected Dark Matter worth $\(Int(material.value))")
+                    } else {
+                        print("📦 Cargo full! Can't collect Dark Matter")
+                    }
+
+                    // Trigger special core collection effects
+                    createCoreCollectionEffect(at: player.position)
+                } else {
+                    print("⚠️ removeBlock returned nil for grid (\(gridX), \(gridY))")
+                }
+            } else {
+                print("⚠️ Failed to cast darkMatterNode to MaterialDeposit")
+            }
+            return
+        }
+
         // Check for shop/surface contact
         if bodies.first(where: { $0.node?.name == "shop" }) != nil,
            bodies.contains(where: { $0.categoryBitMask == 1 }) {

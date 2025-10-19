@@ -92,7 +92,18 @@ class MaterialDeposit: SKNode {
                 let repeatGlowPulse = SKAction.repeatForever(glowPulse)
                 glowEffect.run(repeatGlowPulse, withKey: "darkMatterGlowPulse")
 
-                print("💎 Dark Matter core crystal created with pulsing animation")
+                // Add physics body for contact-based collection (no collision, just detection)
+                let physicsRadius = depositSize * 2.5  // Slightly larger than visual size for easy collection
+                self.physicsBody = SKPhysicsBody(circleOfRadius: physicsRadius)
+                self.physicsBody?.isDynamic = false  // Stationary
+                self.physicsBody?.categoryBitMask = 8  // MaterialDeposit category
+                self.physicsBody?.contactTestBitMask = 1  // Player category
+                self.physicsBody?.collisionBitMask = 0  // No collisions, just contacts
+
+                // Set node name for identification in contact detection
+                self.name = "darkMatter"
+
+                print("💎 Dark Matter core crystal created with pulsing animation and physics body")
             } else {
                 // Normal size for other materials
                 imageNode.size = CGSize(width: depositSize * 3, height: depositSize * 3)

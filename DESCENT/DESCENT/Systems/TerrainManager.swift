@@ -146,6 +146,30 @@ class TerrainManager {
                     continue
                 }
 
+                // Check if we're in core chamber depth range (for wall placement)
+                let depth = Double(y) * Double(TerrainBlock.metersPerBlock)
+                let inCoreChamberDepth = depth >= planetConfig.coreDepth && depth < planetConfig.totalDepth
+
+                // Place walls just outside core chamber (if in chamber depth range)
+                if inCoreChamberDepth {
+                    let centerX = width / 2
+                    let chamberRadius = 5
+                    let leftWall = centerX - chamberRadius - 1
+                    let rightWall = centerX + chamberRadius + 1
+
+                    if x == leftWall || x == rightWall {
+                        collisionGrid.setCell(x: x, y: y, to: .obstacle(.bedrock))
+                        createObstacleBlock(x: x, y: y, type: .bedrock, surfaceY: surfaceY)
+
+                        // Debug: Log wall creation
+                        if y == Int(planetConfig.coreDepth / Double(TerrainBlock.metersPerBlock)) {
+                            let side = x == leftWall ? "LEFT" : "RIGHT"
+                            print("🪨 Bedrock \(side) wall created at x=\(x) (chamber interior: \(centerX - chamberRadius) to \(centerX + chamberRadius))")
+                        }
+                        continue
+                    }
+                }
+
                 // Handle core chamber
                 if isInCoreChamber(x: x, y: y) {
                     // Convert grid Y to depth in meters for comparison
@@ -813,11 +837,19 @@ class TerrainManager {
     func removeBlock(x: Int, y: Int) -> Material? {
         let key = "\(x),\(y)"
 
+        print("🔧 removeBlock called for (\(x), \(y))")
+
         // Check if block exists
-        guard let cell = collisionGrid.cellAt(x: x, y: y) else { return nil }
+        guard let cell = collisionGrid.cellAt(x: x, y: y) else {
+            print("⚠️ removeBlock: no cell at (\(x), \(y))")
+            return nil
+        }
+
+        print("🔧 Cell type at (\(x), \(y)): \(cell)")
 
         // Skip empty cells
         if case .empty = cell {
+            print("⚠️ removeBlock: cell at (\(x), \(y)) is empty")
             return nil
         }
 
@@ -827,7 +859,8 @@ class TerrainManager {
                 print("⚠️ Attempted to remove indestructible bedrock at (\(x),\(y)) - blocked!")
                 return nil
             }
-            // Note: hardCrystal and reinforcedRock can be removed (bombs or high-level drill)
+            print("⚠️ removeBlock: cell at (\(x), \(y)) is obstacle(\(blockType)), not material")
+            return nil  // Also return nil for other obstacles (they don't have materials)
         }
 
         var material: Material?
@@ -835,6 +868,7 @@ class TerrainManager {
         // Extract material if present
         if case .material(let mat) = cell {
             material = mat
+            print("✅ removeBlock: extracting \(mat.type) from (\(x), \(y))")
 
             // Remove material deposit visual
             if let deposit = materialDeposits[key] {

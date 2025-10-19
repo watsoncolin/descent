@@ -51,10 +51,10 @@
       "obstacles": [
         {
           "type": "bedrock",
-          "coverage": 0.03,
+          "coverage": 0.0,
           "formationSizes": [
-            { "width": 2, "height": 2 },
-            { "width": 3, "height": 2 }
+            { "width": 1, "height": 1 },
+            { "width": 1, "height": 2 }
           ],
           "minimumDrillLevel": null,
           "bombOnly": false,
@@ -124,9 +124,8 @@
           "type": "bedrock",
           "coverage": 0.08,
           "formationSizes": [
-            { "width": 2, "height": 2 },
-            { "width": 3, "height": 3 },
-            { "width": 4, "height": 2 }
+            { "width": 1, "height": 1 },
+            { "width": 1, "height": 2 }
           ],
           "minimumDrillLevel": null,
           "bombOnly": false,
@@ -215,9 +214,8 @@
           "type": "bedrock",
           "coverage": 0.12,
           "formationSizes": [
-            { "width": 3, "height": 3 },
-            { "width": 4, "height": 3 },
-            { "width": 5, "height": 2 }
+            { "width": 1, "height": 1 },
+            { "width": 1, "height": 2 }
           ],
           "minimumDrillLevel": null,
           "bombOnly": false,
@@ -352,8 +350,7 @@
           "coverage": 0.2,
           "formationSizes": [
             { "width": 4, "height": 4 },
-            { "width": 5, "height": 3 },
-            { "width": 6, "height": 2 }
+            { "width": 5, "height": 3 }
           ],
           "minimumDrillLevel": null,
           "bombOnly": false,
