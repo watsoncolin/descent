@@ -982,9 +982,11 @@ extension GameScene {
             }
         }
 
-        // Get block hardness
-        let depth = Double(gridPos.y)
-        let strataHardness = terrainManager.getHardnessAtDepth(depth) ?? 1.0
+        // Get block hardness - convert grid Y to depth in meters
+        let depthInMeters = Double(gridPos.y) * TerrainBlock.metersPerBlock
+        let strataHardness = terrainManager.getHardnessAtDepth(depthInMeters) ?? 1.0
+
+        print("strata hardness: \(strataHardness) at depth \(Int(depthInMeters))m (grid Y: \(gridPos.y))")
 
         // Calculate drill duration: 0.3 * hardness / drillLevel
         let baseDrillTime = 0.3

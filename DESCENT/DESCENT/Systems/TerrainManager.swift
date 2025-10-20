@@ -819,9 +819,35 @@ class TerrainManager {
         return collisionGrid.cellAt(x: x, y: y)
     }
 
-    /// Get stratum hardness at a specific depth
+    /// Get stratum hardness at a specific depth with progressive scaling
+    /// Hardness gradually increases from base to halfway toward next stratum's hardness
     func getHardnessAtDepth(_ depth: Double) -> Double? {
-        return planetConfig.strata.first(where: { $0.contains(depth: depth) })?.hardness
+        guard let currentStratumIndex = planetConfig.strata.firstIndex(where: { $0.contains(depth: depth) }) else {
+            return nil
+        }
+
+        let currentStratum = planetConfig.strata[currentStratumIndex]
+        let baseHardness = currentStratum.hardness
+
+        // If this is the last stratum, no interpolation needed
+        guard currentStratumIndex < planetConfig.strata.count - 1 else {
+            return baseHardness
+        }
+
+        // Get next stratum's hardness
+        let nextStratum = planetConfig.strata[currentStratumIndex + 1]
+        let nextHardness = nextStratum.hardness
+
+        // Calculate progress through current stratum (0.0 to 1.0)
+        let stratumDepthRange = currentStratum.depthMax - currentStratum.depthMin
+        let depthIntoStratum = depth - currentStratum.depthMin
+        let progress = depthIntoStratum / stratumDepthRange
+
+        // Interpolate from baseHardness to halfway toward nextHardness
+        let maxHardness = baseHardness + (nextHardness - baseHardness) * 0.5
+        let interpolatedHardness = baseHardness + (maxHardness - baseHardness) * progress
+
+        return interpolatedHardness
     }
 
     /// Update circular consumption visual for a block being drilled
