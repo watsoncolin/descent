@@ -106,21 +106,21 @@ Decreases with depth as you go underground
 
 ```
 Level 1: 100 fuel  - $0 (starting)
-Level 2: 150 fuel  - $500
-Level 3: 200 fuel  - $1,200
-Level 4: 300 fuel  - $2,500
-Level 5: 400 fuel  - $5,000
-Level 6: 500 fuel  - $10,000 (max)
+Level 2: 250 fuel  - $500
+Level 3: 500 fuel  - $1,200
+Level 4: 1000 fuel  - $2,500
+Level 5: 2000 fuel  - $5,000
+Level 6: 4000 fuel  - $10,000 (max)
 ```
 
 **Estimated Travel Distance per Fuel Level:**
 
 - Level 1 (100 fuel): ~100-150m depth (round trip with drilling)
-- Level 2 (150 fuel): ~150-200m depth
-- Level 3 (200 fuel): ~200-300m depth
-- Level 4 (300 fuel): ~300-400m depth
-- Level 5 (400 fuel): ~400-500m depth (can reach Mars core)
-- Level 6 (500 fuel): ~500m+ depth (comfortable core runs)
+- Level 2 (250 fuel): ~250-300m depth
+- Level 3 (500 fuel): ~500-600m depth
+- Level 4 (1000 fuel): ~1000-1100m depth
+- Level 5 (2000 fuel): ~2000-2100m depth (can reach Mars core)
+- Level 6 (4000 fuel): ~4000-4100m depth (comfortable core runs)
 
 ---
 

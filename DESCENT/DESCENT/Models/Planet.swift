@@ -18,36 +18,56 @@ enum Planet: String, CaseIterable {
     case mercury = "Mercury"
     case enceladus = "Enceladus"
 
-    /// Value multiplier for materials on this planet
+    /// Cache for loaded planet configs (shared across all instances)
+    private static var configCache: [Planet: PlanetConfig] = [:]
+
+    /// Load planet configuration from JSON file with caching
+    /// Returns nil if file cannot be loaded
+    func loadConfig() -> PlanetConfig? {
+        // Check cache first
+        if let cached = Planet.configCache[self] {
+            return cached
+        }
+
+        // Load from JSON
+        let filename = rawValue.lowercased()
+        guard let url = Bundle.main.url(forResource: filename, withExtension: "json") else {
+            print("⚠️ Could not find \(filename).json in bundle")
+            return nil
+        }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let config = try JSONDecoder().decode(PlanetConfig.self, from: data)
+
+            // Cache the loaded config
+            Planet.configCache[self] = config
+
+            return config
+        } catch {
+            print("⚠️ Error loading \(filename).json: \(error)")
+            return nil
+        }
+    }
+
+    /// Value multiplier for materials on this planet (from JSON config)
     var multiplier: Double {
-        switch self {
-        case .mars: return 1.0
-        case .luna: return 2.0
-        case .io: return 5.0
-        case .europa: return 8.0
-        case .titan: return 15.0
-        case .venus: return 25.0
-        case .mercury: return 50.0
-        case .enceladus: return 100.0
-        }
+        return loadConfig()?.valueMultiplier ?? 1.0
     }
 
-    /// Core depth in meters
+    /// Core depth in meters (from JSON config)
     var coreDepth: Double {
-        switch self {
-        case .mars: return 500
-        case .luna: return 600
-        case .io: return 700
-        case .europa: return 800
-        case .titan: return 900
-        case .venus: return 1000
-        case .mercury: return 1100
-        case .enceladus: return 1200
-        }
+        return loadConfig()?.coreDepth ?? 2500
     }
 
-    /// Gravity strength (affects falling speed)
+    /// Gravity strength (affects falling speed) - from JSON config
+    /// Fallback values used if not present in JSON for backward compatibility
     var gravity: Double {
+        if let configGravity = loadConfig()?.gravity {
+            return configGravity
+        }
+
+        // Fallback values for planets without gravity in JSON yet
         switch self {
         case .mars: return 0.38
         case .luna: return 0.165

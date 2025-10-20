@@ -440,7 +440,7 @@ class GameScene: SKScene {
             let distanceToFinger = hypot(touchLocation.x - player.position.x, touchLocation.y - player.position.y)
             let maxThrustDistance: CGFloat = 150  // Full thrust beyond this
             let thrustIntensity = min(1.0, distanceToFinger / maxThrustDistance)
-            let baseFuelConsumption = 1.5  // fuel/second (FUEL_SYSTEM.md:19)
+            let baseFuelConsumption = 1.0  // fuel/second (FUEL_SYSTEM.md:19)
             let zoneModifier = 1.0  // No environmental zones yet
 
             let fuelPerSecond = baseFuelConsumption * thrustIntensity * zoneModifier
@@ -745,17 +745,13 @@ class GameScene: SKScene {
     }
 
     private func purchaseUpgrade(_ type: SurfaceUI.UpgradeType) {
-        let baseCost: Double
-        let maxLevel = 6
-
         switch type {
         case .fuelTank:
-            baseCost = 100
-            guard gameState.fuelTankLevel < maxLevel else {
+            let cost = CommonUpgrades.getUpgradeCost(upgradeType: "fuelTank", currentLevel: gameState.fuelTankLevel)
+            guard gameState.fuelTankLevel < 6 else {
                 print("⚠️ Fuel Tank already at max level!")
                 return
             }
-            let cost = baseCost * pow(1.5, Double(gameState.fuelTankLevel - 1))
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.fuelTankLevel += 1
@@ -765,12 +761,11 @@ class GameScene: SKScene {
             }
 
         case .drillStrength:
-            baseCost = 150
+            let cost = CommonUpgrades.getUpgradeCost(upgradeType: "drillStrength", currentLevel: gameState.drillStrengthLevel)
             guard gameState.drillStrengthLevel < 5 else {
                 print("⚠️ Drill already at max level!")
                 return
             }
-            let cost = baseCost * pow(1.5, Double(gameState.drillStrengthLevel - 1))
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.drillStrengthLevel += 1
@@ -788,12 +783,11 @@ class GameScene: SKScene {
             }
 
         case .cargoCapacity:
-            baseCost = 120
-            guard gameState.cargoLevel < maxLevel else {
+            let cost = CommonUpgrades.getUpgradeCost(upgradeType: "cargoCapacity", currentLevel: gameState.cargoLevel)
+            guard gameState.cargoLevel < 6 else {
                 print("⚠️ Cargo already at max level!")
                 return
             }
-            let cost = baseCost * pow(1.5, Double(gameState.cargoLevel - 1))
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.cargoLevel += 1
@@ -803,12 +797,11 @@ class GameScene: SKScene {
             }
 
         case .hullArmor:
-            baseCost = 130
-            guard gameState.hullArmorLevel < maxLevel else {
+            let cost = CommonUpgrades.getUpgradeCost(upgradeType: "hullArmor", currentLevel: gameState.hullArmorLevel)
+            guard gameState.hullArmorLevel < 5 else {
                 print("⚠️ Hull already at max level!")
                 return
             }
-            let cost = baseCost * pow(1.5, Double(gameState.hullArmorLevel - 1))
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.hullArmorLevel += 1
@@ -826,12 +819,11 @@ class GameScene: SKScene {
             }
 
         case .engineSpeed:
-            baseCost = 110
+            let cost = CommonUpgrades.getUpgradeCost(upgradeType: "engineSpeed", currentLevel: gameState.engineSpeedLevel)
             guard gameState.engineSpeedLevel < 5 else {
                 print("⚠️ Engine already at max level!")
                 return
             }
-            let cost = baseCost * pow(1.5, Double(gameState.engineSpeedLevel - 1))
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.engineSpeedLevel += 1
@@ -849,12 +841,11 @@ class GameScene: SKScene {
             }
 
         case .impactDampeners:
-            baseCost = 200
+            let cost = CommonUpgrades.getUpgradeCost(upgradeType: "impactDampeners", currentLevel: gameState.impactDampenersLevel)
             guard gameState.impactDampenersLevel < 3 else {
                 print("⚠️ Impact Dampeners already at max level!")
                 return
             }
-            let cost = baseCost * pow(1.5, Double(gameState.impactDampenersLevel))
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.impactDampenersLevel += 1
@@ -875,7 +866,7 @@ class GameScene: SKScene {
         let cost: Double
         switch type {
         case .repairKit:
-            cost = 150  // HULL_SYSTEM.md:369
+            cost = Consumables.getCost("repairKit")
             if planet.consumables.repairKits >= maxConsumables {
                 print("🔧 Repair Kit inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
@@ -887,7 +878,7 @@ class GameScene: SKScene {
             }
 
         case .fuelCell:
-            cost = 200  // FUEL_SYSTEM.md:203
+            cost = Consumables.getCost("fuelCell")
             if planet.consumables.fuelCells >= maxConsumables {
                 print("⛽ Fuel Cell inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
@@ -899,7 +890,7 @@ class GameScene: SKScene {
             }
 
         case .bomb:
-            cost = 75
+            cost = Consumables.getCost("bomb")
             if planet.consumables.bombs >= maxConsumables {
                 print("💣 Mining Bomb inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
@@ -911,7 +902,7 @@ class GameScene: SKScene {
             }
 
         case .teleporter:
-            cost = 150
+            cost = Consumables.getCost("teleporter")
             if planet.consumables.teleporters >= maxConsumables {
                 print("🌀 Teleporter inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
@@ -923,7 +914,7 @@ class GameScene: SKScene {
             }
 
         case .shield:
-            cost = 600  // HULL_SYSTEM.md:517-519
+            cost = Consumables.getCost("shield")
             if planet.consumables.shields >= maxConsumables {
                 print("🛡️ Shield inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
@@ -1044,7 +1035,8 @@ extension GameScene {
         let depth = Double(block.y)
         let strataHardness = terrainManager.getHardnessAtDepth(depth) ?? 1.0
         let fuelPerSecond = strataHardness / Double(gameState.drillStrengthLevel)
-        let fuelCost = fuelPerSecond * deltaTime
+        let baseCost = 10.0
+        let fuelCost = fuelPerSecond * deltaTime * baseCost
 
         if !gameState.consumeFuel(fuelCost) {
             // Out of fuel while drilling - abort drilling and trigger game over
@@ -1117,14 +1109,9 @@ extension GameScene: SKPhysicsContactDelegate {
         if let darkMatterNode = bodies.first(where: { $0.node?.name == "darkMatter" })?.node,
            bodies.contains(where: { $0.categoryBitMask == 1 }) {
             // Player touched Dark Matter crystal - collect it!
-            print("💎 Player touched Dark Matter crystal!")
-
-            // Get grid position from the MaterialDeposit
             if let deposit = darkMatterNode as? MaterialDeposit {
                 let gridX = deposit.gridPosition.x
                 let gridY = deposit.gridPosition.y
-
-                print("💎 Attempting to collect Dark Matter at grid (\(gridX), \(gridY))")
 
                 // Remove block and collect material
                 if let material = terrainManager.removeBlock(x: gridX, y: gridY) {
@@ -1141,11 +1128,7 @@ extension GameScene: SKPhysicsContactDelegate {
 
                     // Trigger special core collection effects
                     createCoreCollectionEffect(at: player.position)
-                } else {
-                    print("⚠️ removeBlock returned nil for grid (\(gridX), \(gridY))")
                 }
-            } else {
-                print("⚠️ Failed to cast darkMatterNode to MaterialDeposit")
             }
             return
         }

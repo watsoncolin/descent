@@ -404,11 +404,6 @@ class TerrainLayer: SKNode {
         let posY = layerSize.height - (CGFloat(localGridYFractional) + 1.0) * blockSize
         let centerPos = CGPoint(x: posX + blockSize/2, y: posY + blockSize/2)  // Center of block
 
-        // Debug: Check for position errors
-        if localBlockY < 5 || localBlockY > Int(layerSize.height / blockSize) - 5 {
-            print("🔍 Block position: localBlockY=\(localBlockY), posY=\(posY), layerHeight=\(layerSize.height)")
-        }
-
         // Check if crop node already exists
         if let cropNode = childNode(withName: "consumeCropNode_\(key)") as? SKCropNode {
             // Update the consumption mask to expand
@@ -500,77 +495,6 @@ class TerrainLayer: SKNode {
             path.closeSubpath()
 
             let maskShape = SKShapeNode(path: path)
-            maskShape.fillColor = .white
-            maskShape.strokeColor = .clear
-            maskContainer.addChild(maskShape)
-        }
-
-        return maskContainer
-    }
-
-    /// Create a consumption mask for surface layer (inverse with cutout hole) - DEPRECATED, keeping for reference
-    /// For drilling visualization, progress represents drilling progress (0.0 = not drilled, 1.0 = fully drilled)
-    /// inverseProgress (1.0 - progress) is passed in, so 1.0 = full surface visible, 0.0 = fully excavated
-    private func createCircularConsumptionMask(progress: CGFloat, blockSize: CGFloat, centerPos: CGPoint, blockKey: String) -> SKNode {
-        let maskContainer = SKNode()
-
-        // For surface blocks with inverseProgress:
-        // progress=1.0 (not drilled) → full block visible
-        // progress=0.0 (fully drilled) → nothing visible, dark base shows through
-
-        if progress >= 0.98 {
-            // Surface fully visible - full white rectangle
-            let fullMask = SKShapeNode(rect: CGRect(x: centerPos.x - blockSize/2, y: centerPos.y - blockSize/2, width: blockSize, height: blockSize))
-            fullMask.fillColor = .white
-            fullMask.strokeColor = .clear
-            maskContainer.addChild(fullMask)
-        } else if progress < 0.02 {
-            // Surface fully drilled - no mask (nothing visible)
-            // Return empty container so surface block is completely hidden
-            return maskContainer
-        } else {
-            // Partial drilling - create inverse mask (white rectangle with black cutout circle)
-            // The cutout expands as drilling progresses (as inverseProgress decreases)
-
-            // Create base white rectangle for full block visibility
-            let fullRect = CGRect(x: centerPos.x - blockSize/2, y: centerPos.y - blockSize/2, width: blockSize, height: blockSize)
-
-            // Calculate cutout radius (inverse of progress - as progress decreases, cutout grows)
-            let maxRadius = blockSize * 0.7
-            let cutoutRadius = (1.0 - progress) * maxRadius
-
-            // Get the random phase offset for this block
-            let phaseOffset = blockPhaseOffsets[blockKey] ?? 0
-            let drillingProgress = 1.0 - progress  // Actual drilling progress
-
-            // Create UIBezierPath with rectangular mask minus circular cutout
-            let bezierPath = UIBezierPath(rect: fullRect)
-
-            // Create jagged circular cutout path
-            let cutoutBezier = UIBezierPath()
-            let numPoints = 16
-
-            for i in 0...numPoints {
-                let angle = (CGFloat(i) / CGFloat(numPoints)) * .pi * 2
-                let jitter = sin(angle * 3 + drillingProgress * 10 + phaseOffset) * 0.15 + 1.0
-                let r = cutoutRadius * jitter
-
-                let x = centerPos.x + cos(angle) * r
-                let y = centerPos.y + sin(angle) * r
-
-                if i == 0 {
-                    cutoutBezier.move(to: CGPoint(x: x, y: y))
-                } else {
-                    cutoutBezier.addLine(to: CGPoint(x: x, y: y))
-                }
-            }
-            cutoutBezier.close()
-
-            // Subtract cutout from rectangle using even-odd fill rule
-            bezierPath.append(cutoutBezier)
-            bezierPath.usesEvenOddFillRule = true
-
-            let maskShape = SKShapeNode(path: bezierPath.cgPath)
             maskShape.fillColor = .white
             maskShape.strokeColor = .clear
             maskContainer.addChild(maskShape)

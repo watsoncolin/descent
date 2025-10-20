@@ -306,7 +306,7 @@ class SurfaceUI: SKNode {
             name: "Fuel Tank",
             level: gameState.fuelTankLevel,
             maxLevel: 6,
-            baseCost: 100,
+            upgradeKey: "fuelTank",
             type: .fuelTank,
             yPos: yPos,
             gameState: gameState
@@ -318,7 +318,7 @@ class SurfaceUI: SKNode {
             name: "Drill Strength",
             level: gameState.drillStrengthLevel,
             maxLevel: 5,
-            baseCost: 200,
+            upgradeKey: "drillStrength",
             type: .drillStrength,
             yPos: yPos,
             gameState: gameState
@@ -330,7 +330,7 @@ class SurfaceUI: SKNode {
             name: "Cargo Capacity",
             level: gameState.cargoLevel,
             maxLevel: 6,
-            baseCost: 150,
+            upgradeKey: "cargoCapacity",
             type: .cargoCapacity,
             yPos: yPos,
             gameState: gameState
@@ -342,7 +342,7 @@ class SurfaceUI: SKNode {
             name: "Hull Armor",
             level: gameState.hullArmorLevel,
             maxLevel: 5,
-            baseCost: 180,
+            upgradeKey: "hullArmor",
             type: .hullArmor,
             yPos: yPos,
             gameState: gameState
@@ -359,7 +359,7 @@ class SurfaceUI: SKNode {
         addConsumableButton(
             name: "Repair Kit",
             count: gameState.repairKitCount,
-            cost: 150,  // HULL_SYSTEM.md:369
+            cost: Consumables.getCost("repairKit"),
             type: .repairKit,
             yPos: yPos,
             gameState: gameState
@@ -370,7 +370,7 @@ class SurfaceUI: SKNode {
         addConsumableButton(
             name: "Fuel Cell",
             count: gameState.fuelCellCount,
-            cost: 200,  // FUEL_SYSTEM.md:203
+            cost: Consumables.getCost("fuelCell"),
             type: .fuelCell,
             yPos: yPos,
             gameState: gameState
@@ -381,7 +381,7 @@ class SurfaceUI: SKNode {
         addConsumableButton(
             name: "Mining Bomb",
             count: gameState.bombCount,
-            cost: 75,
+            cost: Consumables.getCost("bomb"),
             type: .bomb,
             yPos: yPos,
             gameState: gameState
@@ -392,7 +392,7 @@ class SurfaceUI: SKNode {
         addConsumableButton(
             name: "Teleporter",
             count: gameState.teleporterCount,
-            cost: 150,
+            cost: Consumables.getCost("teleporter"),
             type: .teleporter,
             yPos: yPos,
             gameState: gameState
@@ -403,15 +403,15 @@ class SurfaceUI: SKNode {
         addConsumableButton(
             name: "Shield",
             count: gameState.shieldCount,
-            cost: 600,  // HULL_SYSTEM.md:517-519
+            cost: Consumables.getCost("shield"),
             type: .shield,
             yPos: yPos,
             gameState: gameState
         )
     }
 
-    private func addUpgradeButton(name: String, level: Int, maxLevel: Int, baseCost: Double, type: UpgradeType, yPos: CGFloat, gameState: GameState) {
-        let cost = baseCost * pow(1.5, Double(level - 1))
+    private func addUpgradeButton(name: String, level: Int, maxLevel: Int, upgradeKey: String, type: UpgradeType, yPos: CGFloat, gameState: GameState) {
+        let cost = CommonUpgrades.getUpgradeCost(upgradeType: upgradeKey, currentLevel: level)
         let canAfford = gameState.credits >= cost
         let isMaxLevel = level >= maxLevel
 

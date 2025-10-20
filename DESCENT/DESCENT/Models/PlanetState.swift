@@ -58,11 +58,11 @@ class PlanetState: Codable {
         // Based on FUEL_SYSTEM.md
         switch upgrades.fuelTank {
         case 1: return 100
-        case 2: return 150
-        case 3: return 200
-        case 4: return 300
-        case 5: return 400
-        case 6: return 500
+        case 2: return 250
+        case 3: return 500
+        case 4: return 1000
+        case 5: return 2000
+        case 6: return 4000
         default: return 100
         }
     }
@@ -95,21 +95,49 @@ struct CommonUpgrades: Codable {
     var engineSpeed: Int = 1        // 1-5
     var impactDampeners: Int = 0    // 0-3
 
-    // Upgrade costs (base costs, scaled by 1.5x per level)
-    static let baseCosts: [String: Double] = [
-        "fuelTank": 100,
-        "drillStrength": 150,
-        "cargoCapacity": 120,
-        "hullArmor": 130,
-        "engineSpeed": 140,
-        "impactDampeners": 200
+    // Upgrade costs per level (level 1 -> level 2 cost, level 2 -> level 3 cost, etc.)
+    static let upgradeCosts: [String: [Int: Double]] = [
+        "fuelTank": [
+            1: 500,   // Level 1 -> 2
+            2: 1500,   // Level 2 -> 3
+            3: 4000,   // Level 3 -> 4
+            4: 10000,   // Level 4 -> 5
+            5: 15000    // Level 5 -> 6
+        ],
+        "drillStrength": [
+            1: 150,   // Level 1 -> 2
+            2: 225,   // Level 2 -> 3
+            3: 340,   // Level 3 -> 4
+            4: 510    // Level 4 -> 5
+        ],
+        "cargoCapacity": [
+            1: 120,   // Level 1 -> 2
+            2: 180,   // Level 2 -> 3
+            3: 270,   // Level 3 -> 4
+            4: 405,   // Level 4 -> 5
+            5: 608    // Level 5 -> 6
+        ],
+        "hullArmor": [
+            1: 130,   // Level 1 -> 2
+            2: 195,   // Level 2 -> 3
+            3: 293,   // Level 3 -> 4
+            4: 440    // Level 4 -> 5
+        ],
+        "engineSpeed": [
+            1: 140,   // Level 1 -> 2
+            2: 210,   // Level 2 -> 3
+            3: 315,   // Level 3 -> 4
+            4: 473    // Level 4 -> 5
+        ],
+        "impactDampeners": [
+            1: 200,   // Level 1 -> 2
+            2: 300    // Level 2 -> 3
+        ]
     ]
 
-    /// Calculate upgrade cost for a specific upgrade type
-    static func calculateCost(upgradeType: String, currentLevel: Int, discountMultiplier: Double = 1.0) -> Double {
-        guard let baseCost = baseCosts[upgradeType] else { return 0 }
-        let cost = baseCost * pow(1.5, Double(currentLevel - 1))
-        return cost * discountMultiplier
+    /// Get upgrade cost for a specific upgrade type at current level
+    static func getUpgradeCost(upgradeType: String, currentLevel: Int) -> Double {
+        return upgradeCosts[upgradeType]?[currentLevel] ?? 0
     }
 }
 
@@ -121,6 +149,20 @@ struct Consumables: Codable {
     var bombs: Int = 100
     var teleporters: Int = 100
     var shields: Int = 100
+
+    // Consumable costs (fixed prices)
+    static let costs: [String: Double] = [
+        "repairKit": 300,
+        "fuelCell": 200,
+        "bomb": 500,
+        "teleporter": 400,
+        "shield": 600
+    ]
+
+    /// Get cost for a specific consumable type
+    static func getCost(_ type: String) -> Double {
+        return costs[type] ?? 0
+    }
 }
 
 // MARK: - Planet Statistics

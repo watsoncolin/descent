@@ -1,0 +1,30 @@
+{
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Models/Material.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Material.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Material.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Material.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Material.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Material.swiftdeps"
+  },
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Models/Planet.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Planet.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Planet.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Planet.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Planet.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Planet.swiftdeps"
+  },
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Models/PlanetState.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/PlanetState.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/PlanetState.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/PlanetState.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/PlanetState.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/PlanetState.swiftdeps"
+  },
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Models/TerrainType.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainType.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainType.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainType.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainType.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainType.swiftdeps"
+  }
+}

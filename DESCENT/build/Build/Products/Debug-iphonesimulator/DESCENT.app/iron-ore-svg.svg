@@ -1,0 +1,61 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Metallic glow -->
+    <radialGradient id="ironGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#9aaaaa;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#7a8a9a;stop-opacity:0" />
+    </radialGradient>
+    
+    <!-- Metallic iron gradient -->
+    <radialGradient id="ironMetal" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" style="stop-color:#9aaaaa;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7a8a9a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5a6a7a;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Dark iron -->
+    <radialGradient id="ironDark" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" style="stop-color:#6a7a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4a5a6a;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Bright metallic shine -->
+    <radialGradient id="ironShine" cx="30%" cy="30%" r="40%">
+      <stop offset="0%" style="stop-color:#bacccc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7a8a9a;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Glow background -->
+  <ellipse cx="24" cy="24" rx="24" ry="24" fill="url(#ironGlow)" />
+  
+  <!-- Main metallic chunks - angular and blocky -->
+  <!-- Large bottom chunk -->
+  <path d="M 18 26 L 30 26 L 34 32 L 32 38 L 16 38 L 14 32 Z" fill="url(#ironDark)" />
+  
+  <!-- Top-left chunk -->
+  <path d="M 14 16 L 22 14 L 24 20 L 18 22 L 12 20 Z" fill="url(#ironMetal)" />
+  
+  <!-- Top-right chunk -->
+  <path d="M 28 12 L 36 14 L 36 20 L 30 22 L 26 18 Z" fill="url(#ironMetal)" />
+  
+  <!-- Center chunk -->
+  <ellipse cx="24" cy="24" rx="9" ry="10" fill="url(#ironMetal)" />
+  
+  <!-- Small accent chunks -->
+  <ellipse cx="34" cy="28" rx="5" ry="5" fill="#6a7a8a" />
+  <ellipse cx="14" cy="30" rx="4" ry="5" fill="#5a6a7a" />
+  
+  <!-- Metallic shine spots -->
+  <ellipse cx="20" cy="18" rx="5" ry="5" fill="url(#ironShine)" opacity="0.8" />
+  <ellipse cx="28" cy="26" rx="4" ry="4" fill="url(#ironShine)" opacity="0.6" />
+  
+  <!-- Bright highlight edges (metallic gleam) -->
+  <ellipse cx="22" cy="16" rx="2" ry="2" fill="#daeaea" opacity="0.9" />
+  <ellipse cx="32" cy="16" rx="2" ry="2" fill="#cadadа" opacity="0.8" />
+  <ellipse cx="26" cy="24" rx="2" ry="2" fill="#bacccc" opacity="0.7" />
+  
+  <!-- Dark crevices -->
+  <ellipse cx="22" cy="24" rx="2" ry="2" fill="#3a4a5a" opacity="0.8" />
+  <ellipse cx="28" cy="30" rx="2" ry="2" fill="#3a4a5a" opacity="0.8" />
+</svg>

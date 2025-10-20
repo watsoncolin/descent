@@ -1,0 +1,23 @@
+{
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Systems/ConsumableSystem.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/ConsumableSystem.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/ConsumableSystem.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/ConsumableSystem.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/ConsumableSystem.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/ConsumableSystem.swiftdeps"
+  },
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Systems/DamageSystem.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/DamageSystem.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/DamageSystem.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/DamageSystem.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/DamageSystem.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/DamageSystem.swiftdeps"
+  },
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Systems/InputManager.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/InputManager.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/InputManager.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/InputManager.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/InputManager.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/InputManager.swiftdeps"
+  }
+}

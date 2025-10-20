@@ -15,6 +15,7 @@ struct PlanetConfig: Codable {
     let totalDepth: Double
     let coreDepth: Double
     let valueMultiplier: Double
+    let gravity: Double?                // Gravity multiplier relative to Earth (e.g., Mars = 0.38, optional for backward compatibility)
     let tileSize: Double
 
     // Planet metadata (optional for backward compatibility)

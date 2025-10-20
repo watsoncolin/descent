@@ -1,0 +1,23 @@
+{
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Systems/SupplyDropSystem.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/SupplyDropSystem.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/SupplyDropSystem.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/SupplyDropSystem.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/SupplyDropSystem.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/SupplyDropSystem.swiftdeps"
+  },
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Systems/TerrainManager.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainManager.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainManager.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainManager.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainManager.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/TerrainManager.swiftdeps"
+  },
+  "/Users/colinwatson/descent/DESCENT/DESCENT/Utilities/Constants/Constants.swift" : {
+    "const-values" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Constants.swiftconstvalues",
+    "dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Constants.d",
+    "diagnostics" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Constants.dia",
+    "object" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Constants.o",
+    "swift-dependencies" : "/Users/colinwatson/descent/DESCENT/build/Build/Intermediates.noindex/DESCENT.build/Debug-iphonesimulator/DESCENT.build/Objects-normal/arm64/Constants.swiftdeps"
+  }
+}

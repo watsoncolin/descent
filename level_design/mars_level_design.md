@@ -3,12 +3,13 @@
 **Planet:** Mars
 **Difficulty:** Tutorial/Beginner
 **Theme:** Rust-colored Martian excavation
-**Total Depth:** 2560m (configurable per planet in mars.json)
-**Core Location:** 2500m depth (configurable per planet - see `coreDepth` in mars.json)
+**Total Depth:** 2620m (configurable per planet in mars.json)
+**Core Location:** 2560m depth (configurable per planet - see `coreDepth` in mars.json)
+**Gravity:** 0.38x Earth gravity (38% of Earth's gravity)
 **Planet Order:** 1 of 8
 **Unlock Requirements:** None (starting planet)
 
-> **Note:** Core depth is a per-planet configuration stored in the planet's JSON file. Each planet can have different total depth and core placement based on difficulty and design.
+> **Note:** Core depth, total depth, gravity, and value multiplier are all per-planet configurations stored in the planet's JSON file. Each planet can have different physical properties and progression parameters.
 
 ---
 
