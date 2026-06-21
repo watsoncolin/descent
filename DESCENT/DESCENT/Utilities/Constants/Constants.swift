@@ -57,3 +57,38 @@ enum Log {
         #endif
     }
 }
+
+// MARK: - Tuning (fuel & damage)
+
+extension K {
+    /// Fuel costs. See docs/wiki/Fuel System.md.
+    struct Fuel {
+        /// Fuel to drill one block = baseDrillCost × strataHardness / drillLevel.
+        /// Linear in hardness; charged once, up front (not per frame).
+        static let baseDrillCost: Double = 1.5
+        /// Fuel per second at full thrust while flying.
+        static let baseMoveCost: Double = 1.5
+    }
+
+    /// Impact-damage tuning. See docs/wiki/Hull and Damage.md.
+    struct Damage {
+        /// Terminal velocity (px/s). All velocity is clamped to this every frame so
+        /// impact speed — and therefore damage — stays bounded and predictable.
+        static let maxFallSpeed: CGFloat = 350
+        /// HP of damage per (px/s) of impact speed above the dampener threshold.
+        static let multiplier: CGFloat = 0.3
+        /// No impact damage within this many px of the surface (safe zone near the shop).
+        static let safeZoneDepth: CGFloat = 150
+        /// Minimum seconds between impact-damage events.
+        static let cooldown: TimeInterval = 0.4
+        /// Impact speed (px/s) below which the given dampener level takes no damage.
+        static func threshold(dampeners: Int) -> CGFloat {
+            switch dampeners {
+            case 0: return 200
+            case 1: return 275
+            case 2: return 330
+            default: return .infinity   // Level 3+: immune to fall damage
+            }
+        }
+    }
+}

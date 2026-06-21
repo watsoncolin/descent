@@ -8,7 +8,7 @@ updated: 2026-06-21
 Hull (HP) is the pod's structural integrity and DESCENT's skill check. Unlike [[Fuel System|fuel]], which depletes predictably, hull loss comes from hazards, impacts, and risky choices. At 0 HP the pod explodes and the run ends (with potential cargo loss) — unless an Ejection Pod saves it. Mastery is about *avoiding* damage. See [[Game Design]] for the loop and [[Terrain and Strata]] / [[Mars]] for where hazards live.
 
 > [!note]
-> Hull tiers, damage thresholds, hazard values, and resistance multipliers are live tuning constants tracked in [[Code Review]]. Values restated verbatim from the source.
+> **Impact damage is implemented** (see [[#Impact damage]]) — tuning in `K.Damage`. Hull tiers are in `PlanetState`. Hazard values and resistance multipliers below are **design targets** (hazards not yet implemented). See [[Code Review]] for status.
 
 ---
 
@@ -28,33 +28,46 @@ Hull (HP) is the pod's structural integrity and DESCENT's skill check. Unlike [[
 
 ### Impact damage
 
-```
-impactDamage = max(0, (impactSpeed - damageThreshold) × damageMultiplier)
+**Implemented model (rebalanced 2026-06-21).** Damage is driven by the **closing speed into
+the surface you hit** — the pod's pre-impact velocity projected onto the contact normal — not
+raw collision impulse. A head-on landing hurts; grazing/scraping a wall (velocity parallel to
+it) deals ~0, even while falling fast.
 
-Where:
-- impactSpeed = velocity magnitude when hitting terrain (pixels/second)
-- damageThreshold = speed at which damage begins (based on Impact Dampeners)
-- damageMultiplier = 0.5 (scaling factor)
+```
+impactDamage = max(0, (impactSpeed − threshold) × multiplier)
+
+impactSpeed = |preImpactVelocity · contactNormal|   (px/sec into the surface)
+multiplier  = K.Damage.multiplier = 0.3
 ```
 
-The threshold rises with the **Impact Dampener** upgrade:
+Velocity is **clamped to a terminal `K.Damage.maxFallSpeed = 350 px/sec` every frame**, so the
+worst-case impact is bounded. Pre-impact velocity is captured in `PlayerPod.update()` because
+the physics solver has usually cancelled it by the time the contact fires (this was why
+head-on landings briefly read as 0 damage).
+
+The threshold rises with the **Impact Dampener** upgrade (`K.Damage.threshold`):
 
 | Dampener Level | Threshold | Effect |
 | --- | --- | --- |
-| 0 | 50 px/sec | Very fragile, any fall hurts |
-| 1 | 100 px/sec | Handles moderate falls |
-| 2 | 200 px/sec | Handles fast falls |
-| 3 | ∞ px/sec | No fall damage ever (terminal velocity safe) |
+| 0 | 200 px/sec | Routine descents safe; only real drops hurt |
+| 1 | 275 px/sec | Handles fast falls |
+| 2 | 330 px/sec | Near-immune (terminal is 350) |
+| 3 | ∞ px/sec | No fall damage ever |
 
-Worked examples:
+Worked examples (Lv0 dampeners, terminal = 350):
 
-- 150 px/sec @ Lv0: `(150−50)×0.5 = 50 HP` → instant death at 50 HP start
-- 150 px/sec @ Lv1: `(150−100)×0.5 = 25 HP` → painful but survivable
-- 250 px/sec @ Lv2: `(250−200)×0.5 = 25 HP` → safe despite high speed
-- Any speed @ Lv3: `0 HP` → free-fall from any height
+- ≤200 px/sec: `0 HP` → normal mining/descent never hurts
+- 300 px/sec: `(300−200)×0.3 = 30 HP`
+- 350 (terminal faceplant): `(350−200)×0.3 = 45 HP` → survivable once on a 50 HP hull
+
+**Feedback on a hit:** screen shake (scaled to damage), a floating `-X` at the pod, a brief
+red screen flash, an HUD hull-bar pulse, and a haptic thump (device only). Safe zone: no
+impact damage within `K.Damage.safeZoneDepth = 150 px` of the surface; `K.Damage.cooldown =
+0.4s` between impact events.
 
 > [!note]
-> Level 3 dampeners are gamechanging — they enable the [[Fuel System#Free-Fall|free-fall fuel strategy]] with no hull cost.
+> All impact tuning lives in `K.Damage` (`Constants.swift`) — change feel in one place.
+> Level 3 dampeners enable the [[Fuel System#Free-Fall|free-fall fuel strategy]] with no hull cost.
 
 ### Hazard damage
 

@@ -45,12 +45,18 @@ obstacle materials indestructible despite being designed drillable.
 
 ## Deeper passes — TODO
 
-> [!todo] Fuel & damage (see [[Fuel System]], [[Hull and Damage]])
-> - Drilling fuel is **quadratic** in hardness (`3·h²/level²`), 3–10× the documented linear cost. Replace per-frame `rate × time` with a flat linear per-block charge.
-> - Impact damage uses `collisionImpulse` (mass/restitution-dependent, "impulse roulette") not velocity. Rebuild on velocity with transparent thresholds (e.g. 300/550/900 px/s). Delete the dead `sizeScaleFactor` (constant ~3.56×).
-> - Movement fuel near-free (1.0/sec → 100s on starting tank); drilling is the only real sink — decide intent.
-> - Clamp free-fall terminal velocity. Two contradictory consumable price tables. Emergency auto-return unimplemented.
-> - Centralize tuning into `K.Fuel`/`K.Damage` or planet JSON.
+> [!success] Fuel & damage — rebalanced 2026-06-21 (see [[Fuel System]], [[Hull and Damage]])
+> Done:
+> - Drilling fuel is now **linear**, charged once per block: `baseDrillCost(1.5) × hardness / drillLevel` (was quadratic per-frame).
+> - Impact damage rebuilt on **closing speed into the surface** (pre-impact velocity · contact normal) — not impulse. Side-scrapes/ascending bumps no longer hurt; head-on landings do. Deleted the dead `sizeScaleFactor`.
+> - Thresholds 200/275/330/∞ by dampener level, ×0.3; free-fall terminal velocity clamped to 350 px/s every frame.
+> - Movement fuel raised to 1.5/s. Impact feedback added: screen shake, floating `-X`, red flash, hull-bar pulse, haptic.
+> - Tuning centralized in `K.Fuel` / `K.Damage`.
+>
+> Remaining:
+> - Emergency auto-return at 0 fuel still unimplemented (currently instant game-over, keeps 50% cargo).
+> - Two contradictory consumable price tables (`Consumables.costs` vs `SupplyItem.surfacePrice`).
+> - Optionally move tank/hull/threshold ladders into planet JSON.
 
 > [!todo] Strata (see [[Terrain and Strata]])
 > - Standardize on block-rows internally; convert to meters only at the JSON boundary.

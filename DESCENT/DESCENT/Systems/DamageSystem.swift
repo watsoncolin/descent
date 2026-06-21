@@ -9,6 +9,8 @@ import SpriteKit
 
 protocol DamageSystemDelegate: AnyObject {
     func damageSystemDidDestroyHull()
+    /// Non-fatal damage was taken — drive impact feedback (shake, flash, number).
+    func damageSystemDidTakeDamage(_ amount: Double, at position: CGPoint)
 }
 
 class DamageSystem {
@@ -18,69 +20,47 @@ class DamageSystem {
     weak var delegate: DamageSystemDelegate?
 
     private var lastImpactTime: TimeInterval = 0
-    private let impactCooldown: TimeInterval = 0.4  // Balanced to reduce excessive collision spam
 
     // MARK: - Impact Damage
 
-    /// Process an impact collision and apply damage if appropriate
-    /// Returns true if hull was destroyed
+    /// Process an impact collision and apply damage if appropriate.
+    /// `impactSpeed` is the closing speed (px/s) INTO the contacted surface — the pre-impact
+    /// velocity's component along the contact normal, clamped upstream to `K.Damage.maxFallSpeed`.
+    /// A head-on landing hurts; grazing/scraping a wall (velocity parallel to it) deals ~0,
+    /// even while falling fast. Returns true if the hull was destroyed.
     @discardableResult
     func processImpact(
-        impulse: CGFloat,
+        impactSpeed: CGFloat,
         playerPosition: CGPoint,
         surfaceY: CGFloat,
-        podSize: CGSize,
         gameState: GameState
     ) -> Bool {
         // Check if player has active shield
         if gameState.hasActiveEffect("shield") {
-            Log.v("🛡️ Shield absorbed impact (impulse: \(String(format: "%.1f", impulse)))")
+            Log.v("🛡️ Shield absorbed impact (speed: \(Int(impactSpeed)))")
             return false
         }
 
-        // Don't take damage near the surface (within 150 pixels of surface level)
+        // Don't take damage near the surface (safe zone near the shop)
         let distanceFromSurface = surfaceY - playerPosition.y
-        let nearSurface = distanceFromSurface < 150  // Safe zone near shop
+        guard distanceFromSurface >= K.Damage.safeZoneDepth else { return false }
 
-        guard !nearSurface else { return false }
+        // Below the dampener-level threshold, impacts are harmless.
+        let threshold = K.Damage.threshold(dampeners: gameState.impactDampenersLevel)
 
-        // Calculate pod size scale factor relative to reference size (24x36 original pod)
-        // Larger pods generate higher impulse values, so we scale thresholds accordingly
-        let referencePodArea: CGFloat = 24 * 36  // Original pod size
-        let currentPodArea = podSize.width * podSize.height
-        let sizeScaleFactor = currentPodArea / referencePodArea
-
-        // Use collision impulse for more accurate impact detection
-        let impactForce = impulse * 0.85
-
-        // Base damage thresholds (tuned for 24x36 pod)
-        let baseDamageThreshold: CGFloat
-        switch gameState.impactDampenersLevel {
-        case 0: baseDamageThreshold = 12    // More forgiving for early game
-        case 1: baseDamageThreshold = 30    // Can handle moderate falls
-        case 2: baseDamageThreshold = 55    // Can handle fast falls
-        case 3: baseDamageThreshold = .infinity  // No fall damage ever
-        default: baseDamageThreshold = 12
-        }
-
-        // Scale threshold by pod size (bigger pods need higher thresholds)
-        let damageThreshold = baseDamageThreshold * sizeScaleFactor
-
-        // Check cooldown to prevent multiple damage from same collision
+        // Cooldown prevents multiple damage events from one collision.
         let currentTime = Date().timeIntervalSince1970
-        let timeSinceLastImpact = currentTime - lastImpactTime
-
-        guard impactForce > damageThreshold && timeSinceLastImpact >= impactCooldown else {
+        guard impactSpeed > threshold, currentTime - lastImpactTime >= K.Damage.cooldown else {
             return false
         }
 
-        // Calculate and apply damage (reduced multiplier for early game survivability)
-        let damage = (impactForce - damageThreshold) * 1.0
+        let damage = Double((impactSpeed - threshold) * K.Damage.multiplier)
         let hullDestroyed = gameState.takeDamage(damage)
         lastImpactTime = currentTime
 
-        Log.v("💥 Impact damage: \(Int(damage)) HP (impulse: \(String(format: "%.1f", impactForce)), threshold: \(Int(damageThreshold)) [base: \(Int(baseDamageThreshold)) × \(String(format: "%.1fx", sizeScaleFactor))], dampeners: Lv.\(gameState.impactDampenersLevel))")
-        Log.v("   Hull: \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
+        Log.v("💥 Impact: \(Int(damage)) HP (speed: \(Int(impactSpeed)), threshold: \(Int(threshold)), dampeners: Lv.\(gameState.impactDampenersLevel)) → Hull \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
+
+        delegate?.damageSystemDidTakeDamage(damage, at: playerPosition)
 
         if hullDestroyed {
             delegate?.damageSystemDidDestroyHull()

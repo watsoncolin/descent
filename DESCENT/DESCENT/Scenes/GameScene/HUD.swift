@@ -99,6 +99,16 @@ class HUD: SKNode {
 
     // MARK: - Update
 
+    /// Quick pulse on the hull bar to draw the eye when the pod takes impact damage.
+    func flashHull() {
+        hullBar.removeAction(forKey: "hullFlash")
+        let pulse = SKAction.sequence([
+            .scale(to: 1.18, duration: 0.08),
+            .scale(to: 1.0, duration: 0.14)
+        ])
+        hullBar.run(pulse, withKey: "hullFlash")
+    }
+
     func update(gameState: GameState) {
         // Update fuel bar
         let fuelPercent = gameState.currentFuel / gameState.maxFuel
