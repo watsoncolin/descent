@@ -40,3 +40,20 @@ struct K {
         // Add more colors as needed
     }
 }
+
+// MARK: - Logging
+
+/// Lightweight gated logger. All gameplay logging routes through here so the
+/// console stays quiet by default. Flip `Log.verbose = true` to surface gameplay
+/// logs while debugging. Compiles to nothing in release builds.
+enum Log {
+    /// Set to `true` during a debug session to see verbose gameplay logs.
+    static var verbose = false
+
+    @inline(__always)
+    static func v(_ message: @autoclosure () -> String) {
+        #if DEBUG
+        if verbose { print(message()) }
+        #endif
+    }
+}

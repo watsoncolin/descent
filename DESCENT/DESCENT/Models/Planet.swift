@@ -32,7 +32,7 @@ enum Planet: String, CaseIterable {
         // Load from JSON
         let filename = rawValue.lowercased()
         guard let url = Bundle.main.url(forResource: filename, withExtension: "json") else {
-            print("⚠️ Could not find \(filename).json in bundle")
+            Log.v("⚠️ Could not find \(filename).json in bundle")
             return nil
         }
 
@@ -45,7 +45,7 @@ enum Planet: String, CaseIterable {
 
             return config
         } catch {
-            print("⚠️ Error loading \(filename).json: \(error)")
+            Log.v("⚠️ Error loading \(filename).json: \(error)")
             return nil
         }
     }

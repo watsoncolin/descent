@@ -49,7 +49,7 @@ class PlanetState: Codable {
         consumables = Consumables()
         timesPrestiged += 1
 
-        print("🔄 Prestige on \(planetId) - Reset credits and upgrades")
+        Log.v("🔄 Prestige on \(planetId) - Reset credits and upgrades")
     }
 
     // MARK: - Computed Properties
@@ -144,11 +144,13 @@ struct CommonUpgrades: Codable {
 // MARK: - Consumables
 
 struct Consumables: Codable {
-    var repairKits: Int = 100
-    var fuelCells: Int = 100
-    var bombs: Int = 100
-    var teleporters: Int = 100
-    var shields: Int = 100
+    // Starter loadout: a small safety net, not a stockpile. Previously 100 of each,
+    // which short-circuited the entire fuel/hull resource loop and the shop. (REVIEW.md)
+    var repairKits: Int = 1
+    var fuelCells: Int = 1
+    var bombs: Int = 0
+    var teleporters: Int = 0
+    var shields: Int = 0
 
     // Consumable costs (fixed prices)
     static let costs: [String: Double] = [

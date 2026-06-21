@@ -314,16 +314,16 @@ extension TextureGenerator {
         let maxDimension: CGFloat = 4096.0
 
         if size.width > maxDimension || size.height > maxDimension {
-            print("⚠️ ERROR: Attempted to create texture larger than Metal limit!")
-            print("   Requested: \(size.width)x\(size.height)")
-            print("   Maximum: \(maxDimension)x\(maxDimension)")
+            Log.v("⚠️ ERROR: Attempted to create texture larger than Metal limit!")
+            Log.v("   Requested: \(size.width)x\(size.height)")
+            Log.v("   Maximum: \(maxDimension)x\(maxDimension)")
 
             // Clamp to maximum size
             let clampedSize = CGSize(
                 width: min(size.width, maxDimension),
                 height: min(size.height, maxDimension)
             )
-            print("   Clamping to: \(clampedSize.width)x\(clampedSize.height)")
+            Log.v("   Clamping to: \(clampedSize.width)x\(clampedSize.height)")
 
             return createVerticalGradientTexture(size: clampedSize, colors: colors)
         }
@@ -360,13 +360,13 @@ extension TextureGenerator {
         let size = CGSize(width: radius * 2, height: radius * 2)
 
         if size.width > maxDimension || size.height > maxDimension {
-            print("⚠️ ERROR: Attempted to create radial texture larger than Metal limit!")
-            print("   Requested radius: \(radius) (size: \(size.width)x\(size.height))")
-            print("   Maximum: \(maxDimension)x\(maxDimension)")
+            Log.v("⚠️ ERROR: Attempted to create radial texture larger than Metal limit!")
+            Log.v("   Requested radius: \(radius) (size: \(size.width)x\(size.height))")
+            Log.v("   Maximum: \(maxDimension)x\(maxDimension)")
 
             // Clamp to maximum size
             let clampedRadius = maxDimension / 2
-            print("   Clamping radius to: \(clampedRadius)")
+            Log.v("   Clamping radius to: \(clampedRadius)")
 
             return createRadialGradientTexture(radius: clampedRadius, colors: colors)
         }
@@ -404,16 +404,16 @@ extension TextureGenerator {
         let maxDimension: CGFloat = 4096.0
 
         if size.width > maxDimension || size.height > maxDimension {
-            print("⚠️ ERROR: Attempted to create diagonal texture larger than Metal limit!")
-            print("   Requested: \(size.width)x\(size.height)")
-            print("   Maximum: \(maxDimension)x\(maxDimension)")
+            Log.v("⚠️ ERROR: Attempted to create diagonal texture larger than Metal limit!")
+            Log.v("   Requested: \(size.width)x\(size.height)")
+            Log.v("   Maximum: \(maxDimension)x\(maxDimension)")
 
             // Clamp to maximum size
             let clampedSize = CGSize(
                 width: min(size.width, maxDimension),
                 height: min(size.height, maxDimension)
             )
-            print("   Clamping to: \(clampedSize.width)x\(clampedSize.height)")
+            Log.v("   Clamping to: \(clampedSize.width)x\(clampedSize.height)")
 
             return createDiagonalGradientTexture(size: clampedSize, colors: colors, angle: angle)
         }

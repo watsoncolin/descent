@@ -44,12 +44,12 @@ class GameState {
         // Try to load existing profile
         if let loadedProfile = SaveManager.shared.loadProfile() {
             self.profile = loadedProfile
-            print("📂 Loaded existing profile")
+            Log.v("📂 Loaded existing profile")
         } else {
             // Create new profile
             self.profile = GameProfile()
             SaveManager.shared.saveProfile(profile)
-            print("✨ Created new profile")
+            Log.v("✨ Created new profile")
         }
     }
 
@@ -57,7 +57,7 @@ class GameState {
     /// Initialize with a test profile (for debugging)
     init(testProfile: GameProfile) {
         self.profile = testProfile
-        print("🧪 Initialized with test profile")
+        Log.v("🧪 Initialized with test profile")
     }
     #endif
 
@@ -66,7 +66,7 @@ class GameState {
     /// Start a new mining run
     func startMiningRun() {
         guard let planet = planetState else {
-            print("❌ Cannot start run - planet state not found")
+            Log.v("❌ Cannot start run - planet state not found")
             return
         }
 
@@ -82,16 +82,16 @@ class GameState {
         planet.statistics.totalRunsOnPlanet += 1
         profile.totalRunsCompleted += 1
 
-        print("🚀 Started mining run on \(currentPlanet.rawValue)")
-        print("   - Fuel: \(planet.maxFuel)")
-        print("   - Hull: \(planet.maxHull)")
-        print("   - Cargo: \(planet.cargoCapacity)")
+        Log.v("🚀 Started mining run on \(currentPlanet.rawValue)")
+        Log.v("   - Fuel: \(planet.maxFuel)")
+        Log.v("   - Hull: \(planet.maxHull)")
+        Log.v("   - Cargo: \(planet.cargoCapacity)")
     }
 
     /// End run successfully (returned to surface with cargo)
     func endRunSuccess() {
         guard let run = currentRun, let planet = planetState else {
-            print("❌ No active run to end")
+            Log.v("❌ No active run to end")
             return
         }
 
@@ -118,9 +118,9 @@ class GameState {
             profile.addDiscoveredMineral(mineral.type)
         }
 
-        print("✅ Run completed successfully!")
-        print("   - Earned: $\(Int(earnings))")
-        print("   - Depth: \(Int(run.currentDepth))m")
+        Log.v("✅ Run completed successfully!")
+        Log.v("   - Earned: $\(Int(earnings))")
+        Log.v("   - Depth: \(Int(run.currentDepth))m")
 
         // Clean up
         currentRun = nil
@@ -133,7 +133,7 @@ class GameState {
     /// Handle fuel-out game over (keeps 50% of cargo value)
     func endRunOutOfFuel() {
         guard let run = currentRun, let planet = planetState else {
-            print("❌ No active run for fuel-out")
+            Log.v("❌ No active run for fuel-out")
             return
         }
 
@@ -144,7 +144,7 @@ class GameState {
         planet.statistics.totalCreditsEarnedHere += halfValue
         profile.totalCreditsEarned += halfValue
 
-        print("⛽ OUT OF FUEL - Kept 50% of cargo ($\(Int(halfValue)) / $\(Int(fullValue)))")
+        Log.v("⛽ OUT OF FUEL - Kept 50% of cargo ($\(Int(halfValue)) / $\(Int(fullValue)))")
 
         // Update death statistics
         planet.statistics.totalDeathsHere += 1
@@ -161,12 +161,12 @@ class GameState {
     /// Handle hull-destroyed game over (loses all cargo)
     func endRunHullDestroyed() {
         guard let planet = planetState else {
-            print("❌ No active run for hull destroyed")
+            Log.v("❌ No active run for hull destroyed")
             return
         }
 
         let lostValue = currentRun?.totalCargoValue ?? 0
-        print("💥 HULL DESTROYED - Lost all cargo ($\(Int(lostValue)))")
+        Log.v("💥 HULL DESTROYED - Lost all cargo ($\(Int(lostValue)))")
 
         // Update death statistics
         planet.statistics.totalDeathsHere += 1
@@ -185,7 +185,7 @@ class GameState {
     /// Extract core and prestige
     func prestige() -> Int {
         guard let planet = planetState else {
-            print("❌ Cannot prestige - no planet state")
+            Log.v("❌ Cannot prestige - no planet state")
             return 0
         }
 
@@ -201,9 +201,9 @@ class GameState {
         planet.prestige()
         planet.timesCompleted += 1
 
-        print("🌟 PRESTIGE!")
-        print("   - Soul Crystals Earned: +\(soulCrystalsEarned)")
-        print("   - Total Soul Crystals: \(profile.soulCrystals)")
+        Log.v("🌟 PRESTIGE!")
+        Log.v("   - Soul Crystals Earned: +\(soulCrystalsEarned)")
+        Log.v("   - Total Soul Crystals: \(profile.soulCrystals)")
 
         // Auto-save
         SaveManager.shared.saveProfile(profile)
@@ -345,7 +345,7 @@ class GameState {
         // Check if there's space without dropping anything
         if run.totalCargoVolume + material.volume <= run.pod.maxCargo {
             run.addMineral(material)
-            print("➕ Added \(material.type.rawValue) to cargo")
+            Log.v("➕ Added \(material.type.rawValue) to cargo")
             return true
         }
 
@@ -367,7 +367,7 @@ class GameState {
         if let lowestInCargo = sortedCargo.first {
             let lowestValuePerUnit = lowestInCargo.totalValue / Double(lowestInCargo.volumeUsed)
             if newMaterialValuePerUnit <= lowestValuePerUnit {
-                print("🚫 \(material.type.rawValue) ignored (too low value: $\(String(format: "%.1f", newMaterialValuePerUnit))/unit)")
+                Log.v("🚫 \(material.type.rawValue) ignored (too low value: $\(String(format: "%.1f", newMaterialValuePerUnit))/unit)")
                 return false
             }
         }
@@ -396,8 +396,8 @@ class GameState {
 
         // Log the auto-drop
         let droppedSummary = droppedItems.joined(separator: ", ")
-        print("📦 Auto-dropped: \(droppedSummary)")
-        print("➕ Collected: \(material.type.rawValue)")
+        Log.v("📦 Auto-dropped: \(droppedSummary)")
+        Log.v("➕ Collected: \(material.type.rawValue)")
 
         return true
     }
@@ -412,7 +412,7 @@ class GameState {
 
         planet.consumables.repairKits -= 1
         currentRun?.pod.hull = min(currentRun!.pod.hull + 50, currentRun!.pod.maxHull)
-        print("🔧 Used Repair Kit - Hull: \(Int(currentHull))")
+        Log.v("🔧 Used Repair Kit - Hull: \(Int(currentHull))")
         return true
     }
 
@@ -424,7 +424,7 @@ class GameState {
 
         planet.consumables.fuelCells -= 1
         currentRun?.pod.fuel = min(currentRun!.pod.fuel + 100, currentRun!.pod.maxFuel)
-        print("⛽ Used Fuel Cell - Fuel: \(Int(currentFuel))")
+        Log.v("⛽ Used Fuel Cell - Fuel: \(Int(currentFuel))")
         return true
     }
 
@@ -435,7 +435,7 @@ class GameState {
         }
 
         planet.consumables.bombs -= 1
-        print("💣 Used Bomb!")
+        Log.v("💣 Used Bomb!")
         return true
     }
 
@@ -443,7 +443,7 @@ class GameState {
     func useTeleporter() -> Bool {
         // Check if core has been extracted - teleporter disabled after core collection
         if currentRun?.coreExtracted == true {
-            print("❌ Teleporter disabled - Core extracted! Return to surface manually.")
+            Log.v("❌ Teleporter disabled - Core extracted! Return to surface manually.")
             return false
         }
 
@@ -452,7 +452,7 @@ class GameState {
         }
 
         planet.consumables.teleporters -= 1
-        print("🌀 Used Teleporter!")
+        Log.v("🌀 Used Teleporter!")
         return true
     }
 
@@ -464,7 +464,7 @@ class GameState {
 
         planet.consumables.shields -= 1
         currentRun?.addActiveEffect("shield", duration: 10.0)
-        print("🛡️ Used Shield - 10s immunity")
+        Log.v("🛡️ Used Shield - 10s immunity")
         return true
     }
 

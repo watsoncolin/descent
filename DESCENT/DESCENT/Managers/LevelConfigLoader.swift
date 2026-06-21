@@ -27,13 +27,13 @@ class LevelConfigLoader {
     func loadPlanet(_ planetName: String) -> PlanetConfig? {
         // Check cache first
         if let cached = loadedConfigs[planetName.lowercased()] {
-            print("📦 Loaded \(planetName) config from cache")
+            Log.v("📦 Loaded \(planetName) config from cache")
             return cached
         }
 
         // Try to load from bundle
         guard let url = Bundle.main.url(forResource: planetName.lowercased(), withExtension: "json") else {
-            print("❌ Failed to find \(planetName).json in bundle")
+            Log.v("❌ Failed to find \(planetName).json in bundle")
             return nil
         }
 
@@ -45,14 +45,14 @@ class LevelConfigLoader {
             // Cache it
             loadedConfigs[planetName.lowercased()] = config
 
-            print("✅ Loaded \(config.name) config:")
-            print("   - Total depth: \(config.totalDepth)m")
-            print("   - Strata layers: \(config.strata.count)")
-            print("   - Resources: \(config.strata.flatMap { $0.resources }.count)")
+            Log.v("✅ Loaded \(config.name) config:")
+            Log.v("   - Total depth: \(config.totalDepth)m")
+            Log.v("   - Strata layers: \(config.strata.count)")
+            Log.v("   - Resources: \(config.strata.flatMap { $0.resources }.count)")
 
             return config
         } catch {
-            print("❌ Failed to parse \(planetName).json: \(error)")
+            Log.v("❌ Failed to parse \(planetName).json: \(error)")
             return nil
         }
     }
@@ -112,7 +112,7 @@ class LevelConfigLoader {
     /// Clear the cache (useful for testing or reloading)
     func clearCache() {
         loadedConfigs.removeAll()
-        print("🗑️ Cleared planet config cache")
+        Log.v("🗑️ Cleared planet config cache")
     }
 
     /// Preload all planet configs (useful at app startup)
@@ -123,6 +123,6 @@ class LevelConfigLoader {
             _ = loadPlanet(name)
         }
 
-        print("📦 Preloaded \(loadedConfigs.count) planet configs")
+        Log.v("📦 Preloaded \(loadedConfigs.count) planet configs")
     }
 }

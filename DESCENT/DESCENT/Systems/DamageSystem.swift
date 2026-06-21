@@ -34,7 +34,7 @@ class DamageSystem {
     ) -> Bool {
         // Check if player has active shield
         if gameState.hasActiveEffect("shield") {
-            print("🛡️ Shield absorbed impact (impulse: \(String(format: "%.1f", impulse)))")
+            Log.v("🛡️ Shield absorbed impact (impulse: \(String(format: "%.1f", impulse)))")
             return false
         }
 
@@ -79,8 +79,8 @@ class DamageSystem {
         let hullDestroyed = gameState.takeDamage(damage)
         lastImpactTime = currentTime
 
-        print("💥 Impact damage: \(Int(damage)) HP (impulse: \(String(format: "%.1f", impactForce)), threshold: \(Int(damageThreshold)) [base: \(Int(baseDamageThreshold)) × \(String(format: "%.1fx", sizeScaleFactor))], dampeners: Lv.\(gameState.impactDampenersLevel))")
-        print("   Hull: \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
+        Log.v("💥 Impact damage: \(Int(damage)) HP (impulse: \(String(format: "%.1f", impactForce)), threshold: \(Int(damageThreshold)) [base: \(Int(baseDamageThreshold)) × \(String(format: "%.1fx", sizeScaleFactor))], dampeners: Lv.\(gameState.impactDampenersLevel))")
+        Log.v("   Hull: \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
 
         if hullDestroyed {
             delegate?.damageSystemDidDestroyHull()
@@ -101,14 +101,14 @@ class DamageSystem {
     ) -> Bool {
         // Check if player has active shield
         if gameState.hasActiveEffect("shield") {
-            print("🛡️ Shield absorbed \(hazardType) damage (\(Int(amount)) HP)")
+            Log.v("🛡️ Shield absorbed \(hazardType) damage (\(Int(amount)) HP)")
             return false
         }
 
         let hullDestroyed = gameState.takeDamage(amount)
 
-        print("☠️ \(hazardType) damage: \(Int(amount)) HP")
-        print("   Hull: \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
+        Log.v("☠️ \(hazardType) damage: \(Int(amount)) HP")
+        Log.v("   Hull: \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
 
         if hullDestroyed {
             delegate?.damageSystemDidDestroyHull()

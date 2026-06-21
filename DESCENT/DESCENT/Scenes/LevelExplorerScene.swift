@@ -93,11 +93,11 @@ class LevelExplorerScene: SKScene {
     }
 
     private func loadLevel() {
-        print("🌍 LevelExplorerScene: Loading Mars level...")
+        Log.v("🌍 LevelExplorerScene: Loading Mars level...")
 
         // Load Mars configuration
         guard let config = LevelConfigLoader.shared.loadPlanet("mars") else {
-            print("❌ Failed to load Mars level configuration!")
+            Log.v("❌ Failed to load Mars level configuration!")
             return
         }
 
@@ -105,9 +105,9 @@ class LevelExplorerScene: SKScene {
         levelTotalDepth = config.totalDepth
         levelWidth = 1200  // Fixed width for explorer (about 18 blocks)
 
-        print("🌍 Level loaded: \(config.name)")
-        print("   - Total depth: \(levelTotalDepth)m")
-        print("   - Strata count: \(config.strata.count)")
+        Log.v("🌍 Level loaded: \(config.name)")
+        Log.v("   - Total depth: \(levelTotalDepth)m")
+        Log.v("   - Strata count: \(config.strata.count)")
 
         // Generate all terrain layers
         generateTerrain()
@@ -121,14 +121,14 @@ class LevelExplorerScene: SKScene {
     }
 
     private func generateTerrain() {
-        print("🏔️ Generating terrain layers using TerrainLayer (same as TerrainManager)...")
+        Log.v("🏔️ Generating terrain layers using TerrainLayer (same as TerrainManager)...")
 
         // Use the same logic as TerrainManager - create TerrainLayer objects
         for (stratumIndex, stratum) in levelConfig.strata.enumerated() {
             // Use canonical mapping (same as TerrainManager)
             let terrainType = TerrainType.fromStratumName(stratum.name)
 
-            print("   - Stratum \(stratumIndex): \(stratum.name) (\(stratum.depthMin)m - \(stratum.depthMax)m) → \(terrainType)")
+            Log.v("   - Stratum \(stratumIndex): \(stratum.name) (\(stratum.depthMin)m - \(stratum.depthMax)m) → \(terrainType)")
 
             // Create TerrainLayer (same as TerrainManager)
             let layer = TerrainLayer(
@@ -147,10 +147,10 @@ class LevelExplorerScene: SKScene {
 
             terrainContainer.addChild(layer)
 
-            print("     ✅ TerrainLayer created and positioned")
+            Log.v("     ✅ TerrainLayer created and positioned")
         }
 
-        print("✅ Terrain generation complete!")
+        Log.v("✅ Terrain generation complete!")
     }
 
     // MARK: - Touch Handling

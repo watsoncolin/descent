@@ -103,7 +103,7 @@ class MaterialDeposit: SKNode {
                 // Set node name for identification in contact detection
                 self.name = "darkMatter"
 
-                print("💎 Dark Matter core crystal created with pulsing animation and physics body")
+                Log.v("💎 Dark Matter core crystal created with pulsing animation and physics body")
             } else {
                 // Normal size for other materials
                 imageNode.size = CGSize(width: depositSize * 3, height: depositSize * 3)

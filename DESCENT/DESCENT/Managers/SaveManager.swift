@@ -23,7 +23,7 @@ class SaveManager {
 
     // MARK: - Initialization
     private init() {
-        print("💾 SaveManager initialized")
+        Log.v("💾 SaveManager initialized")
     }
 
     // MARK: - Save Game Profile
@@ -48,14 +48,14 @@ class SaveManager {
             UserDefaults.standard.set(currentDataVersion, forKey: dataVersionKey)
             UserDefaults.standard.synchronize()
 
-            print("💾 Game saved successfully")
-            print("   - Soul Crystals: \(profile.soulCrystals)")
-            print("   - Total Credits: $\(Int(profile.totalCreditsEarned))")
-            print("   - Planets: \(profile.planets.filter { $0.isUnlocked }.count)/\(profile.planets.count)")
+            Log.v("💾 Game saved successfully")
+            Log.v("   - Soul Crystals: \(profile.soulCrystals)")
+            Log.v("   - Total Credits: $\(Int(profile.totalCreditsEarned))")
+            Log.v("   - Planets: \(profile.planets.filter { $0.isUnlocked }.count)/\(profile.planets.count)")
 
             return true
         } catch {
-            print("❌ Failed to save game: \(error)")
+            Log.v("❌ Failed to save game: \(error)")
             return false
         }
     }
@@ -64,7 +64,7 @@ class SaveManager {
 
     func loadProfile() -> GameProfile? {
         guard let data = UserDefaults.standard.data(forKey: profileKey) else {
-            print("📂 No save file found - creating new profile")
+            Log.v("📂 No save file found - creating new profile")
             return nil
         }
 
@@ -72,7 +72,7 @@ class SaveManager {
             // Check data version for migration
             let dataVersion = UserDefaults.standard.integer(forKey: dataVersionKey)
             if dataVersion < currentDataVersion {
-                print("🔄 Data migration needed: v\(dataVersion) → v\(currentDataVersion)")
+                Log.v("🔄 Data migration needed: v\(dataVersion) → v\(currentDataVersion)")
                 // TODO: Implement migration logic
             }
 
@@ -83,18 +83,18 @@ class SaveManager {
 
             // Validate data
             if validateProfile(profile) {
-                print("✅ Game loaded successfully")
-                print("   - Profile: \(profile.profileId)")
-                print("   - Soul Crystals: \(profile.soulCrystals)")
-                print("   - Play Time: \(Int(profile.totalPlayTime / 3600))h")
+                Log.v("✅ Game loaded successfully")
+                Log.v("   - Profile: \(profile.profileId)")
+                Log.v("   - Soul Crystals: \(profile.soulCrystals)")
+                Log.v("   - Play Time: \(Int(profile.totalPlayTime / 3600))h")
                 return profile
             } else {
-                print("⚠️ Data validation failed - attempting backup restore")
+                Log.v("⚠️ Data validation failed - attempting backup restore")
                 return restoreFromBackup()
             }
         } catch {
-            print("❌ Failed to load game: \(error)")
-            print("🔄 Attempting backup restore...")
+            Log.v("❌ Failed to load game: \(error)")
+            Log.v("🔄 Attempting backup restore...")
             return restoreFromBackup()
         }
     }
@@ -104,13 +104,13 @@ class SaveManager {
     private func createBackup() {
         if let data = UserDefaults.standard.data(forKey: profileKey) {
             UserDefaults.standard.set(data, forKey: "\(profileKey).backup")
-            print("📦 Backup created")
+            Log.v("📦 Backup created")
         }
     }
 
     private func restoreFromBackup() -> GameProfile? {
         guard let backupData = UserDefaults.standard.data(forKey: "\(profileKey).backup") else {
-            print("❌ No backup available")
+            Log.v("❌ No backup available")
             return nil
         }
 
@@ -120,14 +120,14 @@ class SaveManager {
             let profile = try decoder.decode(GameProfile.self, from: backupData)
 
             if validateProfile(profile) {
-                print("✅ Restored from backup")
+                Log.v("✅ Restored from backup")
                 return profile
             } else {
-                print("❌ Backup data also invalid")
+                Log.v("❌ Backup data also invalid")
                 return nil
             }
         } catch {
-            print("❌ Failed to restore backup: \(error)")
+            Log.v("❌ Failed to restore backup: \(error)")
             return nil
         }
     }
@@ -137,13 +137,13 @@ class SaveManager {
     private func validateProfile(_ profile: GameProfile) -> Bool {
         // Validate soul crystals
         if profile.soulCrystals < 0 {
-            print("⚠️ Invalid soul crystals: \(profile.soulCrystals)")
+            Log.v("⚠️ Invalid soul crystals: \(profile.soulCrystals)")
             profile.soulCrystals = 0
         }
 
         // Validate golden gems
         if profile.goldenGems < 0 {
-            print("⚠️ Invalid golden gems: \(profile.goldenGems)")
+            Log.v("⚠️ Invalid golden gems: \(profile.goldenGems)")
             profile.goldenGems = 0
         }
 
@@ -174,7 +174,7 @@ class SaveManager {
 
     func saveCurrentPlanet(_ profile: GameProfile, planetId: String) -> Bool {
         guard let planet = profile.getPlanetState(planetId) else {
-            print("❌ Planet not found: \(planetId)")
+            Log.v("❌ Planet not found: \(planetId)")
             return false
         }
 
@@ -189,7 +189,7 @@ class SaveManager {
         UserDefaults.standard.removeObject(forKey: lastSaveKey)
         UserDefaults.standard.removeObject(forKey: "\(profileKey).backup")
         UserDefaults.standard.synchronize()
-        print("🗑️ Save data deleted")
+        Log.v("🗑️ Save data deleted")
     }
 
     // MARK: - Export/Import (for cloud save future)
@@ -202,7 +202,7 @@ class SaveManager {
             let data = try encoder.encode(profile)
             return String(data: data, encoding: .utf8)
         } catch {
-            print("❌ Failed to export: \(error)")
+            Log.v("❌ Failed to export: \(error)")
             return nil
         }
     }
@@ -218,7 +218,7 @@ class SaveManager {
             let profile = try decoder.decode(GameProfile.self, from: data)
             return validateProfile(profile) ? profile : nil
         } catch {
-            print("❌ Failed to import: \(error)")
+            Log.v("❌ Failed to import: \(error)")
             return nil
         }
     }
@@ -227,13 +227,13 @@ class SaveManager {
 
     func printSaveInfo() {
         if let lastSave = UserDefaults.standard.object(forKey: lastSaveKey) as? Date {
-            print("💾 Last save: \(lastSave)")
+            Log.v("💾 Last save: \(lastSave)")
         } else {
-            print("💾 No save data")
+            Log.v("💾 No save data")
         }
 
         let dataVersion = UserDefaults.standard.integer(forKey: dataVersionKey)
-        print("📊 Data version: \(dataVersion)")
+        Log.v("📊 Data version: \(dataVersion)")
     }
 
     #if DEBUG

@@ -62,12 +62,12 @@ class TerrainManager {
         let gridHeight = Int(ceil(config.totalDepth))
         self.collisionGrid = CollisionGrid(gridSize: (width: width, height: gridHeight))
 
-        print("🌍 TerrainManager initialized for \(config.name)")
-        print("   - Seed: \(terrainSeed)")
-        print("   - Total depth: \(config.totalDepth)m")
-        print("   - Strata layers: \(config.strata.count)")
-        print("   - Grid size: \(width)×\(gridHeight)")
-        print("   - Soul Crystal bonus: \(soulCrystalBonus)x")
+        Log.v("🌍 TerrainManager initialized for \(config.name)")
+        Log.v("   - Seed: \(terrainSeed)")
+        Log.v("   - Total depth: \(config.totalDepth)m")
+        Log.v("   - Strata layers: \(config.strata.count)")
+        Log.v("   - Grid size: \(width)×\(gridHeight)")
+        Log.v("   - Soul Crystal bonus: \(soulCrystalBonus)x")
 
         // Load all terrain layers immediately (not lazy loading)
         loadAllTerrainLayers()
@@ -81,7 +81,7 @@ class TerrainManager {
 
         let surfaceY = scene.frame.maxY - 100
 
-        print("🏔️ Loading all terrain layers immediately...")
+        Log.v("🏔️ Loading all terrain layers immediately...")
 
         // Load each stratum (same logic as Level Explorer)
         for (stratumIndex, stratum) in planetConfig.strata.enumerated() {
@@ -89,7 +89,7 @@ class TerrainManager {
             loadedStratumIndices.insert(stratumIndex)
         }
 
-        print("✅ All \(planetConfig.strata.count) terrain layers loaded")
+        Log.v("✅ All \(planetConfig.strata.count) terrain layers loaded")
     }
 
     // MARK: - Chunk Management
@@ -164,7 +164,7 @@ class TerrainManager {
                         // Debug: Log wall creation
                         if y == Int(planetConfig.coreDepth / Double(TerrainBlock.metersPerBlock)) {
                             let side = x == leftWall ? "LEFT" : "RIGHT"
-                            print("🪨 Bedrock \(side) wall created at x=\(x) (chamber interior: \(centerX - chamberRadius) to \(centerX + chamberRadius))")
+                            Log.v("🪨 Bedrock \(side) wall created at x=\(x) (chamber interior: \(centerX - chamberRadius) to \(centerX + chamberRadius))")
                         }
                         continue
                     }
@@ -190,7 +190,7 @@ class TerrainManager {
 
                         // Debug: Log bedrock creation
                         if x == centerX {
-                            print("🪨 Bedrock floor created at (\(x), \(y)) - depth \(Int(depth))m (totalDepthInBlocks: \(totalDepthInBlocks))")
+                            Log.v("🪨 Bedrock floor created at (\(x), \(y)) - depth \(Int(depth))m (totalDepthInBlocks: \(totalDepthInBlocks))")
                         }
                         continue
                     }
@@ -259,13 +259,13 @@ class TerrainManager {
         terrainLayers[stratumIndex] = layer
         allTerrainLayers.append((layer: layer, depthRange: stratum.depthMin...stratum.depthMax))
 
-        print("🏔️ Created stratum layer \(stratumIndex): \(stratum.name)")
-        print("   - Depth range: \(stratum.depthMin)...\(stratum.depthMax)m")
-        print("   - Size: \(layer.layerSize)")
-        print("   - TerrainType: \(terrainType)")
-        print("   - Surface colors from mars.json: \(stratum.surfaceGradient.map { $0.toHex() })")
-        print("   - Excavated colors from mars.json: \(stratum.excavatedGradient.map { $0.toHex() })")
-        print("   - Layer zPosition: \(layer.zPosition)")
+        Log.v("🏔️ Created stratum layer \(stratumIndex): \(stratum.name)")
+        Log.v("   - Depth range: \(stratum.depthMin)...\(stratum.depthMax)m")
+        Log.v("   - Size: \(layer.layerSize)")
+        Log.v("   - TerrainType: \(terrainType)")
+        Log.v("   - Surface colors from mars.json: \(stratum.surfaceGradient.map { $0.toHex() })")
+        Log.v("   - Excavated colors from mars.json: \(stratum.excavatedGradient.map { $0.toHex() })")
+        Log.v("   - Layer zPosition: \(layer.zPosition)")
     }
 
     /// Create a material deposit node at grid position
@@ -374,7 +374,9 @@ class TerrainManager {
     private func generateObstaclesForChunk(chunkNumber: Int, startY: Int, endY: Int) {
         // Process each Y level in this chunk
         for y in startY..<endY {
-            let depth = Double(y)
+            // strata.contains(depth:) is keyed in METERS, not grid rows. Without the
+            // conversion every row mapped to 0-210m → only surface strata → no obstacles ever spawned. (REVIEW.md)
+            let depth = Double(y) * Double(TerrainBlock.metersPerBlock)
 
             // Get the strata layer for this depth
             guard let layer = planetConfig.strata.first(where: { $0.contains(depth: depth) }) else {
@@ -396,7 +398,7 @@ class TerrainManager {
                 case "reinforcedRock":
                     blockType = .reinforcedRock
                 default:
-                    print("⚠️ Unknown obstacle type: \(obstacle.type)")
+                    Log.v("⚠️ Unknown obstacle type: \(obstacle.type)")
                     continue
                 }
 
@@ -532,7 +534,7 @@ class TerrainManager {
                           let clusterRadiusMax = resource.clusterRadiusMax,
                           let clusterSizeMin = resource.clusterSizeMin,
                           let clusterSizeMax = resource.clusterSizeMax else {
-                        print("⚠️ Resource \(resource.type) missing clustering parameters")
+                        Log.v("⚠️ Resource \(resource.type) missing clustering parameters")
                         continue
                     }
 
@@ -710,9 +712,9 @@ class TerrainManager {
         // Debug logging for first chamber block detected
         if inChamber && !coreChamberDetected {
             coreChamberDetected = true
-            print("🎯 Core chamber detected! Block (\(x), \(y)) at depth \(Int(depth))m")
-            print("   Chamber range: \(Int(planetConfig.coreDepth))m - \(Int(planetConfig.totalDepth))m")
-            print("   Chamber X range: \(centerX - chamberRadius) - \(centerX + chamberRadius)")
+            Log.v("🎯 Core chamber detected! Block (\(x), \(y)) at depth \(Int(depth))m")
+            Log.v("   Chamber range: \(Int(planetConfig.coreDepth))m - \(Int(planetConfig.totalDepth))m")
+            Log.v("   Chamber X range: \(centerX - chamberRadius) - \(centerX + chamberRadius)")
         }
 
         return inChamber
@@ -744,7 +746,7 @@ class TerrainManager {
         coreCrystalSpawned = true
 
         let depthInMeters = Double(centerY) * Double(TerrainBlock.metersPerBlock)
-        print("💎 Dark Matter core crystal spawned at grid(\(centerX), \(centerY)) - depth \(Int(depthInMeters))m")
+        Log.v("💎 Dark Matter core crystal spawned at grid(\(centerX), \(centerY)) - depth \(Int(depthInMeters))m")
     }
 
     /// Create the visual background for the core chamber
@@ -796,7 +798,7 @@ class TerrainManager {
         let pulse = SKAction.sequence([fadeIn, fadeOut])
         glowEffect.run(SKAction.repeatForever(pulse))
 
-        print("🌟 Core chamber background created at (\(Int(worldX)), \(Int(worldY)))")
+        Log.v("🌟 Core chamber background created at (\(Int(worldX)), \(Int(worldY)))")
     }
 
     // MARK: - Material Creation
@@ -805,7 +807,7 @@ class TerrainManager {
     private func createMaterial(from config: ResourceConfig) -> Material? {
         // Map resource type string to MaterialType enum
         guard let materialType = Material.MaterialType(rawValue: config.type) else {
-            print("⚠️ Unknown material type: \(config.type)")
+            Log.v("⚠️ Unknown material type: \(config.type)")
             return nil
         }
 
@@ -883,12 +885,12 @@ class TerrainManager {
             return nil
         }
 
-        // Skip indestructible obstacles (bedrock) - safety check
-        if case .obstacle(let blockType) = cell {
-            if blockType == .bedrock {
-                return nil
-            }
-            return nil  // Also return nil for other obstacles (they don't have materials)
+        // Only bedrock is truly indestructible. reinforcedRock (drill L4+) and hardCrystal
+        // (bomb) fall through to normal removal below — eligibility is already gated by the
+        // caller (startDrilling / bomb path). Previously this returned nil for ALL obstacles,
+        // so authorized removals silently no-op'd. (REVIEW.md)
+        if case .obstacle(let blockType) = cell, blockType == .bedrock {
+            return nil
         }
 
         var material: Material?
@@ -965,7 +967,7 @@ class TerrainManager {
         drilledPositions.removeAll()
         coreCrystalSpawned = false
 
-        print("🗑️ Cleared all terrain")
+        Log.v("🗑️ Cleared all terrain")
     }
 
     /// Convert world position to grid coordinates
@@ -983,11 +985,11 @@ class TerrainManager {
     /// Returns array of materials collected from destroyed blocks
     func clearBombArea(at position: CGPoint) -> [Material] {
         guard let centerGrid = worldToGrid(position) else {
-            print("💣 ❌ Bomb failed: invalid grid position")
+            Log.v("💣 ❌ Bomb failed: invalid grid position")
             return []
         }
 
-        print("💣 Bomb activated at grid (\(centerGrid.x), \(centerGrid.y))")
+        Log.v("💣 Bomb activated at grid (\(centerGrid.x), \(centerGrid.y))")
         var collectedMaterials: [Material] = []
         var blocksChecked = 0
         var blocksDestroyed = 0
@@ -1009,21 +1011,21 @@ class TerrainManager {
                     let y = centerGrid.y + dy
                     blocksChecked += 1
 
-                    print("💣 Checking block (\(x),\(y)) - distance: \(sqrt(distanceSquared))")
+                    Log.v("💣 Checking block (\(x),\(y)) - distance: \(sqrt(distanceSquared))")
 
                     // Remove block instantly and collect material
                     if let material = removeBlock(x: x, y: y) {
                         collectedMaterials.append(material)
                         blocksDestroyed += 1
-                        print("💣 ✅ Destroyed block (\(x),\(y)) - got \(material.type)")
+                        Log.v("💣 ✅ Destroyed block (\(x),\(y)) - got \(material.type)")
                     } else {
-                        print("💣 ⚠️ Block (\(x),\(y)) returned nil (empty or already removed)")
+                        Log.v("💣 ⚠️ Block (\(x),\(y)) returned nil (empty or already removed)")
                     }
                 }
             }
         }
 
-        print("💣 Bomb complete: checked \(blocksChecked) blocks, destroyed \(blocksDestroyed), collected \(collectedMaterials.count) materials")
+        Log.v("💣 Bomb complete: checked \(blocksChecked) blocks, destroyed \(blocksDestroyed), collected \(collectedMaterials.count) materials")
         return collectedMaterials
     }
 }
