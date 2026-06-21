@@ -14,6 +14,10 @@ class PlayerPod: SKSpriteNode {
     /// Velocity entering the current frame, captured before the physics step. Used for
     /// impact damage because the solver has usually cancelled velocity by contact time.
     private(set) var lastVelocity: CGVector = .zero
+    /// Y where the current free-fall began (its apex). Reset whenever the pod isn't falling.
+    private var fallStartY: CGFloat = 0
+    /// Distance (px) the pod has continuously free-fallen, measured from the fall's apex.
+    var currentFallDistance: CGFloat { max(0, fallStartY - position.y) }
     private var isDrilling: Bool = false
     private var currentDrillDirection: DrillDirection? = nil
 
@@ -671,6 +675,14 @@ class PlayerPod: SKSpriteNode {
         // Remember this frame's velocity for impact damage — by the time a collision
         // contact fires, the physics solver has often already cancelled it.
         lastVelocity = physicsBody?.velocity ?? .zero
+
+        // Track the start of the current free-fall so fall damage can be charged by
+        // distance (tiles). While resting / rising / drilling (vy >= 0) the fall origin
+        // follows the pod; once it's actually falling (vy < 0) the origin stays put at the
+        // apex, so currentFallDistance grows with the real fall height.
+        if (physicsBody?.velocity.dy ?? 0) >= 0 {
+            fallStartY = position.y
+        }
 
         // Update drill indicator position and visual based on drill direction
         if let drillIndicator = childNode(withName: "drillIndicator") as? SKShapeNode {

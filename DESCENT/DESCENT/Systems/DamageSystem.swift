@@ -23,21 +23,21 @@ class DamageSystem {
 
     // MARK: - Impact Damage
 
-    /// Process an impact collision and apply damage if appropriate.
-    /// `impactSpeed` is the closing speed (px/s) INTO the contacted surface — the pre-impact
-    /// velocity's component along the contact normal, clamped upstream to `K.Damage.maxFallSpeed`.
-    /// A head-on landing hurts; grazing/scraping a wall (velocity parallel to it) deals ~0,
-    /// even while falling fast. Returns true if the hull was destroyed.
+    /// Apply fall damage based on how many TILES the pod free-fell before landing.
+    /// Speed is unusable here — the pod reaches terminal velocity within ~4 tiles, so a short
+    /// drop and a long plunge look identical by speed; distance separates them, and makes the
+    /// cost depth-independent (N tiles costs the same shallow or deep). Returns true if the
+    /// hull was destroyed.
     @discardableResult
-    func processImpact(
-        impactSpeed: CGFloat,
+    func processFallDamage(
+        fallTiles: CGFloat,
         playerPosition: CGPoint,
         surfaceY: CGFloat,
         gameState: GameState
     ) -> Bool {
         // Check if player has active shield
         if gameState.hasActiveEffect("shield") {
-            Log.v("🛡️ Shield absorbed impact (speed: \(Int(impactSpeed)))")
+            Log.v("🛡️ Shield absorbed fall (\(String(format: "%.1f", fallTiles)) tiles)")
             return false
         }
 
@@ -45,20 +45,20 @@ class DamageSystem {
         let distanceFromSurface = surfaceY - playerPosition.y
         guard distanceFromSurface >= K.Damage.safeZoneDepth else { return false }
 
-        // Below the dampener-level threshold, impacts are harmless.
-        let threshold = K.Damage.threshold(dampeners: gameState.impactDampenersLevel)
+        // Free-fall up to the dampener's safe distance; only the excess tiles hurt.
+        let safeTiles = K.Damage.safeFallTiles(dampeners: gameState.impactDampenersLevel)
+        let excess = fallTiles - safeTiles
 
-        // Cooldown prevents multiple damage events from one collision.
         let currentTime = Date().timeIntervalSince1970
-        guard impactSpeed > threshold, currentTime - lastImpactTime >= K.Damage.cooldown else {
+        guard excess > 0, currentTime - lastImpactTime >= K.Damage.cooldown else {
             return false
         }
 
-        let damage = Double((impactSpeed - threshold) * K.Damage.multiplier)
+        let damage = Double(excess * K.Damage.damagePerTile)
         let hullDestroyed = gameState.takeDamage(damage)
         lastImpactTime = currentTime
 
-        Log.v("💥 Impact: \(Int(damage)) HP (speed: \(Int(impactSpeed)), threshold: \(Int(threshold)), dampeners: Lv.\(gameState.impactDampenersLevel)) → Hull \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
+        Log.v("💥 Fall: \(Int(damage)) HP (\(String(format: "%.1f", fallTiles)) tiles, safe: \(Int(safeTiles)), dampeners: Lv.\(gameState.impactDampenersLevel)) → Hull \(Int(gameState.currentHull))/\(Int(gameState.maxHull))")
 
         delegate?.damageSystemDidTakeDamage(damage, at: playerPosition)
 
