@@ -28,45 +28,48 @@ Hull (HP) is the pod's structural integrity and DESCENT's skill check. Unlike [[
 
 ### Impact damage
 
-**Implemented model (rebalanced 2026-06-21).** Damage is driven by the **closing speed into
-the surface you hit** — the pod's pre-impact velocity projected onto the contact normal — not
-raw collision impulse. A head-on landing hurts; grazing/scraping a wall (velocity parallel to
-it) deals ~0, even while falling fast.
+**Implemented model (distance-based, 2026-06-21).** Fall damage is charged by **how far the
+pod free-fell, in tiles** — not by impact speed. Speed can't work here: the pod reaches
+terminal velocity within ~4 tiles, so a short drop and a long plunge are indistinguishable by
+speed. Distance separates them cleanly, and makes the cost **depth-independent** — N tiles
+costs the same shallow or deep.
 
 ```
-impactDamage = max(0, (impactSpeed − threshold) × multiplier)
+fallDamage = max(0, (fallTiles − safeTiles)) × damagePerTile
 
-impactSpeed = |preImpactVelocity · contactNormal|   (px/sec into the surface)
-multiplier  = K.Damage.multiplier = 0.3
+fallTiles     = continuous free-fall distance (px from the fall's apex) ÷ tile size (64)
+damagePerTile = K.Damage.damagePerTile = 8 HP
 ```
 
-Velocity is **clamped to a terminal `K.Damage.maxFallSpeed = 350 px/sec` every frame**, so the
-worst-case impact is bounded. Pre-impact velocity is captured in `PlayerPod.update()` because
-the physics solver has usually cancelled it by the time the contact fires (this was why
-head-on landings briefly read as 0 damage).
+Only a **floor landing** counts: the pod must be falling (`vy < 0`) **and** hit a mostly
+horizontal surface (contact normal more vertical than horizontal). Scraping a side wall while
+falling, or bumping a ceiling on the way up, deals **0**. The fall origin is tracked in
+`PlayerPod.update()` and reset whenever the pod isn't falling — resting, rising, or drilling —
+so drilling straight down never accumulates a fall.
 
-The threshold rises with the **Impact Dampener** upgrade (`K.Damage.threshold`):
+The **safe fall distance** rises with the Impact Dampener upgrade (`K.Damage.safeFallTiles`):
 
-| Dampener Level | Threshold | Effect |
+| Dampener Level | Safe fall | Effect |
 | --- | --- | --- |
-| 0 | 200 px/sec | Routine descents safe; only real drops hurt |
-| 1 | 275 px/sec | Handles fast falls |
-| 2 | 330 px/sec | Near-immune (terminal is 350) |
-| 3 | ∞ px/sec | No fall damage ever |
+| 0 | 3 tiles | start — short drops free |
+| 1 | 5 tiles | tolerate bigger drops |
+| 2 | 8 tiles | long falls shrugged off |
+| 3 | ∞ | no fall damage ever |
 
-Worked examples (Lv0 dampeners, terminal = 350):
+Worked examples (Lv0, safe = 3 tiles, 8 HP/tile):
 
-- ≤200 px/sec: `0 HP` → normal mining/descent never hurts
-- 300 px/sec: `(300−200)×0.3 = 30 HP`
-- 350 (terminal faceplant): `(350−200)×0.3 = 45 HP` → survivable once on a 50 HP hull
+- ≤3 tiles: `0 HP` → normal drilling/descent never hurts
+- 4 tiles: `(4−3)×8 = 8 HP`
+- 6 tiles: `(6−3)×8 = 24 HP`
+- 8 tiles: `(8−3)×8 = 40 HP` → near-lethal on a 50 HP hull
 
 **Feedback on a hit:** screen shake (scaled to damage), a floating `-X` at the pod, a brief
-red screen flash, an HUD hull-bar pulse, and a haptic thump (device only). Safe zone: no
-impact damage within `K.Damage.safeZoneDepth = 150 px` of the surface; `K.Damage.cooldown =
-0.4s` between impact events.
+red screen flash, an HUD hull-bar pulse, and a haptic thump (device only). Safe zone: no fall
+damage within `K.Damage.safeZoneDepth = 150 px` of the surface; `K.Damage.cooldown = 0.4s`
+between events.
 
 > [!note]
-> All impact tuning lives in `K.Damage` (`Constants.swift`) — change feel in one place.
+> All fall-damage tuning lives in `K.Damage` (`Constants.swift`) — change feel in one place.
 > Level 3 dampeners enable the [[Fuel System#Free-Fall|free-fall fuel strategy]] with no hull cost.
 
 ### Hazard damage

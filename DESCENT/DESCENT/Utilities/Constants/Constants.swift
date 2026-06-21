@@ -72,21 +72,24 @@ extension K {
 
     /// Impact-damage tuning. See docs/wiki/Hull and Damage.md.
     struct Damage {
-        /// Terminal velocity (px/s). All velocity is clamped to this every frame so
-        /// impact speed — and therefore damage — stays bounded and predictable.
-        static let maxFallSpeed: CGFloat = 350
-        /// HP of damage per (px/s) of impact speed above the dampener threshold.
-        static let multiplier: CGFloat = 0.3
-        /// No impact damage within this many px of the surface (safe zone near the shop).
+        /// Terminal velocity (px/s) clamp on free-fall. Movement/visual only — fall damage
+        /// is charged by distance (below), not speed. Thrust is separately capped at 300.
+        static let maxFallSpeed: CGFloat = 500
+        /// HP per tile fallen beyond the safe distance.
+        static let damagePerTile: CGFloat = 8
+        /// No fall damage within this many px of the surface (safe zone near the shop).
         static let safeZoneDepth: CGFloat = 150
-        /// Minimum seconds between impact-damage events.
+        /// Minimum seconds between fall-damage events.
         static let cooldown: TimeInterval = 0.4
-        /// Impact speed (px/s) below which the given dampener level takes no damage.
-        static func threshold(dampeners: Int) -> CGFloat {
+        /// How many tiles the pod can free-fall before taking damage (rises with dampeners).
+        /// We charge by DISTANCE, not speed: the pod hits terminal velocity within ~4 tiles,
+        /// so a short drop and a long plunge are indistinguishable by speed — but not by how
+        /// far you actually fell.
+        static func safeFallTiles(dampeners: Int) -> CGFloat {
             switch dampeners {
-            case 0: return 200
-            case 1: return 275
-            case 2: return 330
+            case 0: return 3
+            case 1: return 5
+            case 2: return 8
             default: return .infinity   // Level 3+: immune to fall damage
             }
         }

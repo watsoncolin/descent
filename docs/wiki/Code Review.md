@@ -59,9 +59,9 @@ obstacle materials indestructible despite being designed drillable.
 > - Optionally move tank/hull/threshold ladders into planet JSON.
 
 > [!todo] Strata (see [[Terrain and Strata]])
+> - ✅ **Done:** O(N²) surface-mask rebuild fixed — the mask now appends one cutout per drill in place (was the depth perf cliff *and* the bomb hitch).
 > - Standardize on block-rows internally; convert to meters only at the JSON boundary.
 > - Make `CollisionGrid` the single source of truth; retire the six string-keyed dicts; integer/`GridCoord` keys.
-> - Fix O(N²) surface-mask rebuild (`TerrainLayer.swift:158`) — the depth perf cliff.
 > - `seededRandom` can return `max+1` → OOB crash (`TerrainManager.swift:683`). Stratum > ~1600m → `fatalError` (Metal 8192px limit). Validate author data, never `fatalError`.
 
 > [!todo] Aesthetics (see [[Design System]])

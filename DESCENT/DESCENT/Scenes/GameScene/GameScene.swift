@@ -1163,21 +1163,23 @@ extension GameScene: SKPhysicsContactDelegate {
             return
         }
 
-        // Damage from the closing speed INTO the contacted surface: the pre-impact
-        // velocity's component along the contact normal. A head-on landing (velocity
-        // along the normal) hurts; grazing/scraping a wall (velocity perpendicular to it)
-        // deals ~0, even while falling fast. We use the velocity captured in
-        // PlayerPod.update() because the solver has already cancelled it by contact time.
+        // Fall damage is charged by how far the pod fell (tiles), not speed — speed can't
+        // tell a short drop from a long plunge since the pod hits terminal in ~4 tiles.
+        // Only a real floor landing counts: falling (vy < 0) AND a mostly-vertical contact
+        // normal. Side-scrapes and ceiling bonks (normal mostly horizontal, or rising) deal 0.
         let surfaceY = frame.maxY - 100
         let n = contact.contactNormal
         let v = player.lastVelocity
-        let impactSpeed = abs(v.dx * n.dx + v.dy * n.dy)
-        damageSystem.processImpact(
-            impactSpeed: impactSpeed,
-            playerPosition: player.position,
-            surfaceY: surfaceY,
-            gameState: gameState
-        )
+        let isFloorLanding = v.dy < 0 && abs(n.dy) > abs(n.dx)
+        let fallTiles = player.currentFallDistance / TerrainBlock.size
+        if isFloorLanding {
+            damageSystem.processFallDamage(
+                fallTiles: fallTiles,
+                playerPosition: player.position,
+                surfaceY: surfaceY,
+                gameState: gameState
+            )
+        }
     }
 
     private func handleRunEnd() {
