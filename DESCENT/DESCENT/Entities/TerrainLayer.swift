@@ -37,6 +37,8 @@ class TerrainLayer: SKNode {
     // Dual-layer system
     private var baseTerrainContainer: SKNode!  // Base layer (always visible, shows surface initially)
     private var surfaceCropNode: SKCropNode!  // Initial surface layer with mask for cutting holes
+    private var surfaceMaskShape: SKShapeNode?  // the crop mask node, mutated in place per drill
+    private var surfaceMaskPath = UIBezierPath()  // full rect minus drilled cutouts (even-odd fill)
     private var drilledBlocks: Set<String> = []  // Track which blocks have been drilled
     private var blockPhaseOffsets: [String: CGFloat] = [:] // Random phase offset per block for varied consumption patterns
     private var blockGlowVariations: [String: (frequency: CGFloat, amplitude: CGFloat, secondaryPhase: CGFloat, rotationDirection: CGFloat)] = [:] // Glow-specific variations including rotation
@@ -141,47 +143,35 @@ class TerrainLayer: SKNode {
         surfaceCropNode.zPosition = 3
         surfaceCropNode.name = "surfaceCropNode"
 
-        // Start with full white rectangle mask (all surface visible)
-        let fullMask = SKShapeNode(rect: CGRect(x: 0, y: 0, width: layerSize.width, height: layerSize.height))
+        // Start with full white rectangle mask (all surface visible). We keep this path
+        // and node around and append cutouts incrementally as blocks are drilled, instead
+        // of rebuilding the whole mask each time.
+        surfaceMaskPath = UIBezierPath(rect: CGRect(x: 0, y: 0, width: layerSize.width, height: layerSize.height))
+        surfaceMaskPath.usesEvenOddFillRule = true
+        let fullMask = SKShapeNode(path: surfaceMaskPath.cgPath)
         fullMask.fillColor = .white
         fullMask.strokeColor = .clear
         fullMask.name = "surfaceMask"
+        surfaceMaskShape = fullMask
         surfaceCropNode.maskNode = fullMask
 
         surfaceCropNode.addChild(surfaceContainer)
         addChild(surfaceCropNode)
     }
 
-    /// Cut a rectangular hole in the initial surface layer at the given block position
-    /// Regenerates mask with ALL drilled blocks to ensure all cutouts are preserved
-    /// gridX and gridY are LOCAL coordinates within this terrain layer
+    /// Cut a rectangular hole in the initial surface layer at the given block position.
+    /// Appends ONLY the new cutout to the persistent mask path (even-odd fill turns it
+    /// into a hole) and updates the existing mask node in place — O(1). Previously this
+    /// rebuilt the whole mask from every drilled block (O(N) per drill, O(N²) per run),
+    /// which is what made deep runs and bombs hitch.
+    /// gridX and gridY are LOCAL coordinates within this terrain layer.
     private func cutHoleInSurfaceLayer(gridX: Int, gridY: Int, blockSize: CGFloat) {
         guard surfaceCropNode != nil else { return }
 
-        // Use UIBezierPath to create mask with even-odd fill rule for cutouts
-        let bezierPath = UIBezierPath(rect: CGRect(x: 0, y: 0, width: layerSize.width, height: layerSize.height))
-
-        // Add rectangular cutouts for all drilled blocks
-        for drilledKey in drilledBlocks {
-            let components = drilledKey.split(separator: ",")
-            guard components.count == 2,
-                  let blockX = Int(components[0]),
-                  let blockY = Int(components[1]) else { continue }
-
-            let posX = CGFloat(blockX) * blockSize
-            let posY = layerSize.height - CGFloat(blockY + 1) * blockSize
-            let cutoutRect = CGRect(x: posX, y: posY, width: blockSize, height: blockSize)
-            bezierPath.append(UIBezierPath(rect: cutoutRect))
-        }
-
-        bezierPath.usesEvenOddFillRule = true
-
-        let newMask = SKShapeNode(path: bezierPath.cgPath)
-        newMask.fillColor = .white
-        newMask.strokeColor = .clear
-        newMask.name = "surfaceMask"
-
-        surfaceCropNode.maskNode = newMask
+        let posX = CGFloat(gridX) * blockSize
+        let posY = layerSize.height - CGFloat(gridY + 1) * blockSize
+        surfaceMaskPath.append(UIBezierPath(rect: CGRect(x: posX, y: posY, width: blockSize, height: blockSize)))
+        surfaceMaskShape?.path = surfaceMaskPath.cgPath
     }
 
     /// Create a continuous terrain container with gradient, variations, and flow patterns
