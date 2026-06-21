@@ -16,25 +16,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Design Documentation
 
-**All game design specifics live in dedicated design documents:**
+**All game design specifics live in the Obsidian wiki at `docs/wiki/`** (open the
+folder as an Obsidian vault, or read the Markdown directly). Start at
+`docs/wiki/Home.md`. Key pages:
 
 ### Core Design
-- **DESIGN.md** - Complete game design, mechanics, progression
-- **MISSING_FEATURES.md** - Implementation status and task tracking
-- **DATA_MODEL.md** - Data structures and persistence layers
+- **`docs/wiki/Game Design.md`** - Vision, core loop, progression, the 8 planets, currencies, prestige
+- **`docs/wiki/Roadmap.md`** - Implementation status and task tracking (was MISSING_FEATURES.md)
+- **`docs/wiki/Data Model.md`** - Three-tier persistence (Profile → Planet → Run)
+- **`docs/wiki/Decisions.md`** - Running decision log
+- **`docs/wiki/Code Review.md`** - Current health, shipped fixes, and the deeper-pass TODOs
 
 ### System-Specific Design
-- **FUEL_SYSTEM.md** - Fuel consumption, warnings, emergency return
-- **CARGO_SYSTEM.md** - Volume-based cargo, auto-drop algorithm
-- **HULL_SYSTEM.md** - Damage system, impact physics
-- **SUPPLY_DROP_SYSTEM.md** - Mid-run item ordering with capacity limits
-- **OBSTACLE_MATERIALS_GUIDE.md** - Terrain types and materials
+- **`docs/wiki/Fuel System.md`** - Fuel consumption, warnings, emergency return
+- **`docs/wiki/Cargo System.md`** - Volume-based cargo, auto-drop algorithm
+- **`docs/wiki/Hull and Damage.md`** - Damage system, impact physics
+- **`docs/wiki/Supply Drops.md`** - Mid-run item ordering with capacity limits
+- **`docs/wiki/Terrain and Strata.md`** + **`docs/wiki/Materials and Economy.md`** - Terrain types and materials
+- **`docs/wiki/Design System.md`** + **`docs/wiki/Drill Animation and VFX.md`** - Visual language and effects
 
 ### Level Design
-- **level_design/mars_level_design.md** - Mars planet configuration
-- **level_design/mars.json** - Mars strata and vein generation data
+- **`docs/wiki/Mars.md`** - Mars planet configuration (the worked example)
+- **`docs/wiki/Level Design Guide.md`** - How to author a new planet
+- **`DESCENT/DESCENT/Resources/mars.json`** - Mars strata and vein generation data (runtime config loaded by the app)
 
-**When implementing features, always consult the relevant design document first.**
+**When implementing features, always consult the relevant wiki page first.**
 
 ---
 
@@ -74,7 +80,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Hazards (gas pockets, cave-ins)
 - Tutorial system
 
-**See MISSING_FEATURES.md for complete status.**
+**See `docs/wiki/Roadmap.md` for complete status.**
 
 ---
 
@@ -116,8 +122,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### When Adding New Features
 
-1. **Check design docs first** - DESIGN.md or system-specific .md files
-2. **Update MISSING_FEATURES.md** - Mark features as implemented
+1. **Check the wiki first** - `docs/wiki/Game Design.md` or the relevant system page
+2. **Update `docs/wiki/Roadmap.md`** - Mark features as implemented
 3. **Follow existing patterns**:
    - Systems for gameplay logic
    - Delegates for communication
@@ -157,7 +163,7 @@ Save on:
 ### Prestige Flow
 
 Prestige sequence:
-1. Collect Dark Matter at core (490m depth on Mars)
+1. Collect Dark Matter at core (~2500m depth on Mars; 2560m total)
 2. Return to surface with `coreExtracted = true` flag
 3. Show PrestigeDialog with Soul Crystal calculation
 4. On prestige: sell cargo → calculate Soul Crystals → reset planet → regenerate terrain
@@ -235,11 +241,11 @@ When implementing features, test:
 
 ## Notes for Claude Code
 
-- **Always read design docs before implementing** - Don't guess at mechanics
-- **Update MISSING_FEATURES.md** when completing items
+- **Always read the wiki (`docs/wiki/`) before implementing** - Don't guess at mechanics
+- **Update `docs/wiki/Roadmap.md`** when completing items
 - **Follow existing code patterns** - Consistency is key
 - **Test save/load** after data model changes
 - **Consider performance** - This runs on mobile devices
 - **Ask if design is unclear** - Better to clarify than implement wrong
 
-**Current Focus**: Implementing warning systems (fuel/hull) and emergency return system. See MISSING_FEATURES.md Priority 1 items.
+**Current Focus**: Implementing warning systems (fuel/hull) and emergency return system. See `docs/wiki/Roadmap.md` Priority 1 items.
