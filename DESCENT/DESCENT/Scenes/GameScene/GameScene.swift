@@ -15,6 +15,7 @@ class GameScene: SKScene {
 
     // Camera
     private var cameraNode: SKCameraNode!
+    private var shakeMagnitude: CGFloat = 0  // decaying impact screen-shake
 
     // HUD
     private var hud: HUD!
@@ -440,7 +441,7 @@ class GameScene: SKScene {
             let distanceToFinger = hypot(touchLocation.x - player.position.x, touchLocation.y - player.position.y)
             let maxThrustDistance: CGFloat = 150  // Full thrust beyond this
             let thrustIntensity = min(1.0, distanceToFinger / maxThrustDistance)
-            let baseFuelConsumption = 1.0  // fuel/second (FUEL_SYSTEM.md:19)
+            let baseFuelConsumption = K.Fuel.baseMoveCost  // fuel/second (docs/wiki/Fuel System.md)
             let zoneModifier = 1.0  // No environmental zones yet
 
             let fuelPerSecond = baseFuelConsumption * thrustIntensity * zoneModifier
@@ -522,8 +523,19 @@ class GameScene: SKScene {
         let targetY = player.position.y
         let currentY = cameraNode.position.y
         let smoothing: CGFloat = 0.1
-        cameraNode.position.y = currentY + (targetY - currentY) * smoothing
-        cameraNode.position.x = frame.midX
+        var newY = currentY + (targetY - currentY) * smoothing
+        var newX = frame.midX
+
+        // Decaying impact shake (set by damageSystemDidTakeDamage)
+        if shakeMagnitude > 0.5 {
+            newX += CGFloat.random(in: -shakeMagnitude...shakeMagnitude)
+            newY += CGFloat.random(in: -shakeMagnitude...shakeMagnitude)
+            shakeMagnitude *= 0.8
+        } else {
+            shakeMagnitude = 0
+        }
+
+        cameraNode.position = CGPoint(x: newX, y: newY)
     }
 
     // MARK: - Surface Management
@@ -993,6 +1005,15 @@ extension GameScene {
         let baseDrillTime = 0.3
         drillDuration = baseDrillTime * strataHardness / Double(gameState.drillStrengthLevel)
 
+        // Charge the whole block's fuel up front (linear: baseDrillCost × hardness / drillLevel).
+        // Predictable, and replaces the old per-frame drain that scaled quadratically. (docs/wiki/Fuel System.md)
+        let drillFuelCost = K.Fuel.baseDrillCost * strataHardness / Double(gameState.drillStrengthLevel)
+        if !gameState.consumeFuel(drillFuelCost) {
+            Log.v("⛽ Out of fuel — can't start drilling")
+            handleGameOver(reason: "Out of Fuel")
+            return
+        }
+
         // Store drilling state
         currentDrillingBlock = (x: gridPos.x, y: gridPos.y)
         drillStartPosition = player.position
@@ -1034,19 +1055,7 @@ extension GameScene {
         let wobble = sin(drillProgress * 20) * 0.05 * drillProgress
         player.zRotation = wobble
 
-        // Consume fuel gradually during drilling
-        // getHardnessAtDepth expects depth in METERS, not grid rows (matches startDrilling). (REVIEW.md)
-        let depthInMeters = Double(block.y) * TerrainBlock.metersPerBlock
-        let strataHardness = terrainManager.getHardnessAtDepth(depthInMeters) ?? 1.0
-        let fuelPerSecond = strataHardness / Double(gameState.drillStrengthLevel)
-        let baseCost = 10.0
-        let fuelCost = fuelPerSecond * deltaTime * baseCost
-
-        if !gameState.consumeFuel(fuelCost) {
-            // Out of fuel while drilling - abort drilling and trigger game over
-            completeDrilling(block: block, fuelOut: true)
-            return
-        }
+        // Fuel for the whole block was charged up front in startDrilling().
 
         // Check if drilling complete
         if drillProgress >= 1.0 {
@@ -1154,13 +1163,19 @@ extension GameScene: SKPhysicsContactDelegate {
             return
         }
 
-        // Take impact damage - delegate to DamageSystem
+        // Damage from the closing speed INTO the contacted surface: the pre-impact
+        // velocity's component along the contact normal. A head-on landing (velocity
+        // along the normal) hurts; grazing/scraping a wall (velocity perpendicular to it)
+        // deals ~0, even while falling fast. We use the velocity captured in
+        // PlayerPod.update() because the solver has already cancelled it by contact time.
         let surfaceY = frame.maxY - 100
+        let n = contact.contactNormal
+        let v = player.lastVelocity
+        let impactSpeed = abs(v.dx * n.dx + v.dy * n.dy)
         damageSystem.processImpact(
-            impulse: contact.collisionImpulse,
+            impactSpeed: impactSpeed,
             playerPosition: player.position,
             surfaceY: surfaceY,
-            podSize: player.size,
             gameState: gameState
         )
     }
@@ -1227,6 +1242,51 @@ extension GameScene: InputManagerDelegate {
 extension GameScene: DamageSystemDelegate {
     func damageSystemDidDestroyHull() {
         handleGameOver(reason: "Hull Destroyed")
+    }
+
+    func damageSystemDidTakeDamage(_ amount: Double, at position: CGPoint) {
+        let dmg = Int(amount.rounded())
+        guard dmg > 0 else { return }
+
+        // Screen shake scaled to severity, floating "-X", red flash, hull-bar pulse —
+        // so it's obvious what just happened and how much it cost.
+        shakeMagnitude = min(16, 4 + CGFloat(amount) * 0.3)
+        showDamageNumber(dmg, at: position)
+        flashDamageVignette(intensity: min(0.3, CGFloat(amount) / 100))
+        hud.flashHull()
+
+        // Haptic feedback (no-op in the Simulator)
+        let style: UIImpactFeedbackGenerator.FeedbackStyle = amount >= 25 ? .heavy : .medium
+        UIImpactFeedbackGenerator(style: style).impactOccurred()
+    }
+
+    private func showDamageNumber(_ amount: Int, at position: CGPoint) {
+        let label = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        label.text = "-\(amount)"
+        label.fontSize = 28
+        label.fontColor = UIColor(red: 1.0, green: 0.3, blue: 0.3, alpha: 1.0)
+        label.position = CGPoint(x: position.x, y: position.y + 30)
+        label.zPosition = 300
+        addChild(label)
+        let rise = SKAction.moveBy(x: 0, y: 50, duration: 0.8)
+        let fade = SKAction.fadeOut(withDuration: 0.8)
+        label.run(.sequence([.group([rise, fade]), .removeFromParent()]))
+    }
+
+    private func flashDamageVignette(intensity: CGFloat) {
+        let flash = SKSpriteNode(
+            color: UIColor(red: 0.9, green: 0.1, blue: 0.1, alpha: 1.0),
+            size: CGSize(width: size.width * 1.2, height: size.height * 1.2)
+        )
+        flash.alpha = 0
+        flash.zPosition = 1500
+        flash.position = .zero  // camera-space center
+        cameraNode.addChild(flash)
+        flash.run(.sequence([
+            .fadeAlpha(to: intensity, duration: 0.05),
+            .fadeOut(withDuration: 0.25),
+            .removeFromParent()
+        ]))
     }
 }
 

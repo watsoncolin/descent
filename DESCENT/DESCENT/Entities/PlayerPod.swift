@@ -11,6 +11,9 @@ class PlayerPod: SKSpriteNode {
 
     // MARK: - Properties
     private var velocity: CGVector = .zero
+    /// Velocity entering the current frame, captured before the physics step. Used for
+    /// impact damage because the solver has usually cancelled velocity by contact time.
+    private(set) var lastVelocity: CGVector = .zero
     private var isDrilling: Bool = false
     private var currentDrillDirection: DrillDirection? = nil
 
@@ -654,6 +657,20 @@ class PlayerPod: SKSpriteNode {
     func update(deltaTime: TimeInterval) {
         // Ensure pod always stays upright (no rotation)
         zRotation = 0
+
+        // Clamp velocity every frame — including free-fall, which moveTowards (thrust
+        // only) doesn't cover. Bounds terminal velocity so impact damage is predictable.
+        if let body = physicsBody {
+            let speed = hypot(body.velocity.dx, body.velocity.dy)
+            if speed > K.Damage.maxFallSpeed {
+                let ratio = K.Damage.maxFallSpeed / speed
+                body.velocity = CGVector(dx: body.velocity.dx * ratio, dy: body.velocity.dy * ratio)
+            }
+        }
+
+        // Remember this frame's velocity for impact damage — by the time a collision
+        // contact fires, the physics solver has often already cancelled it.
+        lastVelocity = physicsBody?.velocity ?? .zero
 
         // Update drill indicator position and visual based on drill direction
         if let drillIndicator = childNode(withName: "drillIndicator") as? SKShapeNode {
