@@ -8,7 +8,7 @@ updated: 2026-06-21
 Fuel is DESCENT's core resource-management mechanic. It depletes during thrust and drilling, forcing players to trade exploration depth against safe return capability. Running out doesn't kill you — it triggers an automatic [emergency return](#emergency-return-0-fuel) with a cargo penalty. See [[Game Design]] for how this fits the overall loop, and [[Hull and Damage]] for the other failure axis.
 
 > [!note]
-> All consumption rates, tank tiers, and thresholds below are live tuning constants — balance changes are tracked in [[Code Review]]. Values here are restated verbatim from the source spec.
+> **Movement and drilling fuel are implemented** (rebalanced 2026-06-21) — tuning lives in `K.Fuel` (`Constants.swift`); tank tiers are in `PlanetState`. The warning system and the auto-emergency-return below are **design targets** (not yet implemented). See [[Code Review]] for status.
 
 ---
 
@@ -49,23 +49,26 @@ Where:
 
 ### 2. Drilling
 
+The whole block's fuel is charged **once, up front** when drilling starts — predictable, and
+replacing an earlier per-frame drain that scaled *quadratically* with hardness.
+
 ```
-fuelPerTile = baseDrillCost × strataHardness / drillLevel
+fuelPerBlock = baseDrillCost × strataHardness / drillLevel
 
 Where:
-- baseDrillCost = 1.0 fuel per tile
+- baseDrillCost = K.Fuel.baseDrillCost = 1.5 fuel per block
 - strataHardness = 1.0 to 3.5 (varies by strata layer)
 - drillLevel = 1 to 5 (player upgrade)
 ```
 
 | Strata | Hardness | Drill Lv1 | Drill Lv3 | Drill Lv5 |
 | --- | --- | --- | --- | --- |
-| Surface Regolith | 1.0 | 1.0 fuel | 0.33 fuel | 0.2 fuel |
-| Basalt Shield | 2.0 | 2.0 fuel | 0.67 fuel | 0.4 fuel |
-| Dense Mantle | 3.0 | 3.0 fuel | 1.0 fuel | 0.6 fuel |
-| Pre-Core Mantle | 3.5 | 3.5 fuel | 1.17 fuel | 0.7 fuel |
+| Surface Regolith | 1.0 | 1.5 fuel | 0.5 fuel | 0.3 fuel |
+| Basalt Shield | 2.0 | 3.0 fuel | 1.0 fuel | 0.6 fuel |
+| Dense Mantle | 3.0 | 4.5 fuel | 1.5 fuel | 0.9 fuel |
+| Pre-Core Mantle | 3.5 | 5.25 fuel | 1.75 fuel | 1.05 fuel |
 
-Drill upgrades dramatically reduce fuel cost in hard rock — essential for deep dives. See [[Terrain and Strata]] for the full hardness model.
+Drill upgrades make blocks both faster *and* cheaper — essential for deep dives. See [[Terrain and Strata]] for the full hardness model.
 
 ### 3. Environmental zone modifiers
 
@@ -109,6 +112,11 @@ Four staged warnings fire at fixed percentages of max fuel:
 ---
 
 ## Emergency return (0 fuel)
+
+> [!warning] Not yet implemented
+> The designed auto-ascent below is a **target**. Current behavior: hitting 0 fuel ends the
+> run immediately (game over) and keeps **50% of cargo value**. Building the auto-return is a
+> tracked follow-up in [[Code Review]].
 
 Hitting 0 fuel does **not** kill you — an automated ascent recovers the pod, minus cargo.
 

@@ -39,6 +39,6 @@ Swift + SpriteKit. Repo: `descent`.
 ## Status — June 2026
 Resumed after an ~8-month pause. A four-part [[Code Review]] mapped the engine,
 [[Terrain and Strata]], [[Fuel System]]/[[Hull and Damage]] balance, and [[Design System]]
-aesthetics. A quick-win batch is shipped and building on iOS 26.5. **Next:** the deeper
-passes — fuel/damage tuning first (now testable), then the strata unit-convention
-refactor, then the aesthetic pass toward the app-icon art direction.
+aesthetics. A quick-win batch and a **fuel & damage rebalance** are shipped and building on iOS 26.5
+(linear drill fuel, closing-speed impact damage with feedback). **Next:** the strata
+unit-convention refactor, then the aesthetic pass toward the app-icon art direction.
