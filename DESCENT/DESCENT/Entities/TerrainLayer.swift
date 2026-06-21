@@ -56,12 +56,12 @@ class TerrainLayer: SKNode {
             self.customSurfaceColors = surface
             self.customExcavatedColors = excavated
 
-            print("🎨 Using custom colors from level config for \(terrainType)")
-            print("   - Depth range: \(stratumRange.lowerBound)m - \(stratumRange.upperBound)m")
-            print("   - Surface gradient: \(surface.count) colors")
-            print("   - Surface hex values: \(surface.map { $0.toHex() })")
-            print("   - Excavated gradient: \(excavated.count) colors")
-            print("   - Excavated hex values: \(excavated.map { $0.toHex() })")
+            Log.v("🎨 Using custom colors from level config for \(terrainType)")
+            Log.v("   - Depth range: \(stratumRange.lowerBound)m - \(stratumRange.upperBound)m")
+            Log.v("   - Surface gradient: \(surface.count) colors")
+            Log.v("   - Surface hex values: \(surface.map { $0.toHex() })")
+            Log.v("   - Excavated gradient: \(excavated.count) colors")
+            Log.v("   - Excavated hex values: \(excavated.map { $0.toHex() })")
         }
 
         // Convert depth range (meters) to pixel height
@@ -69,14 +69,14 @@ class TerrainLayer: SKNode {
         let depthInMeters = stratumRange.upperBound - stratumRange.lowerBound
         let pixelHeight = CGFloat(depthInMeters) * (TerrainBlock.size / TerrainBlock.metersPerBlock)
 
-        print("🏔️ Creating TerrainLayer: \(terrainType)")
-        print("   - Range: \(stratumRange.lowerBound)...\(stratumRange.upperBound)m")
-        print("   - Depth: \(depthInMeters)m")
-        print("   - Pixel height: \(pixelHeight)px")
+        Log.v("🏔️ Creating TerrainLayer: \(terrainType)")
+        Log.v("   - Range: \(stratumRange.lowerBound)...\(stratumRange.upperBound)m")
+        Log.v("   - Depth: \(depthInMeters)m")
+        Log.v("   - Pixel height: \(pixelHeight)px")
 
         // Metal texture limit check
         if pixelHeight > 8192 {
-            print("⚠️ ERROR: Texture height \(pixelHeight) exceeds Metal limit of 8192!")
+            Log.v("⚠️ ERROR: Texture height \(pixelHeight) exceeds Metal limit of 8192!")
             fatalError("Texture too large: \(pixelHeight)px. Maximum is 8192px. Stratum range: \(stratumRange)")
         }
 
@@ -87,7 +87,7 @@ class TerrainLayer: SKNode {
 
         super.init()
 
-        print("   - Final size: \(layerSize)")
+        Log.v("   - Final size: \(layerSize)")
 
         setupDualLayers()
     }
@@ -112,16 +112,16 @@ class TerrainLayer: SKNode {
         // Z-positioning should handle layer ordering
         baseTerrainContainer = baseContainer
         addChild(baseTerrainContainer)
-        print("   ✅ Base terrain layer created with excavated colors")
-        print("   - Layer size: \(layerSize)")
-        print("   - Layer zPosition (relative): 0")
+        Log.v("   ✅ Base terrain layer created with excavated colors")
+        Log.v("   - Layer size: \(layerSize)")
+        Log.v("   - Layer zPosition (relative): 0")
 
         // Create initial full surface layer (lighter) that covers entire terrain
         createInitialSurfaceLayer()
-        print("   ✅ Initial surface layer created at relative zPosition 3")
+        Log.v("   ✅ Initial surface layer created at relative zPosition 3")
 
         // Surface blocks shrink during drilling via inverse crop masks to reveal darker excavated base beneath
-        print("   ✅ Dual-layer excavation system ready")
+        Log.v("   ✅ Dual-layer excavation system ready")
     }
 
     /// Create initial surface layer that covers entire terrain (before any drilling)
@@ -361,21 +361,21 @@ class TerrainLayer: SKNode {
             }
         }
 
-        print("🏁 Starting fade animation for \(cropKey)")
+        Log.v("🏁 Starting fade animation for \(cropKey)")
 
         // Use very quick fade for instant removal (bombs), normal fade for drilling
         let fadeDuration = instant ? 0.01 : 0.15
         let fadeAction = SKAction.fadeOut(withDuration: fadeDuration)
         let remove = SKAction.removeFromParent()
         cropNode.run(SKAction.sequence([fadeAction, remove])) { [weak self] in
-            print("🏁 ✅ Crop node \(cropKey) removed from parent (fade complete)")
+            Log.v("🏁 ✅ Crop node \(cropKey) removed from parent (fade complete)")
 
             // Check if it was actually removed
             if let strongSelf = self {
                 if let stillExists = strongSelf.childNode(withName: cropKey) {
-                    print("🏁 ⚠️ WARNING: Crop node \(cropKey) still exists after removal! Alpha: \(stillExists.alpha)")
+                    Log.v("🏁 ⚠️ WARNING: Crop node \(cropKey) still exists after removal! Alpha: \(stillExists.alpha)")
                 } else {
-                    print("🏁 ✅ Confirmed: Crop node \(cropKey) no longer in scene tree")
+                    Log.v("🏁 ✅ Confirmed: Crop node \(cropKey) no longer in scene tree")
                 }
             }
         }
@@ -415,7 +415,7 @@ class TerrainLayer: SKNode {
             // Generate deterministic random values based on grid coordinates (ensures unique patterns)
             // Use grid coordinates as seed for deterministic but unique randomness
             let seed = UInt64(gridX) * 73856093 ^ UInt64(gridY) * 19349663  // Hash function for spatial hashing
-            print("🎲 Block (\(gridX), \(gridY)) → seed: \(seed)")
+            Log.v("🎲 Block (\(gridX), \(gridY)) → seed: \(seed)")
             var rng = SeededRandomNumberGenerator(seed: seed)
 
             // Generate random phase offset for this block (makes each block's pattern unique)
@@ -756,12 +756,12 @@ class TerrainLayer: SKNode {
         position = CGPoint(x: worldX, y: worldY)
 
         let topY = worldY + layerSize.height
-        print("📍 POSITIONED \(terrainType) layer:")
-        print("   - Depth range: \(stratumRange.lowerBound)m - \(stratumRange.upperBound)m")
-        print("   - Bottom Y: \(worldY) (at \(stratumRange.upperBound)m depth)")
-        print("   - Top Y: \(topY) (at \(stratumRange.lowerBound)m depth)")
-        print("   - Layer height: \(layerSize.height)px")
-        print("   - zPosition: \(zPosition)")
+        Log.v("📍 POSITIONED \(terrainType) layer:")
+        Log.v("   - Depth range: \(stratumRange.lowerBound)m - \(stratumRange.upperBound)m")
+        Log.v("   - Bottom Y: \(worldY) (at \(stratumRange.upperBound)m depth)")
+        Log.v("   - Top Y: \(topY) (at \(stratumRange.lowerBound)m depth)")
+        Log.v("   - Layer height: \(layerSize.height)px")
+        Log.v("   - zPosition: \(zPosition)")
     }
 }
 

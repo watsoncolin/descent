@@ -107,33 +107,33 @@ class GameScene: SKScene {
         consumableUI.onUseRepairKit = { [weak self] in
             guard let self = self else { return }
             if self.consumableSystem.useConsumable(.repairKit) {
-                print("🔧 Repair Kit used!")
+                Log.v("🔧 Repair Kit used!")
                 self.createRepairEffect()
             }
         }
         consumableUI.onUseFuelCell = { [weak self] in
             guard let self = self else { return }
             if self.consumableSystem.useConsumable(.fuelCell) {
-                print("⛽ Fuel Cell used!")
+                Log.v("⛽ Fuel Cell used!")
                 self.createFuelEffect()
             }
         }
         consumableUI.onUseBomb = { [weak self] in
             guard let self = self else { return }
             if self.consumableSystem.useConsumable(.bomb, at: self.player.position) {
-                print("💣 Bomb used!")
+                Log.v("💣 Bomb used!")
             }
         }
         consumableUI.onUseTeleporter = { [weak self] in
             guard let self = self else { return }
             if self.consumableSystem.useConsumable(.teleporter) {
-                print("🌀 Teleporter used!")
+                Log.v("🌀 Teleporter used!")
             }
         }
         consumableUI.onUseShield = { [weak self] in
             guard let self = self else { return }
             if self.consumableSystem.useConsumable(.shield) {
-                print("🛡️ Shield used!")
+                Log.v("🛡️ Shield used!")
             }
         }
         consumableUI.isHidden = true  // Hidden until mining starts
@@ -149,7 +149,7 @@ class GameScene: SKScene {
                 gameState: self.gameState
             )
             if !success {
-                print("❌ Cannot order supply drop - insufficient credits or delivery in progress")
+                Log.v("❌ Cannot order supply drop - insufficient credits or delivery in progress")
             }
         }
         supplyDropUI.onClearOrder = { [weak self] in
@@ -230,7 +230,7 @@ class GameScene: SKScene {
             self?.hud.isHidden = hide
         })
 
-        print("🚀 DESCENT initialized - Touch and hold to move pod")
+        Log.v("🚀 DESCENT initialized - Touch and hold to move pod")
     }
 
     private func setupShop() {
@@ -326,7 +326,7 @@ class GameScene: SKScene {
         rightWall.zPosition = 1
         addChild(rightWall)
 
-        print("🧱 Created boundaries at x: \(frame.minX) and \(frame.maxX)")
+        Log.v("🧱 Created boundaries at x: \(frame.minX) and \(frame.maxX)")
     }
 
     // MARK: - Touch Handling
@@ -382,14 +382,14 @@ class GameScene: SKScene {
     }
 
     private func openPodShowcase() {
-        print("🎨 Opening Pod Showcase...")
+        Log.v("🎨 Opening Pod Showcase...")
         let showcaseScene = PodShowcaseScene(size: size)
         showcaseScene.scaleMode = scaleMode
         view?.presentScene(showcaseScene, transition: SKTransition.fade(withDuration: 0.3))
     }
 
     private func openLevelExplorer() {
-        print("🗺️ Opening Level Explorer...")
+        Log.v("🗺️ Opening Level Explorer...")
         let explorerScene = LevelExplorerScene(size: size)
         explorerScene.scaleMode = scaleMode
         view?.presentScene(explorerScene, transition: SKTransition.fade(withDuration: 0.3))
@@ -444,7 +444,8 @@ class GameScene: SKScene {
             let zoneModifier = 1.0  // No environmental zones yet
 
             let fuelPerSecond = baseFuelConsumption * thrustIntensity * zoneModifier
-            let fuelConsumption = fuelPerSecond * deltaTime
+            // Use clampedDeltaTime so a frame hitch doesn't spike fuel use. (REVIEW.md)
+            let fuelConsumption = fuelPerSecond * clampedDeltaTime
 
             // Update exhaust particles based on thrust intensity
             player.updateExhaust(thrustIntensity: thrustIntensity)
@@ -528,7 +529,7 @@ class GameScene: SKScene {
     // MARK: - Surface Management
 
     private func returnToSurface() {
-        print("🚁 Teleporting to surface...")
+        Log.v("🚁 Teleporting to surface...")
 
         // Reset player position to surface (but don't sell cargo yet)
         player.position = CGPoint(x: frame.midX, y: frame.maxY - 100)
@@ -541,7 +542,7 @@ class GameScene: SKScene {
         gameState.currentDepth = 0.0
         gameState.phase = .surface
 
-        print("📦 Returned with cargo worth: $\(Int(gameState.cargoValue))")
+        Log.v("📦 Returned with cargo worth: $\(Int(gameState.cargoValue))")
 
         // Show surface UI (player can now sell or launch again)
         surfaceUI.show(gameState: gameState, hideHUD: { [weak self] hide in
@@ -553,8 +554,8 @@ class GameScene: SKScene {
         // Process the successful run completion (adds cargo value to credits, updates stats, etc.)
         gameState.endRunSuccess()
 
-        print("💰 Cargo sold and run completed!")
-        print("💵 Total credits: $\(Int(gameState.credits))")
+        Log.v("💰 Cargo sold and run completed!")
+        Log.v("💵 Total credits: $\(Int(gameState.credits))")
     }
 
     private func handleGameOver(reason: String) {
@@ -562,7 +563,7 @@ class GameScene: SKScene {
         guard !isGameOverInProgress else { return }
         isGameOverInProgress = true
 
-        print("💀 GAME OVER: \(reason)")
+        Log.v("💀 GAME OVER: \(reason)")
 
         let cargoValue = gameState.cargoValue
 
@@ -593,7 +594,7 @@ class GameScene: SKScene {
     }
 
     private func completeGameOverReset() {
-        print("🔄 Returning to surface after game over...")
+        Log.v("🔄 Returning to surface after game over...")
 
         // Hide game over dialog
         gameOverDialog.hide()
@@ -617,22 +618,22 @@ class GameScene: SKScene {
         gameState.phase = .surface
 
         // Clear and regenerate terrain for next run
-        print("🗑️ Clearing terrain...")
+        Log.v("🗑️ Clearing terrain...")
         terrainManager.removeAllTerrain()
-        print("🌍 Creating new terrain...")
+        Log.v("🌍 Creating new terrain...")
         let soulCrystalBonus = gameState.profile.totalMineralValueMultiplier
         terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet, soulCrystalBonus: soulCrystalBonus)
-        print("📍 Loading chunks at surface position...")
+        Log.v("📍 Loading chunks at surface position...")
         terrainManager.updateChunks(playerY: player.position.y)
 
         // Show surface UI (credits and upgrades persist)
-        print("🎮 Showing surface UI...")
-        print("💵 Current credits: $\(Int(gameState.credits))")
+        Log.v("🎮 Showing surface UI...")
+        Log.v("💵 Current credits: $\(Int(gameState.credits))")
         surfaceUI.show(gameState: gameState, hideHUD: { [weak self] hide in
             self?.hud.isHidden = hide
         })
 
-        print("✅ Returned to surface!")
+        Log.v("✅ Returned to surface!")
 
         // Reset game over flag
         isGameOverInProgress = false
@@ -640,20 +641,20 @@ class GameScene: SKScene {
 
     /// Perform prestige: sell cargo, earn Soul Crystals, reset planet
     private func performPrestige() {
-        print("🌟 PERFORMING PRESTIGE!")
+        Log.v("🌟 PERFORMING PRESTIGE!")
 
         // Hide prestige dialog
         prestigeDialog.hide()
 
         // Sell all cargo first (adds to credits and completes run)
         gameState.endRunSuccess()
-        print("💰 Cargo sold and added to earnings!")
+        Log.v("💰 Cargo sold and added to earnings!")
 
         // Perform prestige (this calculates Soul Crystals and resets planet)
         let soulCrystalsEarned = gameState.prestige()
-        print("💎 Earned \(soulCrystalsEarned) Soul Crystals!")
-        print("💎 Total Soul Crystals: \(gameState.profile.soulCrystals)")
-        print("📈 New Earnings Bonus: \(Int((gameState.profile.soulCrystalEarningsBonus - 1.0) * 100))%")
+        Log.v("💎 Earned \(soulCrystalsEarned) Soul Crystals!")
+        Log.v("💎 Total Soul Crystals: \(gameState.profile.soulCrystals)")
+        Log.v("📈 New Earnings Bonus: \(Int((gameState.profile.soulCrystalEarningsBonus - 1.0) * 100))%")
 
         // Reset player position to surface
         player.position = CGPoint(x: frame.midX, y: frame.maxY - 100)
@@ -668,35 +669,35 @@ class GameScene: SKScene {
         cameraNode.position = CGPoint(x: frame.midX, y: frame.maxY - 100)
 
         // Clear and regenerate terrain with new Soul Crystal bonus
-        print("🗑️ Clearing terrain...")
+        Log.v("🗑️ Clearing terrain...")
         terrainManager.removeAllTerrain()
-        print("🌍 Creating new terrain with Soul Crystal bonus...")
+        Log.v("🌍 Creating new terrain with Soul Crystal bonus...")
         let soulCrystalBonus = gameState.profile.totalMineralValueMultiplier
         terrainManager = TerrainManager(scene: self, planet: gameState.currentPlanet, soulCrystalBonus: soulCrystalBonus)
-        print("📍 Loading chunks at surface position...")
+        Log.v("📍 Loading chunks at surface position...")
         terrainManager.updateChunks(playerY: player.position.y)
 
         // Show surface UI
-        print("🎮 Showing surface UI...")
-        print("💵 Current credits: $\(Int(gameState.credits))")
+        Log.v("🎮 Showing surface UI...")
+        Log.v("💵 Current credits: $\(Int(gameState.credits))")
         surfaceUI.show(gameState: gameState, hideHUD: { [weak self] hide in
             self?.hud.isHidden = hide
         })
 
-        print("✨ Prestige complete!")
+        Log.v("✨ Prestige complete!")
     }
 
     private func launchMiningRun() {
         // Don't launch if already mining with cargo
         if gameState.phase == .mining && !gameState.currentCargo.isEmpty {
-            print("⚠️ Already on a mining run with cargo!")
+            Log.v("⚠️ Already on a mining run with cargo!")
             surfaceUI.hide(showHUD: { [weak self] _ in
                 self?.hud.isHidden = false
             })
             return
         }
 
-        print("🚀 Launching mining run...")
+        Log.v("🚀 Launching mining run...")
 
         // Update pod visuals based on current upgrade levels
         player.updateUpgrades(
@@ -723,7 +724,7 @@ class GameScene: SKScene {
     }
 
     private func resetProgressForTesting() {
-        print("🔄 RESETTING ALL PROGRESS FOR TESTING...")
+        Log.v("🔄 RESETTING ALL PROGRESS FOR TESTING...")
 
         // Reset planet state completely
         gameState.planetState?.credits = 0
@@ -738,10 +739,10 @@ class GameScene: SKScene {
         surfaceUI.isHidden = true
         surfaceUI.isHidden = false
 
-        print("✅ Progress reset complete!")
-        print("   - Credits: $0")
-        print("   - All upgrades: Level 1")
-        print("   - All consumables: 0")
+        Log.v("✅ Progress reset complete!")
+        Log.v("   - Credits: $0")
+        Log.v("   - All upgrades: Level 1")
+        Log.v("   - All consumables: 0")
     }
 
     private func purchaseUpgrade(_ type: SurfaceUI.UpgradeType) {
@@ -749,27 +750,27 @@ class GameScene: SKScene {
         case .fuelTank:
             let cost = CommonUpgrades.getUpgradeCost(upgradeType: "fuelTank", currentLevel: gameState.fuelTankLevel)
             guard gameState.fuelTankLevel < 6 else {
-                print("⚠️ Fuel Tank already at max level!")
+                Log.v("⚠️ Fuel Tank already at max level!")
                 return
             }
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.fuelTankLevel += 1
-                print("⛽ Upgraded Fuel Tank to Level \(gameState.fuelTankLevel) (Max Fuel: \(gameState.maxFuel))")
+                Log.v("⛽ Upgraded Fuel Tank to Level \(gameState.fuelTankLevel) (Max Fuel: \(gameState.maxFuel))")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .drillStrength:
             let cost = CommonUpgrades.getUpgradeCost(upgradeType: "drillStrength", currentLevel: gameState.drillStrengthLevel)
             guard gameState.drillStrengthLevel < 5 else {
-                print("⚠️ Drill already at max level!")
+                Log.v("⚠️ Drill already at max level!")
                 return
             }
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.drillStrengthLevel += 1
-                print("⛏️ Upgraded Drill Strength to Level \(gameState.drillStrengthLevel)")
+                Log.v("⛏️ Upgraded Drill Strength to Level \(gameState.drillStrengthLevel)")
                 // Update player pod visuals
                 player.updateUpgrades(
                     drillLevel: gameState.drillStrengthLevel,
@@ -779,33 +780,33 @@ class GameScene: SKScene {
                     cargoLevel: gameState.cargoLevel
                 )
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .cargoCapacity:
             let cost = CommonUpgrades.getUpgradeCost(upgradeType: "cargoCapacity", currentLevel: gameState.cargoLevel)
             guard gameState.cargoLevel < 6 else {
-                print("⚠️ Cargo already at max level!")
+                Log.v("⚠️ Cargo already at max level!")
                 return
             }
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.cargoLevel += 1
-                print("📦 Upgraded Cargo Capacity to Level \(gameState.cargoLevel) (Max Cargo: \(gameState.cargoCapacity))")
+                Log.v("📦 Upgraded Cargo Capacity to Level \(gameState.cargoLevel) (Max Cargo: \(gameState.cargoCapacity))")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .hullArmor:
             let cost = CommonUpgrades.getUpgradeCost(upgradeType: "hullArmor", currentLevel: gameState.hullArmorLevel)
             guard gameState.hullArmorLevel < 5 else {
-                print("⚠️ Hull already at max level!")
+                Log.v("⚠️ Hull already at max level!")
                 return
             }
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.hullArmorLevel += 1
-                print("🛡️ Upgraded Hull Armor to Level \(gameState.hullArmorLevel) (Max Hull: \(gameState.maxHull))")
+                Log.v("🛡️ Upgraded Hull Armor to Level \(gameState.hullArmorLevel) (Max Hull: \(gameState.maxHull))")
                 // Update player pod visuals
                 player.updateUpgrades(
                     drillLevel: gameState.drillStrengthLevel,
@@ -815,19 +816,19 @@ class GameScene: SKScene {
                     cargoLevel: gameState.cargoLevel
                 )
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .engineSpeed:
             let cost = CommonUpgrades.getUpgradeCost(upgradeType: "engineSpeed", currentLevel: gameState.engineSpeedLevel)
             guard gameState.engineSpeedLevel < 5 else {
-                print("⚠️ Engine already at max level!")
+                Log.v("⚠️ Engine already at max level!")
                 return
             }
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.engineSpeedLevel += 1
-                print("🚀 Upgraded Engine Speed to Level \(gameState.engineSpeedLevel)")
+                Log.v("🚀 Upgraded Engine Speed to Level \(gameState.engineSpeedLevel)")
                 // Update player pod visuals
                 player.updateUpgrades(
                     drillLevel: gameState.drillStrengthLevel,
@@ -837,21 +838,21 @@ class GameScene: SKScene {
                     cargoLevel: gameState.cargoLevel
                 )
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .impactDampeners:
             let cost = CommonUpgrades.getUpgradeCost(upgradeType: "impactDampeners", currentLevel: gameState.impactDampenersLevel)
             guard gameState.impactDampenersLevel < 3 else {
-                print("⚠️ Impact Dampeners already at max level!")
+                Log.v("⚠️ Impact Dampeners already at max level!")
                 return
             }
             if gameState.credits >= cost {
                 gameState.credits -= cost
                 gameState.impactDampenersLevel += 1
-                print("💥 Upgraded Impact Dampeners to Level \(gameState.impactDampenersLevel)")
+                Log.v("💥 Upgraded Impact Dampeners to Level \(gameState.impactDampenersLevel)")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
         }
 
@@ -868,61 +869,61 @@ class GameScene: SKScene {
         case .repairKit:
             cost = Consumables.getCost("repairKit")
             if planet.consumables.repairKits >= maxConsumables {
-                print("🔧 Repair Kit inventory full (max: \(maxConsumables))")
+                Log.v("🔧 Repair Kit inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.repairKits += 1
-                print("🔧 Purchased Repair Kit (x\(planet.consumables.repairKits))")
+                Log.v("🔧 Purchased Repair Kit (x\(planet.consumables.repairKits))")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .fuelCell:
             cost = Consumables.getCost("fuelCell")
             if planet.consumables.fuelCells >= maxConsumables {
-                print("⛽ Fuel Cell inventory full (max: \(maxConsumables))")
+                Log.v("⛽ Fuel Cell inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.fuelCells += 1
-                print("⛽ Purchased Fuel Cell (x\(planet.consumables.fuelCells))")
+                Log.v("⛽ Purchased Fuel Cell (x\(planet.consumables.fuelCells))")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .bomb:
             cost = Consumables.getCost("bomb")
             if planet.consumables.bombs >= maxConsumables {
-                print("💣 Mining Bomb inventory full (max: \(maxConsumables))")
+                Log.v("💣 Mining Bomb inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.bombs += 1
-                print("💣 Purchased Mining Bomb (x\(planet.consumables.bombs))")
+                Log.v("💣 Purchased Mining Bomb (x\(planet.consumables.bombs))")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .teleporter:
             cost = Consumables.getCost("teleporter")
             if planet.consumables.teleporters >= maxConsumables {
-                print("🌀 Teleporter inventory full (max: \(maxConsumables))")
+                Log.v("🌀 Teleporter inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.teleporters += 1
-                print("🌀 Purchased Teleporter (x\(planet.consumables.teleporters))")
+                Log.v("🌀 Purchased Teleporter (x\(planet.consumables.teleporters))")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
 
         case .shield:
             cost = Consumables.getCost("shield")
             if planet.consumables.shields >= maxConsumables {
-                print("🛡️ Shield inventory full (max: \(maxConsumables))")
+                Log.v("🛡️ Shield inventory full (max: \(maxConsumables))")
             } else if gameState.credits >= cost {
                 gameState.credits -= cost
                 planet.consumables.shields += 1
-                print("🛡️ Purchased Shield (x\(planet.consumables.shields))")
+                Log.v("🛡️ Purchased Shield (x\(planet.consumables.shields))")
             } else {
-                print("💸 Not enough credits! Need $\(Int(cost))")
+                Log.v("💸 Not enough credits! Need $\(Int(cost))")
             }
         }
     }
@@ -976,7 +977,7 @@ extension GameScene {
 
             if !canDrill {
                 // Visual/audio feedback for hitting indestructible block
-                print("⚠️ Cannot drill \(blockType) with drill level \(gameState.drillStrengthLevel)")
+                Log.v("⚠️ Cannot drill \(blockType) with drill level \(gameState.drillStrengthLevel)")
                 // TODO: Play "clang" sound effect
                 return
             }
@@ -986,7 +987,7 @@ extension GameScene {
         let depthInMeters = Double(gridPos.y) * TerrainBlock.metersPerBlock
         let strataHardness = terrainManager.getHardnessAtDepth(depthInMeters) ?? 1.0
 
-        print("strata hardness: \(strataHardness) at depth \(Int(depthInMeters))m (grid Y: \(gridPos.y))")
+        Log.v("strata hardness: \(strataHardness) at depth \(Int(depthInMeters))m (grid Y: \(gridPos.y))")
 
         // Calculate drill duration: 0.3 * hardness / drillLevel
         let baseDrillTime = 0.3
@@ -996,7 +997,7 @@ extension GameScene {
         currentDrillingBlock = (x: gridPos.x, y: gridPos.y)
         drillStartPosition = player.position
 
-        print("🎯 Starting drill on block (\(gridPos.x), \(gridPos.y)) at world pos (\(Int(drillTipPosition.x)), \(Int(drillTipPosition.y)))")
+        Log.v("🎯 Starting drill on block (\(gridPos.x), \(gridPos.y)) at world pos (\(Int(drillTipPosition.x)), \(Int(drillTipPosition.y)))")
 
         // Calculate target position - pod descends INTO the block position (centered on block)
         let surfaceY = frame.maxY - 100
@@ -1034,8 +1035,9 @@ extension GameScene {
         player.zRotation = wobble
 
         // Consume fuel gradually during drilling
-        let depth = Double(block.y)
-        let strataHardness = terrainManager.getHardnessAtDepth(depth) ?? 1.0
+        // getHardnessAtDepth expects depth in METERS, not grid rows (matches startDrilling). (REVIEW.md)
+        let depthInMeters = Double(block.y) * TerrainBlock.metersPerBlock
+        let strataHardness = terrainManager.getHardnessAtDepth(depthInMeters) ?? 1.0
         let fuelPerSecond = strataHardness / Double(gameState.drillStrengthLevel)
         let baseCost = 10.0
         let fuelCost = fuelPerSecond * deltaTime * baseCost
@@ -1077,16 +1079,16 @@ extension GameScene {
             // Collect material if present
             if material.type == Material.MaterialType.darkMatter {
                 gameState.currentRun?.coreExtracted = true
-                print("💎 CORE EXTRACTED! You can now prestige at the surface!")
+                Log.v("💎 CORE EXTRACTED! You can now prestige at the surface!")
 
                 // Trigger special core collection effects
                 createCoreCollectionEffect(at: player.position)
             }
 
             if gameState.addToCargo(material) {
-                print("⛏️ Mined \(material.type.rawValue) worth $\(Int(material.value))")
+                Log.v("⛏️ Mined \(material.type.rawValue) worth $\(Int(material.value))")
             } else {
-                print("📦 Cargo full! Can't collect \(material.type.rawValue)")
+                Log.v("📦 Cargo full! Can't collect \(material.type.rawValue)")
             }
         }
 
@@ -1119,13 +1121,13 @@ extension GameScene: SKPhysicsContactDelegate {
                 if let material = terrainManager.removeBlock(x: gridX, y: gridY) {
                     // Mark core as extracted
                     gameState.currentRun?.coreExtracted = true
-                    print("💎 CORE EXTRACTED! You can now prestige at the surface!")
+                    Log.v("💎 CORE EXTRACTED! You can now prestige at the surface!")
 
                     // Add to cargo
                     if gameState.addToCargo(material) {
-                        print("⛏️ Collected Dark Matter worth $\(Int(material.value))")
+                        Log.v("⛏️ Collected Dark Matter worth $\(Int(material.value))")
                     } else {
-                        print("📦 Cargo full! Can't collect Dark Matter")
+                        Log.v("📦 Cargo full! Can't collect Dark Matter")
                     }
 
                     // Trigger special core collection effects
@@ -1140,7 +1142,7 @@ extension GameScene: SKPhysicsContactDelegate {
            bodies.contains(where: { $0.categoryBitMask == 1 }) {
             // Pod touched the surface/shop - check if we should end the run
             if gameState.phase == .mining {
-                print("🏁 Surface reached! Ending run...")
+                Log.v("🏁 Surface reached! Ending run...")
                 handleRunEnd()
                 return
             }
@@ -1189,14 +1191,14 @@ extension GameScene: SKPhysicsContactDelegate {
         // Check if core was extracted - show prestige dialog if so
         if gameState.currentRun?.coreExtracted == true {
             prestigeDialog.show(gameState: gameState)
-            print("🏁 Run ended - Core extracted! Prestige available!")
+            Log.v("🏁 Run ended - Core extracted! Prestige available!")
         } else {
             // Show sell dialog with run results BEFORE processing the sale
             sellDialog.show(gameState: gameState)
-            print("🏁 Run ended - reached surface!")
+            Log.v("🏁 Run ended - reached surface!")
         }
-        print("   - Cargo Value: $\(Int(gameState.cargoValue))")
-        print("   - Depth Reached: \(Int(gameState.currentDepth))m")
+        Log.v("   - Cargo Value: $\(Int(gameState.cargoValue))")
+        Log.v("   - Depth Reached: \(Int(gameState.currentDepth))m")
     }
 }
 
@@ -1232,7 +1234,7 @@ extension GameScene: DamageSystemDelegate {
 
 extension GameScene: ConsumableSystemDelegate {
     func consumableSystemDidUseTeleporter() {
-        print("🌀 Teleporting to surface...")
+        Log.v("🌀 Teleporting to surface...")
         createTeleportEffect(at: player.position)
 
         // Teleport pod to 200px above surface, centered
@@ -1242,28 +1244,33 @@ extension GameScene: ConsumableSystemDelegate {
         player.position = targetPosition
         player.physicsBody?.velocity = .zero
 
-        print("   Teleported to (\(Int(targetPosition.x)), \(Int(targetPosition.y)))")
+        Log.v("   Teleported to (\(Int(targetPosition.x)), \(Int(targetPosition.y)))")
     }
 
     func consumableSystemDidUseBomb(at position: CGPoint) {
-        print("💣 Bomb activated at \(position)")
+        Log.v("💣 Bomb activated at \(position)")
 
-        // Clear 3×3 area and collect materials
-        let materials = terrainManager.clearBombArea(at: position)
+        // Show the explosion immediately for instant feedback, then clear the
+        // terrain on the next runloop tick so the blast actually renders before
+        // the (currently heavy) terrain rebuild runs. Without the defer, the
+        // synchronous clearBombArea blocks the frame and the bomb feels frozen
+        // until it finishes. TODO: the underlying cost is the O(N²) surface-mask
+        // rebuild — see docs/wiki/Code Review.md (strata refactor).
+        createExplosionEffect(at: position)
 
-        // Add collected materials to cargo
-        for material in materials {
-            if gameState.addToCargo(material) {
-                print("   ⛏️ Collected \(material.type.rawValue) from bomb")
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let materials = self.terrainManager.clearBombArea(at: position)
+            for material in materials {
+                if self.gameState.addToCargo(material) {
+                    Log.v("   ⛏️ Collected \(material.type.rawValue) from bomb")
+                }
             }
         }
-
-        // Add explosion visual effect
-        createExplosionEffect(at: position)
     }
 
     func consumableSystemDidActivateShield(duration: TimeInterval) {
-        print("🛡️ Shield activated for \(Int(duration))s")
+        Log.v("🛡️ Shield activated for \(Int(duration))s")
         createShieldEffect(duration: duration)
     }
 }
@@ -1554,24 +1561,24 @@ extension GameScene {
         // HUD notification
         hud.showNotification(message: "CORE EXTRACTED!\nReturn to surface to prestige!", color: UIColor(red: 1.0, green: 0.4, blue: 0.0, alpha: 1.0))
 
-        print("💎 CORE COLLECTION SPECIAL EFFECTS TRIGGERED")
+        Log.v("💎 CORE COLLECTION SPECIAL EFFECTS TRIGGERED")
     }
 }
 
 // MARK: - SupplyDropSystemDelegate
 extension GameScene: SupplyDropSystemDelegate {
     func supplyDropSystemDidStartDelivery() {
-        print("📦 Supply drop order placed - 30 second countdown started")
+        Log.v("📦 Supply drop order placed - 30 second countdown started")
     }
 
     func supplyDropSystemDidCancelDelivery() {
-        print("⚠️ Supply drop cancelled - player moved too much!")
+        Log.v("⚠️ Supply drop cancelled - player moved too much!")
         // Show cancellation message (could add a toast notification here)
     }
 
     func supplyDropSystemDidCompleteDelivery(items: [SupplyDropSystem.SupplyItem: Int]) {
         let totalItems = items.values.reduce(0, +)
-        print("✅ Supply drop completed: \(totalItems) items")
+        Log.v("✅ Supply drop completed: \(totalItems) items")
     }
 
     func supplyDropSystemNeedsSupplyPod(at position: CGPoint, items: [SupplyDropSystem.SupplyItem: Int]) {

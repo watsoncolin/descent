@@ -38,7 +38,7 @@ class CollisionGrid {
             count: gridSize.height
         )
 
-        print("🔲 CollisionGrid initialized: \(gridSize.width)×\(gridSize.height) cells")
+        Log.v("🔲 CollisionGrid initialized: \(gridSize.width)×\(gridSize.height) cells")
     }
 
     // MARK: - Grid Access

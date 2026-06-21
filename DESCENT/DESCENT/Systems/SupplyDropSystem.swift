@@ -216,9 +216,9 @@ class SupplyDropSystem {
 
         delegate?.supplyDropSystemDidStartDelivery()
 
-        print("📦 Supply drop ordered: \(itemCount) items for $\(Int(totalCost))")
-        print("   Items: \(orderItems.map { "\($0.value)x \($0.key.rawValue)" }.joined(separator: ", "))")
-        print("   Delivery in \(Int(deliveryWaitTime)) seconds. Remain stationary!")
+        Log.v("📦 Supply drop ordered: \(itemCount) items for $\(Int(totalCost))")
+        Log.v("   Items: \(orderItems.map { "\($0.value)x \($0.key.rawValue)" }.joined(separator: ", "))")
+        Log.v("   Delivery in \(Int(deliveryWaitTime)) seconds. Remain stationary!")
 
         // Clear order after starting delivery
         orderItems.removeAll()
@@ -303,8 +303,8 @@ class SupplyDropSystem {
         delegate?.supplyDropSystemDidCancelDelivery()
 
         let itemCount = items.values.reduce(0, +)
-        print("⚠️ Supply drop cancelled! Player moved too much. No refund.")
-        print("   Lost \(itemCount) items: \(items.map { "\($0.value)x \($0.key.rawValue)" }.joined(separator: ", "))")
+        Log.v("⚠️ Supply drop cancelled! Player moved too much. No refund.")
+        Log.v("   Lost \(itemCount) items: \(items.map { "\($0.value)x \($0.key.rawValue)" }.joined(separator: ", "))")
     }
 
     private func completeDelivery(items: [SupplyItem: Int], at position: CGPoint) {
@@ -313,7 +313,7 @@ class SupplyDropSystem {
         // Spawn supply pod visual
         delegate?.supplyDropSystemNeedsSupplyPod(at: position, items: items)
 
-        print("📦 Supply drop arriving!")
+        Log.v("📦 Supply drop arriving!")
 
         // Actual item delivery happens when pod lands (via finishDelivery)
     }
@@ -322,7 +322,7 @@ class SupplyDropSystem {
     func finishDelivery(items: [SupplyItem: Int], gameState: GameState) {
         // Add items to inventory via planet state
         guard let planetState = gameState.planetState else {
-            print("❌ Cannot add items - no planet state")
+            Log.v("❌ Cannot add items - no planet state")
             return
         }
 
@@ -347,8 +347,8 @@ class SupplyDropSystem {
 
         delegate?.supplyDropSystemDidCompleteDelivery(items: items)
 
-        print("✅ Supply drop delivered: \(totalItems) items")
-        print("   Received: \(items.map { "\($0.value)x \($0.key.rawValue)" }.joined(separator: ", "))")
+        Log.v("✅ Supply drop delivered: \(totalItems) items")
+        Log.v("   Received: \(items.map { "\($0.value)x \($0.key.rawValue)" }.joined(separator: ", "))")
     }
 
     // MARK: - Reset

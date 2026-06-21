@@ -20,10 +20,12 @@ class GameViewController: UIViewController {
         view.allowsTransparency = false  // Prevents alpha blending buffer
         view.shouldCullNonVisibleNodes = true  // Only render visible nodes
 
-        // Debug settings (disable for production)
+        // Debug settings — DEBUG builds only so they never ship in release. (REVIEW.md)
+        #if DEBUG
         view.showsFPS = true
         view.showsNodeCount = true
         view.showsPhysics = false // Enable when debugging physics
+        #endif
     }
 
     override var prefersStatusBarHidden: Bool {
